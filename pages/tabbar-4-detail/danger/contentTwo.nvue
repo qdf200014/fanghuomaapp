@@ -1,0 +1,131 @@
+<template>
+	<view class="flex flex-1 flex-column">
+		<uni-nav-bar left-icon="back" title="第二步" :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-1 flex-column" style="padding-bottom: 50rpx;">
+			<cell  class="pl-3 pr-3 bg-white">
+				<view style="padding-bottom: 24rpx;padding-top: 56rpx;" class="border-bottom-4">
+					<text class="contentTitle">国家林业和草原局森林草原防火司</text>
+				</view>
+				<view class="flex flex-column align-end" style="padding-top: 16rpx;">
+					<text class="smallTitle">林防督[2021] 1 号</text>
+				</view>
+				<view class="flex flex-column justify-center align-center pt-4 pb-4">
+					<text class="smallName">森林草原防火</text>
+					<text class="smallName" style="padding-top:16rpx ;">隐患整改通知书</text>
+				</view>
+				<text class="companyName">河北省人民政府：</text>
+				<view style="padding-top: 16rpx;padding-bottom: 16rpx;">
+					<text class="contentTop">{{startTime}}至{{endTime}},{{inspectionUnit}}对你单位进行督查,依据《国家林业和草原局森林草原防火督查工作管理办法(试行)》,发现存在10处隐思,具体如下:</text>
+				</view>
+				<text class="contentTop"> 1.贯彻落实中央决策部署存在文件传达、工作部署不及时等1处隐患。
+				     2.落实行政首长负责制存在队伍力量配备不足、森林草原防火基础设施建设未纳入国民经济和社会发展规划、火案查处不及时不力等3处隐患。
+				     3.火源管控存在末对上坟烧纸祭祀用火、农事用火、野外吸烟人员、智障人员等进行针对性管控和未对架空电线打火隐思进行排查整治等2处隐患。
+				     4.宣传教育存在末组织开展防火宣传月、宣传周等活动和未进社区、进村屯、进农户、进学校、进课堂宣传安全避验知识等2处隐患
+				     5.森林草原早期火情处理存在森林草原防火重点区域未组建地方森林草原专业防扑火队、未及时接报和处置早期火情和配合火灾扑救等2处隐患。</text>
+				<text class="contentTop" style="padding-top: 16rpx;">现依据《森林防火条例》《草原防火条例》,责令7个工作日内将上报整改方案,60天内整改完毕,并于2021年3月20日前上报整改情况。</text>
+				<view class="pt-4 pl-2" style="padding-bottom: 16rpx;">
+					<text class="contentTop">督查工作组组长签字：</text>
+				</view>
+				<!-- 签字区域 -->
+				<view class="flex justify-end align-end">
+					<view style="width: 345rpx;height: 210rpx;"></view>
+				</view>
+				<view class="pt-4 pl-2" style="padding-bottom: 16rpx;">
+					<text class="contentTop">被督查单位责任人签字：</text>
+				</view>
+				<!-- 签字区域 -->
+				<view class="flex justify-end align-end">
+					<view style="width: 345rpx;height: 210rpx;"></view>
+				</view>
+				<view class="flex flex-column justify-end align-end pt-4" style="padding-bottom: 24rpx;">
+					<text class="contentTop">当今时间</text>
+				</view>
+			</cell>
+		</list>
+		<view style="width: 750rpx;height: 120rpx;" class="position-fixed left-0 bottom-0 pl-3 pr-3 flex flex-row justify-between align-center bg-white border-top pt-2">
+			<view style="padding-left: 20rpx;" @click="modifyContent">
+				<image src="../../../static/work/modify.png" mode="" style="width: 44rpx;height: 44rpx;"></image>
+				<text class="modify">修改</text>
+			</view>
+			<view style="width: 250rpx;height: 100rpx;background-color: #FFFFFF;border-radius: 45rpx;" class="border-test flex flex-column justify-center align-center">
+				<text style="color: #F75252;">暂存</text>
+			</view>
+			<view style="width: 250rpx;height: 100rpx;background-color: #F75252;border-radius: 45rpx;" class="flex flex-column justify-center align-center" @click="writeName">
+				<text style="color: #FFFFFF;">签字</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				startTime: '2021年1月1日',
+				endTime: '2021年1月15日',
+			}
+		},
+		methods: {
+			// 去签名
+			writeName() {
+				uni.navigateTo({
+					url:'./signature/signature'
+				})
+			},
+			// 点击修改
+			modifyContent(){
+				uni.navigateBack(1)
+			}
+		},
+	}
+</script>
+
+<style>
+	.contentTitle {
+		
+		/* #ifndef APP-PLUS-NVUE */
+		letter-spacing: 1rpx;
+		/* #endif */
+		font-size: 44rpx;
+		font-weight: 600;
+		color: #FF1D1D;
+		line-height: 44rpx;
+		
+	}
+
+	.border-bottom-4 {
+		border-bottom-width: 2rpx;
+		border-bottom-style: solid;
+		border-bottom-color: #FF1D1D;
+	}
+
+	.smallTitle {
+		font-size: 28rpx;
+		font-weight: 600;
+		color: #666666;
+	}
+
+	.smallName {
+		font-size: 40rpx;
+		font-weight: 400;
+		color: #333333;
+	}
+
+	.companyName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #333333;
+	}
+
+	.contentTop {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #333333;
+		line-height: 45rpx;
+	}
+	.modify{
+		font-size: 22rpx;
+		color: #545B62;
+		padding-top: 10rpx;
+	}
+</style>

@@ -1,0 +1,754 @@
+<template>
+    <view class="flex flex-1 flex-column w-100 border-box">
+        <!-- 导航栏 -->
+        <!-- #ifdef APP-PLUS -->
+        <uni-nav-bar left-icon="back" title="动态详情" :statusBar="true" @clickLeft="navigateBack" :fixed="true">
+            <view class="flex flex-1 justify-end" slot="right">
+                <image src="../../../static/fireIndex/start.png" style="width: 36rpx;height: 36rpx;" @click="collect"
+                    v-if="showImg == true"></image>
+                <image src="../../../static/fireIndex/collected.png" style="width: 36rpx;height: 36rpx;"
+                    @click="nocollect" v-if="showImg == false"></image>
+                <image src="../../../static/fireIndex/share.png" style="width: 36rpx;height: 36rpx;margin-left: 36rpx;"
+                    @click="shareFire"></image>
+            </view>
+        </uni-nav-bar>
+        <!-- #endif -->
+        <!-- #ifndef APP-PLUS -->
+        <uni-nav-bar title="动态详情" :statusBar="true" :fixed="true"></uni-nav-bar>
+        <!-- #endif -->
+        <scroll-view class="scroll-Y" :scroll-top="scrollTop" scroll-y="true" @scrolltoupper="upper" @scrolltolower="lower"
+                @scroll="scroll">
+            <view class="pl-3 pr-3" style="padding-top: 29rpx;">
+                <text class="fire_detail" style="line-height: 70rpx;">{{fireDetail.title}}</text>
+            </view>
+            <view class="flex flex-row pl-3 pr-3" style="margin-top: 8rpx;">
+                <text class="detail_name">来源：{{fireDetail.source}}</text>
+                <text class="detail_time">{{dateTran(fireDetail.sentTime)}}</text>
+            </view>
+            <view class="pl-3 pr-3" style="margin-top: 16rpx;margin-bottom: 48rpx;">
+                <view v-if="coverType == 3">
+                    <video :src="fireDetail.videoUrlList[0]" style="width: 690rpx;height: 388rpx;"
+                        id="myVideo flex flex-column justify-center align-center" enable-danmu danmu-btn controls
+                        show-center-play-btn :danmu-btn="false"
+                        :poster="`${fireDetail.videoUrlList[0]}?x-oss-process=video/snapshot,t_6000,m_fast,w_800,f_png`">
+                    </video>
+                </view>
+                <view style="line-height: 56rpx;" v-else>
+                    <mp-html  class="mb-4"  :content="fireDetail.content" />
+                </view>
+            </view>
+        </scroll-view>
+<!--        <view class="pl-3" v-if="newsComment.length>0">
+            <text style="font-size: 36rpx;font-weight: 500;color: #303133;">评论</text>
+            <view style="width: 40rpx;height: 6rpx;background-color: #F75252;margin-top: 16rpx;margin-left: 16rpx;">
+            </view>
+        </view> -->
+        <!-- 评论部分 -->
+       <!-- <view class="flex pt-3 border-bottom pl-3 pr-3 pb-3" @click="godelcomment(item,index)"
+            @longpress="logoTime(item)" style="margin-top: 16rpx;" v-for="(item,index) in newsComment" :key="index" v-if="newsComment.length>0">
+            <view class="im-position-relative easy-chat-img">
+                <image v-if="item.headUrl != ''"  :src="item.headUrl" mode="aspectFill"  style="width: 56rpx;height: 56rpx;"></image>
+                <view v-else class="im-flex-1 im-flex im-justify-center im-align-center im-bg-red-1" style="width: 56rpx;height: 56rpx;">
+                    <text class="im-font-white" style="font-size: 23rpx;">{{ item.userName.slice(-2) }}</text>
+                </view>
+            </view>
+            <view style="width: 618rpx;padding-left: 16rpx;">
+                <view>
+                    <view class="flex flex-row" v-if="item.toUserName==null">
+                        <text
+                            style="font-size: 28rpx;font-weight: 500;color: #303133;padding-right: 8rpx;">{{item.userName}}</text>
+                        <text
+                            style="font-size: 26rpx;font-weight: 400;color: #666666;">({{item.fromJobName}})</text>
+                    </view>
+                    <view class="flex flex-row" v-else>
+                        <text
+                            style="font-size: 28rpx;font-weight: 500;color: #303133;padding-right: 8rpx;">{{item.userName}}</text>
+                        <text
+                            style="font-size: 26rpx;font-weight: 400;color: #666666;">({{item.fromJobName}})</text>
+                        <text
+                            style="font-size: 28rpx;font-weight: 500;color: #487CF1;padding-right: 8rpx;">回复:</text>
+                        <text
+                            style="font-size: 28rpx;font-weight: 500;color: #303133;padding-right: 8rpx;">{{item.toUserName}}</text>
+                        <text style="font-size: 26rpx;font-weight: 400;color: #666666;">({{item.toJobName}})</text>
+                    </view>
+                </view>
+                <text style="font-size: 30rpx;color: #303133;" class="pt-2">{{item.comment}}</text>
+            </view>
+        </view>
+        <view style="height: 200rpx;"></view>
+        <view v-show="isLoadMore">
+            <uni-load-more :status="loadStatus"></uni-load-more>
+        </view> -->
+ 
+        <!-- #ifdef APP-PLUS -->
+        <uni-popup type="bottom" ref='share'>
+            <fire-pop v-on:gohaddle="goStatus($event, index)"></fire-pop>
+        </uni-popup>
+        <uni-popup ref="popupReply" type="center">
+            <wt-dialog :maskClick='true' :btns="['取消','确定']" @confirm="replyDaily" title="">
+                <view class="flex flex-column justify-center align-center" style="padding-bottom: 32rpx;">
+                    <text style="font-size: 26rpx;font-weight: 400;color: #030303;">是否回复该评论</text>
+                </view>
+            </wt-dialog>
+        </uni-popup>
+        <uni-popup ref="popupDelete" type="center">
+            <wt-dialog :maskClick='true' :btns="['取消','确定']" @confirm="deleteCommmit1" title="">
+                <view class="flex flex-column justify-center align-center" style="padding-bottom: 32rpx;">
+                    <text style="font-size: 26rpx;font-weight: 400;color: #030303;">是否删除该评论</text>
+                </view>
+            </wt-dialog>
+        </uni-popup>
+<!--        <view class="position-fixed bottom-0 left-0 w-100 border-top-0 pl-3 flex flex-row align-center"
+            style="height: 120rpx;box-shadow: 0px -8px 14px 0px rgba(169, 169, 169, 0.07);background-color: #FFFFFF;"
+            v-if="showCom">
+            <view class="flex flex-row align-center"
+                style="background-color: #F4F5FB;border-radius: 44rpx;padding-left: 20rpx;width: 428rpx;">
+                <image src="../../../static/fireIndex/writeCommon.png" mode="" style="width: 32rpx;height: 32rpx;"></image>
+                <input type="text" class="flex flex-1" @confirm="uploadCommon" style="height: 72rpx;font-size: 32rpx;font-weight: 400;padding-left: 15rpx;" @input="fireInput"
+                     confirm-type="send" placeholder="写评论" v-model="fireInputs" @keyboardheightchange="getkeyHeight"  adjust-position="false"/>
+            </view>
+            <view class="flex flex-row" style="padding-left: 30rpx;">
+                <image src="../../../static/fireIndex/common.png" style="width: 44rpx;height: 44rpx;"></image>
+                <image src="../../../static/fireIndex/start.png" style="width: 44rpx;height: 44rpx;margin-left: 30rpx;"
+                    @click="collect" v-if="showImg == true"></image>
+                <image src="../../../static/fireIndex/collected.png"
+                    style="width: 44rpx;height: 44rpx;margin-left: 30rpx;" @click="nocollect" v-if="showImg == false">
+                </image>
+                <image src="../../../static/fireIndex/share.png" style="width: 44rpx;height: 44rpx;margin-left: 30rpx;"
+                    @click="shareFire"></image>
+            </view>
+        </view> -->
+<!--        <view class="position-fixed bottom-0 left-0 w-100 border-top-0 pl-3 flex flex-row align-center"
+            style="height: 120rpx;box-shadow: 0px -8px 14px 0px rgba(169, 169, 169, 0.07);background-color: #FFFFFF;"
+            v-else>
+            <view class="flex flex-row align-center"
+                style="background-color: #F4F5FB;border-radius: 44rpx;padding-left: 20rpx;width: 428rpx;">
+                <view class="flex flex-row">
+                    <text class="contentName">回复:</text>
+                    <text class="nameCom">@{{touser.userName}}</text>
+                </view>
+                <input type="text" class="flex flex-1"
+                    style="margin-left: 8rpx;font-size: 32rpx;font-weight: 400;height: 72rpx;" confirm-type="send"
+                    placeholder="请回复" @input="replyNews" @confirm="replyCommon" v-model="replyInput" adjust-position="false"/>
+            </view>
+            <view class="flex flex-row" style="padding-left: 30rpx;">
+                <image src="../../../static/fireIndex/common.png" style="width: 44rpx;height: 44rpx;"></image>
+                <image src="../../../static/fireIndex/start.png" style="width: 44rpx;height: 44rpx;margin-left: 30rpx;"
+                    @click="collect" v-if="showImg == true"></image>
+                <image src="../../../static/fireIndex/collected.png"
+                    style="width: 44rpx;height: 44rpx;margin-left: 30rpx;" @click="nocollect" v-if="showImg == false">
+                </image>
+                <image src="../../../static/fireIndex/share.png" style="width: 44rpx;height: 44rpx;margin-left: 30rpx;"
+                    @click="shareFire"></image>
+            </view>
+        </view> -->
+        <!-- #endif -->
+    </view>
+</template>
+ 
+<script>
+    // import wtLists from '@/components/wt-list/wt-lists.nvue';
+    import mpHtml from '@/components/mp-html/mp-html';
+    import { mapGetters, mapActions } from 'vuex';
+    import {
+        throttle
+    } from "@/common/common.js";
+    import dayjs from 'dayjs';
+    import uniCell from '@/components/uni-cell.vue';
+    //#ifdef APP-PLUS
+    import firePop from './firePop.nvue'
+    //#endif
+    export default {
+        components: {
+            mpHtml,
+            uniCell,
+            // wtLists,
+            //#ifdef APP-PLUS
+            firePop,
+            //#endif
+        },
+        data() {
+            return {
+                articleId: 0,
+                fireDetail: [],
+                discussion: [], //会商列表
+                showImg: true,
+                accounts: [], //创建会商的群组
+                statusCode: 0,
+                fireContent: '', //新闻详情的评论内容
+                commonList: [],
+                fireInputs: '',
+                commentId: '',
+                showCom: true,
+                replyContent: '',
+                fromUid: 0,
+                replyInput: '',
+                coverType: -1,
+                videoCover: '',
+                page: 1,
+                pageSize: 10,
+                loadStatus: 'loading',
+                isLoadMore: false,
+                newsComment: [],
+                delindex: -1,
+                newsUser:{},
+                touser:{},
+                keyHeight:0,
+                fromuId:'',
+				newsCommentId:0,
+            }
+        },
+        computed:{
+            ...mapGetters({
+                userInfo: 'user/info'
+            })
+        },
+        onShow() {
+            this.getNewsComment(); //新闻评论列表
+            // this.getUserInfo(); // 用户信息更新
+            this.workbenchList();
+        },
+        onLoad(e) {
+            //#ifdef APP-PLUS
+            uni.$off('im-selectContactOk')
+            uni.$off('im-selectCreateTeam')
+ 
+            this.setListenerShare()
+            this.setListenerCreateTeam()
+            //#endif
+ 
+            this.getNewsComment(); //新闻评论列表
+            console.log(e);
+            this.coverType = e.coverType;
+            this.articleId = e.articleId;
+            console.log(this.articleId, '文章id')
+            console.log('onload_', e)
+            uni.$api.fireIndex.getcontent({
+                    id: this.articleId
+                })
+                .then(res => {
+                    console.log('getcontent_RES', res);
+                    let obj = res.data.data || [];
+                    obj.content = this.imgTagAddStyle(obj.content)
+                    this.fireDetail = obj
+                    if (this.fireDetail.isCollect == true) {
+                        this.showImg = false;
+                    } else if (this.fireDetail.isCollect == false) {
+                        this.showImg = true;
+                    }
+                })
+                .catch(err => {
+                    console.log('getcontent_ERR', err);
+                })
+            // app获取会商列表
+            uni.$api.consultation.getappconsultations({
+                    guid: this.articleId
+                })
+                .then(res => {
+                    console.log('getappconsultations_RES', res);
+                    this.discussion = res.data.data;
+                    // console.log(this.discussion)
+                })
+                .catch(err => {
+                    console.log('getappconsultations_ERR', err)
+                })
+        },
+        onUnload() {
+            uni.$off('im-selectContactOk')
+            uni.$off('im-selectCreateTeam')
+        },
+        // 上拉加载
+        onReachBottom() {
+            if (!this.isLoadMore) {
+                this.isLoadMore = true
+                this.page += 1
+                this.getNewsComment()
+            }
+        },
+        methods: {
+            getkeyHeight(e){
+                console.log(e)
+                this.keyHeight = e.detail.height;
+            },
+            workbenchList(){
+                this.newsUser = this.userInfo;
+                console.log(this.newsUser,'用户信息')
+            },
+            // 获取新闻评论
+            getNewsComment() {
+                uni.$api.fireIndex.getcomment({
+                        articleId: this.articleId,
+                        page: this.page,
+                        limit: this.pageSize
+                    })
+                    .then(res => {
+                        console.log(res, '获取的新闻评论列表');
+                        if (res.data.statusCode == 200) {
+                            if (res.data.data) {
+                                this.newsComment = this.newsComment.concat(res.data.data)
+                                if (res.data.data.length < this.pageSize) {
+                                    this.isLoadMore = true
+                                    this.loadStatus = 'nomore'
+                                } else {
+                                    this.isLoadMore = false
+                                }
+                            }
+                        } else {
+                            this.isLoadMore = false
+                            if (this.page > 1) {
+                                this.page -= 1
+                            }
+                        }
+ 
+                    })
+                    .catch(err => {
+                        console.log(err, '获取新闻评论列表失败')
+                        this.isLoadMore = false
+                        if (this.page > 1) {
+                            this.page -= 1
+                        }
+                    })
+            },
+            // 回复评论
+            replyCommon: throttle(function(e) {
+                uni.$api.fireIndex.addcomment({
+                        acticleId: this.articleId,
+                        comment: this.replyContent,
+                        toUid: this.fromUid,
+                        parentId: this.commentId
+                    })
+                    .then(res => {
+                        console.log(res, '二级评论成功');
+						this.newsCommentId = res.data.data
+                        this.replyInput = '',
+                        this.showCom = true;
+                        let haha = {
+                            "fromJobName": this.newsUser.jobName,
+                            "userName": this.newsUser.name,
+                            "headUrl": this.newsUser.headUrl,
+                            "comment": this.replyContent,
+                            "toJobName": this.touser.fromJobName,
+                            "toUserName": this.touser.userName,
+                            "fromUid": this.newsUser.userId,
+                        }
+                        this.newsComment.push(haha);
+                        console.log(this.newsComment,'jajajajajaj')
+                    })
+                    .catch(err => {
+                        console.log(err, '二级评论失败')
+                    })
+            }),
+            replyNews(e) {
+                this.replyContent = e.detail.value;
+            },
+            // 确定回复
+            replyDaily() {
+                this.$refs.popupReply.close();
+                this.showCom = false;
+            },
+            // 长按回复评论
+            logoTime(item) {
+                console.log(item, '长按获取的信息')
+                this.touser = item;
+                this.fromUid = item.fromUid;
+                console.log(item.commentId, '评论的id');
+                this.commentId = item.commentId;
+                this.$refs.popupReply.open();
+            },
+            // 获取点击评论的id
+            godelcomment(item, index) {
+                this.delindex = index;
+                this.commentId = item.commentId;
+                this.fromuId = item.fromUid;
+                console.log(this.fromuId)
+                console.log(this.newsUser.userId)
+                if(this.fromuId == this.newsUser.userId){
+                    this.$refs.popupDelete.open();
+                }else{
+                    console.log('11111')
+                }
+            },
+            // 删除评论
+            deleteCommmit1() {
+                uni.$api.fireIndex.delcomment({
+                        commentId: this.commentId || this.newsCommentId, 
+                        acticleId: this.articleId,
+                    })
+                    .then(res => {
+                        console.log(res, '删除新闻评论成功');
+                        this.$refs.popupDelete.close();
+                        setTimeout(() => {
+                            this.newsComment.splice(this.delindex, 1);
+                        }, 100)
+                    })
+                    .catch(err => {
+                        console.log(err, '删除新闻评论失败')
+                    })
+            },
+            // 提交评论
+            uploadCommon: throttle(function(e) {
+                uni.$api.fireIndex.addcomment({
+                        acticleId: this.articleId,
+                        comment: this.fireContent,
+                    })
+                    .then(res => {
+                        console.log(res, '新闻评论创建成功');
+						this.newsCommentId = res.data.data
+                        this.fireInputs = ''
+                            let lala = {
+                                "fromJobName": this.newsUser.jobName,
+                                "userName": this.newsUser.name,
+                                "headUrl": this.newsUser.headUrl,
+                                "comment": this.fireContent,
+                                "fromUid": this.newsUser.userId,
+                            }
+                        this.newsComment.push(lala)
+                        console.log(this.newsComment,'评论后的')
+                    })
+                    .catch(err => {
+                        console.log(err, '新闻评论创建失败')
+                    })
+            }),
+            // 新闻详情评论
+            fireInput(e) {
+                console.log(e.detail.value, '新闻评论');
+                this.fireContent = e.detail.value;
+            },
+            imgTagAddStyle(htmlstr) {
+                // 正则匹配所有img标签
+                // var regex0 = new RegExp("(i?)(\<img)([^\>]+\>)","gmi");
+                // 正则匹配不含style="" 或 style='' 的img标签
+                // eslint-disable-next-line no-useless-escape
+                let regex1 = new RegExp('(i?)(\<img)(?!(.*?style=[\'"](.*)[\'"])[^\>]+\>)', 'gmi');
+                // 给不含style="" 或 style='' 的img标签加上style=""
+                htmlstr = htmlstr.replace(regex1, '$2 style=""$3');
+                // 正则匹配含有style的img标签
+                // eslint-disable-next-line no-useless-escape
+                let regex2 = new RegExp('(i?)(\<img.*?style=[\'"])([^\>]+\>)', 'gmi');
+                // 在img标签的style里面增加css样式(这里增加的样式：display:block;max-width:100%;height:auto;border:5px solid red;)
+                htmlstr = htmlstr.replace(regex2, '$2width:100%;height:auto;$3');
+                return htmlstr;
+            },
+            // 注册监听 选人完成后创建群
+            setListenerCreateTeam() {
+                let _self = this
+                uni.$off('im-selectCreateTeam');
+                uni.$on('im-selectCreateTeam', (accounts) => {
+                    this.$nextTick(function() {
+ 
+                        console.log(accounts);
+                        var guidname = accounts.toString();
+                        uni.$api.consultation.addconsultation({
+                                key: guidname,
+                                guid: this.articleId
+                            })
+                            .then(res => {
+                                console.log(res, 'addconsultation——会商创建成功');
+                                this.statusCode = res.data.statusCode;
+                                uni.showToast({
+                                    title: '会商创建成功',
+                                    icon: 'none'
+                                })
+ 
+                                _self.$store.dispatch('initNim/nimCreateAdvancedTeam', {
+                                    name: _self.fireDetail.title,
+                                    avatar: 'http://yx-web.nos.netease.com/webdoc/h5/im/default-advanced.png',
+                                    accounts: accounts
+                                }).then(team_obj => {
+                                    console.log('team_obj', team_obj);
+                                    uni.navigateTo({
+                                        url: `/pages/easy-chat/chat?sessionId=team-${team_obj.team.teamId}`
+                                    })
+                                })
+ 
+                                // app获取会商列表
+                                uni.$api.consultation.getappconsultations({
+                                        guid: this.articleId
+                                    })
+                                    .then(res => {
+                                        console.log('getappconsultations_RES', res);
+                                        this.discussion = res.data.data;
+                                        // console.log(this.discussion)
+                                    })
+                                    .catch(err => {
+                                        console.log('getappconsultations_ERR', err)
+                                    })
+                            })
+                            .catch(err => {
+                                console.log(err, '会商创建失败');
+                            })
+ 
+                    })
+                })
+ 
+            },
+            // 注册监听 分享完成后发送 火点消息
+            setListenerShare() {
+                let _self = this
+                uni.$off('im-selectContactOk');
+                uni.$on('im-selectContactOk', (data) => {
+                    this.$nextTick(function() {
+                        // 发送一个卡片消息
+                        let msgCard_content = {
+                            type: 'msgCard',
+                            data: {
+                                // 跳转的地址
+                                url: '/pages/tabbar-1-detail/fireDetail/fireDetail?articleId=' + this
+                                    .articleId,
+                                // 标题
+                                title: this.fireDetail.title,
+                                // 详细内容
+                                detail: this.fireDetail.abstract,
+                                // 封面
+                                appName: '防火码'
+                            }
+                        };
+ 
+                        data.map(item => {
+                            _self.$store.dispatch('initNim/nimSendCustomMsg', {
+                                scene: item.scene,
+                                to: item.to,
+                                content: JSON.stringify(msgCard_content)
+                            });
+                        })
+ 
+ 
+                        uni.showToast({
+                            title: '分享成功',
+                            icon: 'none'
+                        })
+                    })
+                    console.log('selectContactOk', data)
+                })
+            },
+            // 分享
+            shareFire() {
+                this.$refs.share.open();
+            },
+            goStatus(val, index) {
+                console.log(val);
+                if (val == 0) {
+                    uni.navigateTo({
+                        url: '/pages/easy-chat/select-contact?title=' + this.fireDetail.title,
+                        animationType: 'slide-in-bottom'
+                    })
+                } else if (val == 1) {
+                    uni.share({
+                        provider: "weixin",
+                        scene: "WXSceneSession",
+                        type: 0,
+                        href: this.$store.state.app.shareUrl +
+                            "pages/tabbar-1-detail/fireDetail/fireDetail?articleId=" + this.articleId,
+                        imageUrl: this.fireDetail.coverUrls,
+                        title: this.fireDetail.title,
+                        summary: this.fireDetail.abstract,
+                        success: function(res) {
+                            console.log("success:" + JSON.stringify(res));
+                        },
+                        fail: function(err) {
+                            console.log("fail:" + JSON.stringify(err));
+                        }
+                    });
+                } else if (val == 2) {
+                    uni.share({
+                        provider: "weixin",
+                        scene: "WXSenceTimeline",
+                        type: 0,
+                        href: this.$store.state.app.shareUrl +
+                            "pages/tabbar-1-detail/fireDetail/fireDetail?articleId=" + this.articleId,
+                        imageUrl: this.fireDetail.coverUrls,
+                        title: this.fireDetail.title,
+                        summary: this.fireDetail.abstract,
+                        success: function(res) {
+                            console.log("success:" + JSON.stringify(res));
+                        },
+                        fail: function(err) {
+                            console.log("fail:" + JSON.stringify(err));
+                        }
+                    });
+                } else if (val == 3) {
+                    uni.setClipboardData({
+                        data: this.$store.state.app.shareUrl +
+                            "pages/tabbar-1-detail/fireDetail/fireDetail?articleId=" + this.articleId,
+                        success: function(res) {
+                            console.log("success:" + JSON.stringify(res));
+                        },
+                        fail: function(err) {
+                            console.log("fail:" + JSON.stringify(err));
+                        }
+                    })
+                }
+                this.$refs.share.close();
+            },
+            //返回上一级
+            navigateBack() {
+                uni.navigateBack(1)
+            },
+            // 点会商结论跳
+            gobussdis(item) {
+                console.log(item.consId, '会商id')
+                uni.navigateTo({
+                    url: '../conclusion/conclusion?guid=' + item.consId
+                })
+            },
+            dateTran(time) {
+                return dayjs(time).format('YYYY.MM.DD HH:mm');
+            },
+            // 去创建会商
+            goCreateMeet() {
+                uni.navigateTo({
+                    url: '../../discussion/creatDiscussion?disTitle=' + this.fireDetail.title + '&ArticleId =' +
+                        this.articleId
+                });
+                // uni.$api.consultation.addconsultation({
+                //     key:this.articleId,
+                //     guid:accounts
+                // })
+            },
+            // 收藏
+            collect() {
+                uni.$api.user.addusercollection({
+                        ArticleId: this.articleId,
+                        Type: 1,
+                    })
+                    .then(res => {
+                        console.log('收藏成功', res);
+                        this.showImg = false;
+                        uni.showToast({
+                            title: '收藏成功',
+                            icon: 'none',
+                        })
+                    })
+                    .catch(err => {
+                        console.log('收藏失败', err)
+                    })
+            },
+            // 取消收藏
+            nocollect() {
+                uni.$api.user.addusercollection({
+                        ArticleId: this.articleId,
+                        Type: 1,
+                    })
+                    .then(res => {
+                        console.log('取消收藏成功', res);
+                        this.showImg = true;
+                        uni.showToast({
+                            title: '已取消收藏',
+                            icon: 'none',
+                        })
+                    })
+                    .catch(err => {
+                        console.log('取消收藏失败', err)
+                    })
+            }
+        }
+    }
+</script>
+ 
+<style>
+    /* #ifndef APP-PLUS */
+    page {
+        flex: 1;
+        display: flex;
+        width: 750rpx;
+        flex-direction: column;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+ 
+    /* #endif */
+    .fire_detail {
+        font-size: 46rpx;
+        font-weight: 600;
+        color: #323234;
+    }
+ 
+    .detail_name {
+        font-size: 26rpx;
+        font-weight: 400;
+        color: #949599;
+    }
+ 
+    .detail_time {
+        font-size: 26rpx;
+        font-weight: 400;
+        color: #949599;
+        margin-left: 54rpx;
+    }
+ 
+ 
+    .business_title {
+        /*         width: 76rpx; */
+        /* height: 38rpx; */
+        font-size: 38rpx;
+        font-weight: 600;
+        color: #323234;
+        /* line-height: 38rpx; */
+    }
+ 
+    .business_boss {
+        /* width: 128px; */
+        /* height: 32rpx; */
+        font-size: 32rpx;
+        font-weight: 500;
+        color: #2F3034;
+        line-height: 32rpx;
+    }
+ 
+    .business_name {
+        /* width: 84px; */
+        /*         height: 28rpx; */
+        font-size: 28rpx;
+        font-weight: 400;
+        color: #323234;
+        /* line-height: 28rpx; */
+    }
+ 
+    .business_time {
+        /* width: 201rpx; */
+        /* height: 26rpx; */
+        font-size: 26rpx;
+        font-weight: 400;
+        color: #949599;
+        /* line-height: 26rpx; */
+    }
+ 
+    .business_end {
+        height: 28rpx;
+        font-size: 28rpx;
+        font-weight: 500;
+        color: #00BCAB;
+        line-height: 28rpx;
+    }
+ 
+    .busendbox {
+        width: 180rpx;
+        height: 56rpx;
+        border-radius: 29rpx;
+        border-width: 1rpx;
+        border-style: solid;
+        border-color: #00BCAB;
+    }
+ 
+    .border-box {
+        /* box-shadow: 0px 0px 16px 0px rgba(102, 102, 102, 0.15); */
+        background-color: #FFFFFF;
+        border-radius: 16rpx;
+    }
+ 
+    .nameCom {
+ 
+        font-size: 26rpx;
+        font-weight: 400;
+        color: #487CF1;
+    }
+ 
+    .contentName {
+        font-size: 26rpx;
+        font-weight: 400;
+        color: #323234;
+    }
+</style>

@@ -1,0 +1,258 @@
+<template>
+	<view class="flex flex-1 flex-column w-100" style="background-color: #F4F5FB;">
+		<uni-nav-bar left-icon="back" title="人员审批" :statusBar="true"></uni-nav-bar>
+		<view style="flex-direction: row;justify-content: center;align-items: center;background-color: #FFFFFF;">
+			<view class="uni-tab-item flex justify-center align-center" v-for="(tab,index) in tabList" :ref="'tabitem'+index"
+			 :data-id="index" :data-current="index" @click="handerToggle(index)" :class="tabIndex==index ? ' border-title-active' : ''">
+				<text class="uni-tab-item-title" :class="tabIndex==index ? 'uni-tab-item-title-active' : ''">{{tab.name}}</text>
+			</view>
+		</view>
+		<!-- 注意wt-list本身不具有flex布局，使用时包一层容器 -->
+		<view class="position-relative flex flex-1 w-100" v-if="tabIndex>-1">
+			<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+			<wt-list api="approval.getappuserinfoapproval" :params="{status: tabIndex}" ref="approvallist">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="ctx">
+
+					<!-- 循环处理数据 -->
+					<cell v-for="(item,index) in ctx.dataList" style="padding-left: 30rpx;padding-right: 30rpx;padding-top: 24rpx;padding-bottom: 24rpx;">
+						<!-- // 已审批 -->
+						<approvaled :item="item" v-if="tabIndex"></approvaled>
+						<!-- // 未审批 -->
+						<unapproval :item="item" v-else v-on:goexams="goStatus($event, index)" :index="index"></unapproval>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+		<uni-popup ref="popupWtDialog" type="center">
+			<wt-dialog :maskClick='true' :btns="['确认']"
+			@close="wtDialogConfirm" title="">
+				<view style="padding-left: 24rpx;padding-right: 24rpx;">
+					<textarea placeholder="请输入拒绝原因"  v-model="content" class="p_content"/>
+				</view>
+			</wt-dialog>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	import wtList from '@/components/wt-list/wt-list.nvue';
+	import unapproval from "./unapproval.nvue";
+	import approvaled from "./approvaled.nvue";
+	export default {
+		data() {
+			return {
+				tabList: [{
+						name: '未审批',
+					},
+					{
+						name: '已审批'
+					}
+				],
+				tabIndex: 0,
+				content:'',  //拒绝原因
+				btnIndex:'',   //同意或者拒绝的下标
+				userId:'',   //审批用户id
+				clickIndex:0,
+			}
+		},
+		components: {
+			wtList,
+			unapproval,
+			approvaled
+		},
+		methods: {
+			handerToggle(index) {
+				this.tabIndex = -1;
+				this.$nextTick(() => {
+					this.tabIndex = index;
+				})
+			},
+			// removeItem(index){
+			// 	this.$refs.approvallist.removeItem(index);
+			// },
+			// 跳转未回执详情
+			goriskDetail() {
+				uni.navigateTo({
+					url: '../noriskReply/noriskReply'
+				})
+			},
+			// 从子级拿来的值---同意或拒绝的下标
+			goStatus(val, index){
+				this.clickIndex = index;
+				console.log(this.clickIndex,'akakakaakak')
+				// console.log('子级传来的值',val);
+				this.btnIndex = val.btnIndex;
+				this.userId = val.userId;
+				console.log(this.btnIndex);
+				if(this.btnIndex == 1){
+					this.$refs.popupWtDialog.open();
+				}else if(this.btnIndex == 0){
+					uni.$api.approval.approvaluserinfo({
+						UserId:this.userId,
+						Status:1,
+					})
+					.then(res=>{
+						console.log('同意成功',res);
+						uni.showToast({
+							title:'同意成功'
+						});
+						this.$refs.approvallist.removeItem(this.clickIndex);
+					})
+					.catch(err=>{
+						console.log('同意失败',err);
+					})
+				}
+			},
+			// dialog确认按钮,单按钮回调
+			wtDialogConfirm(done, val, index){
+				console.log(this.clickIndex,'ahfsahf')
+				console.log('wtDialogConfirm');
+				done();
+				var Reason = this.content;
+				console.log(Reason,'拒绝原因')
+				uni.$api.approval.approvaluserinfo({
+					UserId:this.userId,
+					Status:2,
+					Reason:Reason
+				})
+				.then(res=>{
+					console.log('拒绝成功',res);
+					uni.showToast({
+						title:'拒绝成功',
+					})
+					this.$refs.approvallist.removeItem(this.clickIndex);
+				})
+				.catch(err=>{
+					console.log('拒绝失败',err);
+				})
+			},
+		},
+	}
+</script>
+
+<style>
+	.content {
+		text-align: center;
+	}
+
+	.uni-tab-item {
+		/* #ifndef APP-PLUS */
+		display: inline-block;
+		/* #endif */
+		flex-wrap: nowrap;
+		width: 375rpx;
+	}
+
+	.uni-tab-item-title {
+		color: #555;
+		font-size: 15px;
+		height: 40px;
+		line-height: 40px;
+		flex-wrap: nowrap;
+		/* #ifndef APP-PLUS */
+		white-space: nowrap;
+		/* #endif */
+	}
+
+	.uni-tab-item-title-active {
+		color: #007AFF;
+	}
+
+	.border-title-active {
+		border-bottom-width: 4rpx;
+		border-bottom-color: #487CF1;
+		border-style: solid;
+	}
+
+	.bborder {
+		border-color: #487CF1;
+		border-style: solid;
+		border-bottom-width: 4rpx;
+	}
+
+	.gaoName {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		/* line-height: 32rpx; */
+	}
+
+	.gaoDetail {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+		/* line-height: 44rpx; */
+
+	}
+
+	.people_apply {
+		height: 32rpx;
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #F07A4E;
+		line-height: 32rpx;
+
+	}
+
+	.approval_title {
+		height: 32rpx;
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		/* line-height: 32rpx; */
+
+	}
+
+	.approval_detail {
+		height: 44rpx;
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+		/* line-height: 44rpx; */
+
+	}
+
+	.approval_agree {
+		width: 72rpx;
+		height: 36rpx;
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+		line-height: 36rpx;
+
+	}
+
+	.approval_refuse {
+		width: 72rpx;
+		height: 36rpx;
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+		line-height: 36rpx;
+
+	}
+
+	.agree {
+		width: 108rpx;
+		height: 36rpx;
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #949599;
+		line-height: 36rpx;
+
+	}
+	.border-bottom {
+		border-bottom-width: 1rpx;
+		border-style: solid;
+		border-color: #EEEFF3;
+	}
+	.p_content{
+		
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+</style>

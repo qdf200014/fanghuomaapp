@@ -1,0 +1,171 @@
+<template>
+	<view style="width: 750rpx;margin-top: 24rpx;background-color: #FFFFFF;" class="pl-3 pr-3 pt-3" v-if="phonePeople.length">
+		<view style="padding-bottom: 32rpx;" class="border-bottom">
+			<text class="all_title">防火通讯录</text>
+		</view>
+		<view class="flex flex-row align-center border-bottom" style="padding-top: 21rpx;padding-bottom: 21rpx;" v-for="(item,index) in phonePeople"
+		 :key="index" @click="gopeopleDetail(item)">
+<!-- 			<view style="width: 96rpx;height: 96rpx;border-radius: 48rpx;padding-right: 24rpx;">
+				<image :src="item.headUrl" mode="" style="width: 96rpx;height: 96rpx;border-radius: 48rpx;"></image>
+			</view> -->
+			<view>
+				<view v-if="item.headUrl">
+					<image :src="item.headUrl || ''" style="width: 96rpx;height: 96rpx;border-radius: 48rpx;"></image>
+				</view>
+				<view class="defaultHead" v-else>
+					<text class="headName">{{item.name.charAt(item.name.length-2)+item.name.charAt(item.name.length-1)}}</text>
+				</view>
+			</view>
+			<view  v-if="item.address">
+				<view class="flex flex-row">
+					<view style="padding-right: 16rpx;padding-left: 24rpx;">
+						<text class="all_name">{{item.name}}</text>
+					</view>
+					<view class="all_box flex justify-center align-center">
+						<text class="all_type">{{item.jobName}}</text>
+					</view>
+				</view>
+				<view style="padding-left: 24rpx;padding-top: 19rpx;">
+					<text style="font-size: 24rpx;font-weight: 400;color: #949599;">{{item.address}}</text>
+				</view>
+			</view>
+			<view v-else class="flex flex-row">
+				<view style="padding-right: 16rpx;padding-left: 24rpx;">
+					<text class="all_name">{{item.name}}</text>
+				</view>
+				<view class="all_box flex justify-center align-center">
+					<text class="all_type">{{item.jobName}}</text>
+				</view>
+			</view>
+		</view>
+		<view class="flex justify-center align-center " style="height: 90rpx;" @click="goPeople" v-if="phonePeople.length>=3">
+			<text class="look_more">查看更多</text>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		props: {
+			inputKey: {
+				type: String,
+				default: () => null
+			},
+		},
+		data() {
+			return {
+				phonePeople: [],
+			}
+		},
+		watch: {
+			inputKey(val) {
+				this.inputKey = val;
+				this.refresh(val);
+			}
+		},
+		created() {
+			let This = this;
+			this.refresh = getApp().globalData.debounce((val) => {
+				// console.log('--------------------------------------------');
+				this.getPeople();
+			},1000)
+		},
+		mounted() {
+			this.getPeople();
+		},
+		methods: {
+			goPeople() {
+				this.$emit("gopeoples")
+			},
+			getPeople() {
+				uni.$api.homeSearch.firesearch({
+						key: this.inputKey,
+						page: 1,
+						limit: 3
+					})
+					.then(res => {
+						console.log('通讯录内容', res);
+						this.phonePeople = res.data.data.usersList;
+						this.$emit('phonePeople',this.phonePeople)
+					})
+					.catch(err => {
+						console.log(err)
+					})
+			},
+			gopeopleDetail(item){
+				uni.navigateTo({
+					url:'../../addrBook/personalPage?userId='+item.userId +'&sourceType=' + 0
+				})
+				
+			}
+		}
+	}
+</script>
+
+<style>
+	.all_title {
+
+		font-size: 38rpx;
+		font-weight: 600;
+		color: #323234;
+	}
+
+	.all_name {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+	
+	.other_name {
+	
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #0062CC;
+	}
+
+	.all_box {
+
+		height: 38rpx;
+		border-radius: 20rpx;
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #F07A4E;
+		padding-left: 16rpx;
+		padding-right: 16rpx;
+	}
+
+	.all_type {
+
+		font-size: 22rpx;
+		font-weight: 400;
+		color: #F07A4E;
+	}
+
+	.look_more {
+
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+	.defaultHead {
+		/* #ifndef APP-PLUS-NVUE */
+		display: flex;
+		/* #endif */
+		justify-content: center;
+		align-items: center;
+		width: 96rpx;
+		height: 96rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+	
+	.headName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+</style>

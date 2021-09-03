@@ -1,0 +1,66 @@
+{
+	"name": "腾讯云TRTC实时音视频插件",  
+	"id": "TX-TRTC",  
+	"version": "1.0",  
+	"description": "腾讯云TRTC实时音视频插件",  
+	"_dp_type":"nativeplugin",  
+	"_dp_nativeplugin":{ 
+		"android": {
+			"plugins": [  
+				{
+					"type": "module",  
+					"name": "TX-TRTC",  
+					"class": "com.zhimi.trtc.trtc.TRTCModule"  
+				}
+			],  
+			"hooksClass": "com.zhimi.trtc.TRTCAppProxy",  
+			"integrateType": "aar",  
+			"dependencies": [
+				"com.tencent.liteav:LiteAVSDK_TRTC:latest.release"
+			],
+			"abis": [
+				"armeabi-v7a",
+				"arm64-v8a"
+			], 
+			"minSdkVersion": "19"
+		},
+		"ios": {
+			"plugins": [
+				{
+					"type": "module",
+					"name": "TX-TRTC",
+					"class": "TRTCModule"
+				}
+			],
+			"hooksClass": "TRTCAppProxy",
+			"integrateType": "library",
+			"frameworks": [
+				"libz.tbd",
+				"libc++.tbd",
+				"libresolv.tbd",
+				"libsqlite3.tbd",
+				"Accelerate.framework",
+				"OpenAL.framework"
+			],
+			"embedFrameworks": [
+			],
+			"capabilities": {
+				"UIBackgroundModes":[
+					"audio"
+				]
+			},
+			"headers": [
+			], 
+			"resources": [
+			], 
+			"privacies": [
+				"NSCameraUsageDescription",
+				"NSMicrophoneUsageDescription"
+			],  
+			"validArchitectures": [
+				"arm64"
+			],
+			"deploymentTarget": "9.0"
+		}
+	}
+}

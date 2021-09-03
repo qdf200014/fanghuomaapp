@@ -1,0 +1,347 @@
+<template>
+	<view class="page-news">
+		<uni-list class="listview" :enableBackToTop="true" :scroll-y="true" @scrolltolower="loadMore()">
+			<uni-refresh v-if="isRefresh" class="refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="refreshing ? 'show' : 'hide'">
+				<div class="refresh-view">
+					<image class="refresh-icon" :src="refreshIcon" :style="{width: (refreshing || pulling) ? 0: '32px'}" :class="{'refresh-icon-active': refreshFlag}"></image>
+					<uni-load-more v-if="refreshing" class="loading-icon" status="loading" :contentText="loadingMoreText"></uni-load-more>
+					<text class="loading-text">{{refreshText}}</text>
+				</div>
+			</uni-refresh>
+			<slot name="dataList" :dataList="dataList"></slot>
+			<uni-cell v-if="isGetMore">
+				<view @appear="appearBottom" style="width: 750rpx;height: 1px;"></view>
+			</uni-cell>
+			<uni-cell v-if="isGetMore && (isLoading || dataList.length > limit)">
+				<view class="loading-more">
+					<text class="loading-more-text">{{loadingText}}</text>
+				</view>
+			</uni-cell>
+			<no-data class="no-data" v-if="isNoData" @retry="retry"></no-data>
+		</uni-list>
+	</view>
+</template>
+
+<script>
+	import uniList from '@/components/uni-list.vue';
+	import uniCell from '@/components/uni-cell.vue';
+	import uniRefresh from '@/components/uni-refresh.vue';
+	import uniLoadMore from '@/components/uni-load-more.vue';
+	import noData from '@/components/nodata.nvue';
+	import _ from 'lodash';
+	export default {
+		components: {
+			uniList,
+			uniCell,
+			uniRefresh,
+			uniLoadMore,
+			noData,
+		},
+		props: {
+			api: {	// 接口名
+				type: [Array, String],
+				default: () => 'fireIndex.getpages'
+			},
+			limit: {	// 分页数
+				type: [Number],
+				default: () => 20
+			},
+			params: {	// 其他请求参数
+				type: Object,
+				default: () => {}
+			},
+			autoRetry:{	// 无数据重试按钮
+				type:[Boolean,Number],
+				default:()=>true
+			},
+			resKey:{
+				type:[Array, String],
+				default: () => 'data'
+			},
+			isGetMore:{	//是否开启上拉加载更多
+				type:Boolean,
+				default:()=>true
+			},
+			isRefresh:{	// 是否开启下拉刷新
+				type:Boolean,
+				default:()=>true
+			},
+			endKey:{	//  兼容“结束返回最后一页数据”的接口，添加endKey寻找判断结束标志
+				type:[Array, String],
+				default:'data._meta.currentPage'
+			}
+		},
+		computed: {
+			request() {
+				let api = typeof this.api == 'string' ? this.api.split('.') : this.api;
+				let _req = uni.$api;
+				api.forEach(item => {
+					if (_req[item]) {
+						_req = _req[item];
+					}
+				})
+				return _.throttle((config) => {
+					return _req(config)
+				}, 500)
+			},
+			resultKey(){
+				let _key = typeof this.resKey == 'string' ? this.resKey.split('.') : this.resKey;
+				return _key;
+			},
+			pageEnd(){
+				let _key = typeof this.endKey == 'string' ? this.endKey.split('.') : this.endKey;
+				return _key;
+			}
+		},
+		data() {
+			return {
+				dataList: [],
+				page: 1,
+				navigateFlag: false,
+				pulling: false,
+				refreshing: false,
+				refreshFlag: false,
+				refreshText: "",
+				isLoading: false,
+				loadingText: '加载中...',
+				isNoData: false,
+				pulling: false,
+				angle: 0,
+				loadingMoreText: {
+					contentdown: '',
+					contentrefresh: '',
+					contentnomore: ''
+				},
+				refreshIcon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAB5QTFRFcHBw3Nzct7e39vb2ycnJioqK7e3tpqam29vb////D8oK7wAAAAp0Uk5T////////////ALLMLM8AAABxSURBVHja7JVBDoAgDASrjqj//7CJBi90iyYeOHTPMwmFZrHjYyyFYYUy1bwUZqtJIYVxhf1a6u0R7iUvWsCcrEtwJHp8MwMdvh2amHduiZD3rpWId9+BgPd7Cc2LIkPyqvlQvKxKBJ//Qwq/CacAAwDUv0a0YuKhzgAAAABJRU5ErkJggg=="
+			}
+		},
+		created() {
+			this.pullTimer = null;
+			if(!this.isGetMore){
+				this.loadData();
+			}
+		},
+		methods: {
+			retry(){
+				if(this.autoRetry){
+					this.loadData(true);
+				}
+				this.$emit('retry')
+			},
+			removeItem(index, item){
+				let _reitem = item ? this.dataList.splice(index, 1, item) : this.dataList.splice(index, 1);
+				this.isNoData = this.dataList.length <= 0;
+				return _reitem
+			},
+			appearBottom() {
+				if (this.refreshing) {
+					return;
+				}
+				this.$emit('loadDataMore');
+				this.loadData();
+			},
+			loadData(refresh) {
+				if (this.isLoading) {
+					return;
+				}
+				this.isLoading = true;
+				this.isNoData = false;
+
+				if (refresh) {
+					this.page = 1;
+				}
+				let params = {
+					limit: this.limit,
+					page: this.page,
+				};
+				Object.assign(params, this.params);
+				this.$emit('beforeRequest', params);
+				this.request(params)
+					.then(result => {
+						console.log('this.api_RES', this.api, result);
+						let data = result.data, endPage = result.data;
+						
+						this.resultKey.forEach(key=>{		// 取数据列表
+							data = data[key] || [];
+						});
+						
+						this.pageEnd.forEach(key=>{			// 取结束页
+							if(endPage.hasOwnProperty(key)){
+								endPage = endPage[key];
+							}
+						});
+						
+						('number' == typeof endPage && endPage<params.page) ? (data = []) : '';	// 已结束忽略默认数据
+						
+						if(data.length<=0)this.loadingText = '到底啦～';
+						
+						if (data.length <= 0) {} else {
+							this.page++;
+						}
+
+						if (refresh) {
+							this.dataList = data;
+						} else {
+							this.dataList = this.dataList.concat(data || []);
+						}
+						this.isNoData = this.dataList.length <= 0;
+					})
+					.catch(err => {
+						console.log('this.api_ERR', this.api, err);
+						if (this.dataList.length == 0) {
+							this.isNoData = true;
+						}
+					})
+					.finally(() => {
+						this.$emit('afterRequest');
+						setTimeout(()=> {this.isLoading = false}, 50);
+						if (refresh) {
+							this.refreshing = false;
+							this.refreshFlag = false;
+							this.refreshText = "已刷新";
+							if (this.pullTimer) {
+								clearTimeout(this.pullTimer);
+							}
+							this.pullTimer = setTimeout(() => {
+								this.pulling = false;
+							}, 1000);
+						}
+					});
+			},
+			loadMore(e) {
+				// this.loadData();
+			},
+			refreshData() {
+				if (this.isLoading) {
+					return;
+				}
+				this.$emit('loadDataRefresh');
+				this.pulling = true;
+				this.refreshing = true;
+				this.refreshText = "正在刷新...";
+				this.loadData(true);
+			},
+			onrefresh(e) {
+				this.refreshData();
+			},
+			onpullingdown(e) {
+				if (this.refreshing) {
+					return;
+				}
+
+				// var angle = (e.pullingDistance) / e.viewHeight * 180;
+				// if (angle > 180) {
+				// 	angle = 180;
+				// }
+				// tab.angle = angle;
+
+				this.pulling = false;
+				if (Math.abs(e.pullingDistance) > Math.abs(e.viewHeight)) {
+					this.refreshFlag = true;
+					this.refreshText = "释放立即刷新";
+				} else {
+					this.refreshFlag = false;
+					this.refreshText = "下拉可以刷新";
+				}
+			},
+			newGuid() {
+				let s4 = function() {
+					return (65536 * (1 + Math.random()) | 0).toString(16).substring(1);
+				}
+				return (s4() + s4() + "-" + s4() + "-4" + s4().substr(0, 3) + "-" + s4() + "-" + s4() + s4() + s4()).toUpperCase();
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.no-data {
+		flex: 1;
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 10;
+	}
+
+	.page-news {
+		flex: 1;
+		flex-direction: column;
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+	}
+
+	.listview {
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		flex-direction: column;
+		/* #endif */
+		/* #ifndef MP-ALIPAY */
+		flex-direction: column;
+		/* #endif */
+	}
+
+	.refresh {
+		justify-content: center;
+	}
+
+	.refresh-view {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		width: 750rpx;
+		height: 64px;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.refresh-icon {
+		width: 32px;
+		height: 32px;
+		transition-duration: .5s;
+		transition-property: transform;
+		transform: rotate(0deg);
+		transform-origin: 15px 15px;
+	}
+
+	.refresh-icon-active {
+		transform: rotate(180deg);
+	}
+
+	.loading-icon {
+		width: 28px;
+		height: 28px;
+		margin-right: 5px;
+		color: gray;
+	}
+
+	.loading-text {
+		margin-left: 2px;
+		font-size: 16px;
+		color: #999999;
+	}
+
+	.loading-more {
+		align-items: center;
+		justify-content: center;
+		padding-top: 14px;
+		padding-bottom: 14px;
+		text-align: center;
+	}
+
+	.loading-more-text {
+		font-size: 28upx;
+		color: #999;
+	}
+</style>

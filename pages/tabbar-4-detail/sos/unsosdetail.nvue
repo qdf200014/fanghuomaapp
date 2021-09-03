@@ -1,0 +1,129 @@
+<template>
+	<view style="background-color: #FFFFFF;" class="flex flex-column flex-1 w-100">
+		<!-- 违规未回执详情 -->
+		<uni-nav-bar left-icon="back" title="紧急求救详情" :statusBar="true" @clickLeft="navigateBack"></uni-nav-bar>
+		<list class="flex flex-column w-100 flex-1 w-100">
+			<cell class="p-3 w-100">
+				<view style="border-radius: 16rpx;background-color: #F4F5FB;">
+					<view class="pl-3 pr-3 pt-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">求救人</text>
+						<text class="violation_bottom" v-if="unsosList.username">{{unsosList.username}}</text>
+						<text class="violation_bottom" v-else>非登记游客</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">手机号</text>
+						<text class="violation_bottom">{{unsosList.phone}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">求救时间</text>
+						<text class="violation_bottom">{{dateTran(unsosList.created_at)}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">求救地点</text>
+						<text class="violation_bottom">{{unsosList.park_name}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">求救地址</text>
+						<text class="violation_bottom">{{unsosList.place}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">求救位置</text>
+						<text class="violation_bottom">{{unsosList.lng}}，{{unsosList.lat}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text style="font-size: 32rpx;font-weight: 400;color: #606266;">险情图片/视频</text>
+						<view class="flex flex-row justify-between flex-wrap">
+							<view v-for="(item,index) in unsosList.images" :key="index" style="padding-top: 28rpx;">
+								<wt-media :media="headUrl+item.url"  style="width: 300rpx;height: 200rpx;border-radius: 15rpx;"></wt-media>
+							</view>
+						</view>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">描述</text>
+						<text class="violation_bottom">{{unsosList.describe}}</text>
+					</view>
+				</view>
+			</cell>
+		</list>
+		<view class="flex justify-center border-top box" style="padding-top: 20rpx;padding-bottom: 20rpx;">
+			<view style="background-color: #487CF1;width: 686rpx;height: 88rpx;border-radius: 44rpx;" class="flex justify-center align-center"
+			 @click="goreceipt">
+				<text style="font-size: 36rpx;font-family: PingFangSC-Semibold, PingFang SC;font-weight: 600;color: #FFFFFF;">回执</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		data() {
+			return {
+				unsosList: '',
+				headUrl: 'https://fhm-oss.limefamily.cn/fhm/',
+				id: '',
+				title: '',
+				index: null
+			}
+		},
+		onLoad(e) {
+			console.log(e);
+			this.id = e.id;
+			this.title = e.title;
+			this.index = e.index;
+			uni.$api.sos.getsosdetail({
+					id: this.id
+				})
+				.then(res => {
+					console.log(res);
+					this.unsosList = res.data.data
+				})
+				.catch(err => {
+					console.log(err)
+				});
+		},
+		methods: {
+			goreceipt() {
+				uni.$api.sos.sosmark({
+						id: this.id
+					})
+					.then(res => {
+						console.log('回执成功', res);
+						uni.$emit('removeSosItem', {
+							index: this.index
+						})
+						uni.showToast({
+							title: "回执成功",
+							duration: 2000
+						});
+						setTimeout(()=>{
+							uni.navigateBack(1)
+						},2000)
+					})
+					.catch(err => {
+						console.log('回执失败', err)
+					})
+			},
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+		}
+	}
+</script>
+
+<style>
+	.violation_top {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #606266;
+		padding-bottom: 14rpx;
+	}
+
+	.violation_bottom {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+</style>

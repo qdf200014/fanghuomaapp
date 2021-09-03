@@ -1,0 +1,174 @@
+<template>
+	<!-- 点击首页的查看更多跳转到此页 -->
+	<view class="flex flex-column flex-1 w-100" style="background-color: #F4F5FB;">
+		<view v-if="chatList.length > 0 ? true : false" style="padding-bottom: 32rpx;padding-left: 42rpx;margin-top: 24rpx;background-color: #FFFFFF;" class="border-bottom pt-3">
+			<text class="all_title">聊天记录</text>
+		</view>
+		<view class="flex flex-1 w-100"  style="background-color: #FFFFFF;">
+			<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+			<wt-list api="im.getSessionList" :params="{
+				query: {
+					type: 'text',
+					'text-like': inputKey
+				},
+				userId: userUID
+			}" ref="searchChat" :isGetMore="false" @resultRequest="resultRequest">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+		
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="ctx">
+					<!-- 循环处理数据 -->
+					<cell class="im-flex" v-for="(item,index) in ctx.dataList" style="height: 138rpx;" :key="item" @tap="gotoChat(item)">
+						<view v-if="item.type === 'text'" class="im-flex im-align-center im-my-1 im-mx-2">
+							<nim-avatar :account="item.from" class="im-round-2"></nim-avatar>
+							<view class="im-flex-column im-flex-1 im-justify-between im-content-between im-ml-2">
+								<text class="im-font-30 im-font-light">{{ item.time | formatTime }}</text>
+								<text class="im-font-30 im-font-black-2 im-mt-2" style="width: 620rpx; lines: 1; text-overflow: ellipsis;">{{ item.text }}</text>
+							</view>
+						</view>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+		<view class="flex justify-center align-center " style="height: 90rpx; background-color: #FFF;" @click="goChat" v-if="showMore">
+				<text class="look_more">查看更多</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import nimAvatar from '@/components/easy-chat/nim-avatar.vue'
+	import useDayjs from '@/common/NIM/useDayjs.js'
+	
+	export default {
+		props: {
+			inputKey: {
+				type: String,
+				default: () => null
+			},
+			showMore: {
+				type: Boolean,
+				default: () => null
+			},
+		},
+		filters: {
+			formatTime(n) {
+				return useDayjs.defaultFormat(n)
+			}
+		},
+		components: {
+			nimAvatar
+		},
+		data(){
+			return {
+				showMore: true,
+				chatList: []
+			}
+		},
+		watch: {
+			inputKey(val) {
+				this.refresh(val);
+			}
+		},
+		computed: {
+			userUID() {
+				return this.$store.getters['initNim/userUID']
+			}
+		},
+		mounted() {
+			console.log(this.inputKey, '更多消息');
+			this.$refs.searchChat.refreshData();
+			this.gotoChat();
+		},
+		created() {
+			let This = this;
+			this.refresh = getApp().globalData.debounce((val) => {
+				// console.log('--------------------------------------------');
+				This.$refs.searchChat.refreshData();
+			}, 1000)
+		},
+		methods: {
+			resultRequest(res) {
+				console.log('!!!!!!!!!!!!!!!', res);
+				this.chatList = res.data.dat
+				this.$emit('chatList',res.data.data)
+			},
+			gotoChat(item) {
+				console.log(item);
+				
+				if (item.flow === 'out' || item.scene === 'team') {
+					uni.navigateTo({
+						url: `/pages/easy-chat/chat?sessionId=${item.scene}-${item.to}`
+					})
+				} else {
+					uni.navigateTo({
+						url: `/pages/easy-chat/chat?sessionId=${item.scene}-${item.from}`
+					})
+				}
+				
+				// uni.navigateTo({
+				// 	url: '/page'
+				// })
+			},
+			showPage(list){
+				console.log(list)
+			}
+		}
+	}
+</script>
+
+<style>
+	.all_title{
+		
+		font-size: 38rpx;
+		font-weight: 600;
+		color: #323234;
+	}
+	.all_name{
+		
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+	.all_box{
+		
+		height: 38rpx;
+		border-radius: 20rpx;
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #F07A4E;
+		padding-left: 16rpx;
+		padding-right: 16rpx;
+	}
+	.all_type{
+		
+		font-size: 22rpx;
+		font-weight: 400;
+		color: #F07A4E;
+	}
+	.look_more{
+		
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+	.defaultHead {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 96rpx;
+		height: 96rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+	
+	.headName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+</style>

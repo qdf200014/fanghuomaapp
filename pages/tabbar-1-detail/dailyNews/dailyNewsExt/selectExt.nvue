@@ -1,0 +1,43 @@
+<template>
+	<view class="flex flex-1 w-100 flex-column">
+		<uni-nav-bar left-icon="back" left-text="返回" right-text="菜单" title="模版" :statusBar="true"></uni-nav-bar>
+		<scroll-view class="flex flex-1 w-100 flex-row justify-between align-start flex-wrap p-3">
+			<view v-for="(item, index) in extList" :key="index" class="position-relative flex justify-center align-center border-test" @click="writeReport(item)">
+				<image :src="item.icon" style="width: 269rpx;height: 343rpx;"></image>
+				<text class="position-absolute">{{item.title}}</text>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				extList:[
+					{
+						title:'日报',
+						id:0,
+						icon:'/static/addrBook/noAccess.png'
+					},
+					{
+						title:'日报2',
+						id:1,
+						icon:'/static/addrBook/noAccess.png'
+					}
+				]
+			}
+		},
+		methods: {
+			writeReport(item){
+				uni.navigateTo({
+					url: './dailyNewsExt'
+				});
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

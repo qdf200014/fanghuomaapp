@@ -1,0 +1,46 @@
+<template>
+	<view class="flex flex-1 w-100 flex-column bg-white">
+		<uni-status-bar></uni-status-bar>
+		<view class="w-100 flex flex-1 flex-column justify-between align-center">
+			<view class="flex-4 w-100"></view>
+			<view class="flex-1 flex flex-row justify-center align-center">
+				<image src="../../static/bottomLogo.png" style="width: 296rpx;height: 86rpx;border-radius: 5px;"></image>
+				<!-- <view class="flex flex-column justify-center align-center" style="padding-left: 24px;">
+					<image src="../../static/img/lunchPage/lunch_title.png" style="width: 210rpx;height: 71rpx;"></image>
+				</view> -->
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		onLoad() {
+			console.log('lunch page onload');
+			//#ifdef APP-PLUS
+			plus.navigator.closeSplashscreen();
+			//#endif
+			setTimeout(()=>{
+				this.gotoIndex();
+			}, 2000)
+		},
+		methods: {
+			gotoIndex(){	// 检查登录状态,是否跳转到首页
+				let token = uni.getStorageSync('token') || false;
+				if(token){
+					uni.switchTab({
+						url:'/pages/tabbar/tabbar-1/tabbar-1'
+					})
+				}else{
+					uni.redirectTo({
+						url:'../login/index'
+					})
+				}
+			}
+			
+		}
+	}
+</script>
+<style>
+	
+</style>

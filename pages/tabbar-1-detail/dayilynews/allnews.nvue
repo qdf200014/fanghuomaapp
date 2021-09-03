@@ -1,0 +1,255 @@
+<template>
+	<!-- 注意wt-list本身不具有flex布局，使用时包一层容器 -->
+	<view class="flex flex-1 w-100" style="margin-bottom: 120rpx">
+		<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+		<wt-list api="dailynews.getdaily" :params="{types:0}" ref="allnewsList">
+			<!-- wt-list所触发的事件无须使用！！！ -->
+	
+			<!-- 如下结构必须遵守 -->
+			<template v-slot:dataList="ctx">
+	
+				<!-- 循环处理数据 -->
+				<cell v-for="(items,indexs) in ctx.dataList">
+					<view class="w-100 pl-3 pr-3 flex flex-column justify-center" style="height: 76rpx;">
+						<text style="font-size: 28rpx;font-weight: 400;color: #999999;">{{items.publihTime}}</text>
+					</view>
+					<view style="width: 750rpx;background-color: #FFFFFF;" class="p-3 border-bottom" v-for="(item,index) in items.dailys"  @click="allnewsDetail(item)">
+						<view class="flex flex-row justify-between">
+							<view class="flex flex-row">
+								<!-- <image :src="item.headUrl" mode="" style="width: 96rpx;height: 96rpx;border-radius: 48rpx;"></image> -->
+								<view>
+									<view v-if="item.headUrl">
+										<image :src="item.headUrl || ''" style="width: 96rpx;height: 96rpx;border-radius: 48rpx;"></image>
+									</view>
+									<view class="defaultHead" v-else>
+										<text class="headName">{{item.userName.charAt(item.userName.length-2)+item.userName.charAt(item.userName.length-1)}}</text>
+									</view>
+								</view>
+								<view class="flex flex-column justify-center" style="padding-left: 24rpx;">
+									<text class="dayname">{{item.userName}}的日报</text>
+									<text class="daytime">{{dataTrn(item.createTime)}}</text>
+								</view>
+							</view>
+							<view class="flex align-center" @tap.stop="lookallnews(item,$event)">
+								<image src="../../../static/addrBook/more.png" mode="heightFix" style="width: 32rpx;height: 7rpx;"></image>
+							</view>
+						</view>
+						<view class="flex flex-row" style="padding-top: 28rpx;padding-bottom: 31rpx;">
+							<image :src="item.converUrl" mode="aspectFill" style="width: 240rpx;height: 160rpx;border-radius: 15rpx;" v-if="item.converUrl"></image>
+							<view>
+								<view style="width: 426rpx;margin-top: 8rpx;" class="flex flex-column justify-center" v-if="item.converUrl">
+									<text class="daydetail line-3 " style="padding-left: 24rpx;  line-height: 48rpx;">{{item.abstract}}</text>
+								</view>
+								<view style="width: 690rpx;"  v-else>
+									<text class="daydetail line-3" style="line-height: 48rpx;">{{item.abstract}}</text>
+								</view>
+							</view>
+						</view>
+						<view class="flex flex-row justify-between">
+							<view class="flex flex-row">
+								<view  v-if="userID != item.userId" class="flex flex-column justify-center align-center">
+									<view style="background-color: rgba(72, 124, 241, 0.1);border-radius: 20rpx;padding-left: 12rpx;padding-right: 12rpx;" v-if="item.isReaded==false" class="flex flex-column justify-center align-center">
+										<text style="font-size: 24rpx;font-weight: 400;color:  rgba(72, 124, 241, 1);">未读</text>
+									</view>
+									<view style="background-color: rgba(148, 149, 153, 0.1);border-radius: 20rpx;padding-left: 12rpx;padding-right: 12rpx;" v-if="item.isReaded==true" class="flex flex-column justify-center align-center">
+										<text style="font-size: 24rpx;font-weight: 400;color:  rgba(148, 149, 153, 1);">已读</text>
+									</view>
+								</view>
+								<text style="font-size: 26rpx;font-weight: 400;color: #949599;margin-left: 24rpx;padding-top: 8rpx;padding-bottom: 8rpx;">{{item.readNum}}人已读</text>
+							</view>
+							<view class="flex flex-row justify-center">
+								<view class="flex flex-row" @click.stop="gocommon(item,$event)">
+									<view class="flex flex-column justify-center align-center">
+										<image src="../../../static/work/common.png" mode="" style="width: 32rpx;height: 32rpx;"></image>
+									</view>
+									<view class="flex flex-column justify-center align-center">
+										<text class="commonnum" style="padding-left: 12rpx;">{{item.commentNum}}条评论</text>
+									</view>
+								</view>
+								<view class="flex flex-row justify-center" style="padding-left: 30rpx;">
+									<view class="flex flex-column justify-center">
+		                                <image src="../../../static/work/unreprise.png" mode="" style="width: 32rpx;height: 32rpx;" @click.stop="goprise(item,$event)" v-if="item.isPrised ==false" ></image>
+										<image src="../../../static/work/prised.png" mode="" style="width: 32rpx;height: 32rpx;" @click.stop="goprised(item,$event)"  v-if="item.isPrised ==true"></image>
+									</view>
+									<view class="flex flex-column justify-center align-center">
+										<text class="commonnum" style="padding-left: 12rpx;" v-if="item.priseNum>0">{{item.priseNum}}人点赞</text>
+										<text class="commonnum" style="padding-left: 12rpx;" v-else>点赞</text>
+									</view>
+								</view>
+							</view>
+						</view>
+					</view>
+				</cell>
+			</template>
+		</wt-list>
+
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	import { throttle } from "@/common/common.js";
+	export default {
+		data(){
+			return{
+				userName:'',
+				showImg:true,
+				userID:''
+			}
+		},
+		onShow(){
+			
+			// this.refreshAllNews();
+		},
+		onLoad(){
+			// this.refreshAllNews();
+		},
+		mounted() {
+			console.log(this.$store.state.user.info,'用户信息');
+			let userInfo = this.$store.state.user.info;
+			this.userID = userInfo.userId;
+		},
+		methods:{
+			refreshAllNews(){
+				console.log(this.$refs.allnewsList)
+				this.$refs.allnewsList.refreshData();
+			},
+			dataTrn(time){
+				return  dayjs(time).format('YYYY/MM/DD HH:mm');
+			},
+			// 查看日报详情
+			allnewsDetail(item){
+				console.log(item.dailyId,'日报id', item.dailyType);
+				if(item.dailyType==1){
+					uni.navigateTo({
+						// url:'../dailyNews/dailyNewsExt/dailyNewsExt?dailyId='+item.dailyId
+						url:'../forestDetail/forestDetail?dailyId='+item.dailyId+'&isPrised='+item.isPrised
+					})
+				}else if(item.dailyType==0){
+					uni.navigateTo({
+						url:'../dailynewsDetail/dailynewsDetail?dailyId='+item.dailyId+'&isPrised='+item.isPrised
+					})
+				}
+			},
+			// 查看个人的所有日报
+			lookallnews(item,event){
+				console.log(item.dailyId,'日报id');
+				// #ifdef APP-NVUE
+				event.stopPropagation()
+				// #endif
+				// this.$refs.popupWtDialog.open();
+				this.userName = item.userName;
+				this.$emit("goall", {
+					dailyId:item.dailyId,
+					userName: item.userName,
+					userId:item.userId
+				})
+			},
+			agree(done, val, index){
+				console.log('agree');
+				done();
+				uni.navigateTo({
+					url:'../lookmineNews/lookmineNews?userName='+this.userName
+				})
+			},
+			// 去点赞
+			goprise:throttle(function(item,event){
+				// #ifdef APP-NVUE
+				event.stopPropagation()
+				// #endif
+				uni.$api.dailynews.addprise({
+					dailyId:item.dailyId
+				})
+				.then(res=>{
+					console.log(res,'点赞成功');
+					item.priseNum++;
+					item.isPrised =true;
+				})
+				.catch(err=>{
+					console.log(err)
+				})
+			}),
+			// 取消点赞
+			goprised:throttle(function (item,event) {
+				// #ifdef APP-NVUE
+				event.stopPropagation()
+				// #endif
+				uni.$api.dailynews.delprise({
+					dailyId:item.dailyId
+				})
+				.then(res=>{
+					console.log(res);
+					item.priseNum--;
+					item.isPrised =false;
+				})
+				.catch(err=>{
+					console.log(err)
+				})
+			}),
+			// 去评论
+			gocommon(item,event){
+				// #ifdef APP-NVUE
+				event.stopPropagation()
+				// #endif
+				if(item.dailyType==1){
+					uni.navigateTo({
+						// url:'../dailyNews/dailyNewsExt/dailyNewsExt?dailyId='+item.dailyId
+						url:'../forestDetail/forestDetail?dailyId='+item.dailyId
+					})
+				}else if(item.dailyType==0){
+					uni.navigateTo({
+						url:'../dailynewsDetail/dailynewsDetail?dailyId='+item.dailyId
+					})
+				}
+			}
+		},
+	}
+</script>
+
+<style>
+.dayname {
+
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #2F3034;
+ }
+
+ .daytime {
+
+  font-size: 26rpx;
+  font-weight: 400;
+  color: #949599;
+ }
+
+ .daydetail {
+
+  font-size: 28rpx;
+  font-weight: 400;
+  color: #323234;
+ }
+
+ .commonnum {
+
+  font-size: 24rpx;
+  font-weight: 400;
+  color: #999999;
+ }
+ .defaultHead {
+ 	display: flex;
+ 	justify-content: center;
+ 	align-items: center;
+ 	width: 96rpx;
+ 	height: 96rpx;
+ 	background-color: #F75252;
+ 	border-radius: 200;
+ 	border-width: 4rpx;
+ 	border-style: solid;
+ 	border-color: rgba(255, 196, 196, 0.67);
+ }
+ 
+ .headName {
+ 	font-size: 32rpx;
+ 	font-weight: 400;
+ 	color: #FFFFFF;
+ }
+</style>

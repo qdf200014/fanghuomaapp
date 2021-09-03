@@ -1,0 +1,140 @@
+<template>
+	<view style="width: 690rpx;background-color: #FFFFFF;border-radius: 16rpx;padding-left: 24rpx;padding-right: 24rpx;padding-top: 24rpx;">
+		<view class="flex flex-row justify-between" style="width: 250rpx;">
+			<view>
+				<view v-if="item.headUrl">
+					<image :src="item.headUrl" mode="" style="width: 96rpx;height: 96rpx;border-radius: 48rpx;"></image>
+				</view>
+				<view class="defaultHead" v-else>
+					<text class="headName">{{item.name.charAt(item.name.length-2)+item.name.charAt(item.name.length-1)}}</text>
+				</view>
+			</view>
+			<view class="flex justify-center align-center">
+				<text class="people_apply">人员申请</text>
+			</view>
+		</view>
+		<view style="padding-top: 22rpx;" class="flex flex-column">
+			<view class="flex flex-row flex-1 align-center" style="padding-bottom: 32rpx;">
+				<text class="approval_title">所在位置：</text>
+				<text class="approval_detail">{{item.address}}</text>
+			</view>
+	<!-- 		<view class="flex flex-row flex-1">
+				<text class="approval_title">所属单位：</text>
+				<text class="approval_detail">{{item.unitName}}</text>
+			</view> -->
+			<view class="flex flex-row flex-1 align-center" style="padding-bottom: 32rpx;">
+				<text class="approval_title">姓名：</text>
+				<text class="approval_detail">{{item.name}}</text>
+			</view>
+			<view class="flex flex-row flex-1 align-center" style="padding-bottom: 32rpx;">
+				<text class="approval_title">管理角色：</text>
+				<text class="approval_detail">{{item.jobName}}</text>
+			</view>
+			<view class="flex flex-row flex-1 align-center" style="padding-bottom: 32rpx;">
+				<text class="approval_title">申请时间：</text>
+				<text class="approval_detail">{{item.updateTime}}</text>
+			</view>
+			<view class="flex flex-row flex-1 justify-center align-center border-top" style="height: 88rpx;">
+				<view class="flex flex-1 justify-center" v-for="(items,index) in dataList" :key="index" @click="goexam(index)">
+					<text class="approval_agree">{{items}}</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		props: {
+			item: {
+				type: [Object],
+				default: () => {}
+			},
+		},
+		mounted() {
+			// console.log(this.item,'啦啦啦啦');
+			this.userId = this.item.userId
+		},
+		data() {
+			return {
+				dataList: ['同意', '拒绝'],
+				userId: '',
+			}
+		},
+		methods: {
+			goexam(index) {
+				this.Status = index;
+				this.$emit("goexams", {
+					btnIndex: this.Status,
+					userId: this.userId
+				})
+			},
+		}
+	}
+</script>
+
+<style>
+	.people_apply {
+
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #F07A4E;
+		/* line-height: 32rpx; */
+	}
+
+	.approval_title {
+		width: 276rpx;
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		
+		/* line-height: 32rpx; */
+	}
+
+	.approval_detail {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+		/* line-height: 32rpx; */
+	}
+
+	.approval_agree {
+
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+		/* line-height: 36rpx; */
+	}
+
+	.approval_refuse {
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+		/* line-height: 36rpx; */
+	}
+
+	.border-top {
+		border-top-width: 1rpx;
+		border-style: solid;
+		border-color: #EEEFF3;
+	}
+	.defaultHead {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 112rpx;
+		height: 112rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+	
+	.headName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+</style>

@@ -1,0 +1,276 @@
+<template>
+	<view class="tabs">
+		<uni-nav-bar left-icon="back" title="投票管理" :statusBar="true" @clickRight="createVote">
+			<text slot="right" class="font-4">新建</text>
+		</uni-nav-bar>
+		<scroll-view ref="tabbar1" id="tab-bar" class="tab-bar" :scroll="false" :scroll-x="true" :show-scrollbar="false"
+		 :scroll-into-view="scrollInto">
+			<view style="flex-direction: column;">
+				<view style="flex-direction: row;">
+					<view class="uni-tab-item flex justify-center align-center" v-for="(tab,index) in tabList" :key="tab.id" :id="tab.id"
+					 :ref="'tabitem'+index" :data-id="index" :data-current="index" @click="ontabtap">
+						<text class="uni-tab-item-title" :class="tabIndex==index ? 'uni-tab-item-title-active' : ''">{{tab.name}}</text>
+					</view>
+				</view>
+				<view class="scroll-view-indicator">
+					<view ref="underline" class="scroll-view-underline" :class="isTap ? 'scroll-view-animation':''" :style="{left: indicatorLineLeft + 'px', width: indicatorLineWidth + 'px'}"></view>
+				</view>
+			</view>
+		</scroll-view>
+		<view class="tab-bar-line" :style="'left:'+(375*tabIndex)+'rpx;'"></view>
+		<view class="position-relative flex flex-1 w-100" style="background-color: #F4F5FB;">
+			<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+			<wt-list :api="api[tabIndex]" v-if="isShowWTList" ref="votelist">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="{dataList}">
+
+					<!-- 循环处理数据 -->
+					<cell v-for="(item,index) in dataList" :key="index" style="background-color: #F4F5FB;">
+
+						<!-- 重定义渲染组件 -->
+						<view @longpress="openAction(item, index)" @click="voteInfo(item)">
+							<create-item :item="item"></create-item>
+						</view>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+	</view>
+</template>
+
+<script>
+	import wtList from '@/components/wt-list/wt-list.nvue';
+	import createItem from './create.nvue';
+
+	export default {
+		components: {
+			createItem
+		},
+		data() {
+			return {
+				tabList: [{
+					name: '我发起的投票'
+				}, {
+					name: '我参与的投票'
+				}],
+				tabIndex: 0,
+				api: [
+					'vote.getvotebyuser',
+					'vote.getcastvotebyuser'
+				],
+				isShowWTList: true,
+			}
+		},
+		onReady() {
+
+		},
+		onShow() {
+			this.getNewVote();
+		},
+		methods: {
+			getNewVote() { //  create a new vote ,and then must be refresh
+				let hasNewVote = uni.getStorageSync('hasNewVote') || false;
+				console.log(hasNewVote, '_hasNewVote')
+				if (hasNewVote) {
+					uni.removeStorageSync('hasNewVote');
+					this.ontabtap({
+						target: {
+							dataset: {
+								current: this.tabIndex
+							}
+						},
+						currentTarget: {
+							dataset: {
+								current: this.tabIndex
+							}
+						}
+					});
+				}
+			},
+			ontabtap(e) {
+				let index = e.target.dataset.current || e.currentTarget.dataset.current;
+				this.tabIndex = index;
+				this.isShowWTList = false;
+				this.$nextTick(() => {
+					this.isShowWTList = true;
+				})
+			},
+			deleteItem(item, index) {
+				uni.$api.vote.deletevote({
+						voteId: item.voteId
+					})
+					.then(res => {
+						console.log('deletevote_RES', res);
+						uni.showToast({
+							title: '已删除',
+							icon: 'none'
+						});
+						this.$refs.votelist.removeItem(index);
+					})
+					.catch(err => {
+						uni.showToast({
+							title: err.message || '操作失败',
+							icon: 'none'
+						});
+					})
+			},
+			openAction(item, index) {
+				if (this.tabIndex) return;
+				uni.showActionSheet({
+					itemList: ['删除'],
+					success: res => {
+						if (res.tapIndex >= 0) {
+							this.deleteItem(item, index);
+						}
+					},
+					fail: () => {},
+					complete: () => {}
+				});
+			},
+			voteInfo(item) {
+				/**
+				 * 投票详情页参数
+				 * lookDetail 	string [ 0可以投票 | 1只能查看详情 ]
+				 * voteId		string 投票id
+				 * voteType		string 投票种类[ 0投票 | 1表决 | 2结论]
+				 */
+				uni.showActionSheet({
+					itemList: ['投票', '表决', '结论'],
+					success: res => {
+						uni.navigateTo({
+							url: '../vote?lookDetail=1&voteId=' + item.voteId + '&voteType=' + res.tapIndex,
+						});
+					}
+				});
+			},
+			createVote() {
+				/**
+				 * 创建投票页参数
+				 * voteType		string 投票种类[ 0投票 | 1表决 | 2结论]
+				 */
+				uni.showActionSheet({
+					itemList: ['投票', '表决', '结论'],
+					success: res => {
+						uni.navigateTo({
+							url: '../create/create?voteType=' + res.tapIndex + '&ConsId=' + '3829576057'
+						});
+					}
+				});
+			}
+		}
+	}
+</script>
+
+<style>
+	/* #ifndef APP-PLUS */
+	page {
+		width: 100%;
+		min-height: 100%;
+		display: flex;
+	}
+
+	/* #endif */
+
+	.tabs {
+		flex: 1;
+		flex-direction: column;
+		overflow: hidden;
+		background-color: #ffffff;
+		/* #ifdef MP-ALIPAY || MP-BAIDU */
+		height: 100vh;
+		/* #endif */
+	}
+
+	.tab-bar {
+		/* #ifdef APP-PLUS */
+		width: 750rpx;
+		/* #endif */
+		height: 42px;
+		flex-direction: row;
+		/* #ifndef APP-PLUS */
+		white-space: nowrap;
+		/* #endif */
+	}
+
+	/* #ifndef APP-NVUE */
+	.tab-bar ::-webkit-scrollbar {
+		display: none;
+		width: 0 !important;
+		height: 0 !important;
+		-webkit-appearance: none;
+		background: transparent;
+	}
+
+	/* #endif */
+
+	.scroll-view-indicator {
+		position: relative;
+		height: 2px;
+		background-color: transparent;
+	}
+
+	.scroll-view-underline {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 0;
+		background-color: #007AFF;
+	}
+
+	.scroll-view-animation {
+		transition-duration: 0.2s;
+		transition-property: left;
+	}
+
+	.tab-bar-line {
+		left: 0;
+		height: 4rpx;
+		width: 375rpx;
+		background-color: #487CF1;
+		transition: all 0.2s;
+	}
+
+	.tab-box {
+		flex: 1;
+	}
+
+	.uni-tab-item {
+		/* #ifndef APP-PLUS */
+		display: inline-block;
+		/* #endif */
+		flex-wrap: nowrap;
+		width: 375rpx;
+	}
+
+	.uni-tab-item-title {
+		color: #555;
+		font-size: 15px;
+		height: 40px;
+		line-height: 40px;
+		flex-wrap: nowrap;
+		/* #ifndef APP-PLUS */
+		white-space: nowrap;
+		/* #endif */
+	}
+
+	.uni-tab-item-title-active {
+		color: #007AFF;
+	}
+
+	.swiper-item {
+		flex: 1;
+		flex-direction: column;
+	}
+
+	.page-item {
+		flex: 1;
+		flex-direction: row;
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+	}
+</style>

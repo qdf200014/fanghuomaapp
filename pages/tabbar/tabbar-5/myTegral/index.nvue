@@ -1,0 +1,186 @@
+<template>
+	<div class="tegralWrap flex flex-1 flex-column">
+		<view class="tegralTop">
+			<uni-nav-bar left-icon="back" :statusBar="true" backgroundColor="transparent" color="#FFF" fixed="true" :border="false" @clickLeft="goBack"></uni-nav-bar>
+			<image src="../../../../static/img/tegal/tegralBg@2x.png" style="width: 750rpx; position: absolute;"></image>
+			<view class="tegralTopCont">
+				<image src="../../../../static/user/integrals@2x.png" class="headImg"></image>
+				<view class="headCont">
+					<view class="headLeft">
+						<text class="num">5000</text>
+						<text class="unit">积分</text>
+					</view>
+					<view class="headRight">
+						<image src="../../../../static/img/tegal/fullStop@2x.png" mode="" style="width: 28rpx; height: 28rpx; margin-right: 8rpx;"></image>
+						<text class="rule" @click="toRule">积分规则</text>
+					</view>
+				</view>
+			</view>
+		</view>
+		<list class="tegralCont flex flex-column w-100">
+			<cell class="addTegral " v-for="(regralList, index) in regralLists" :key="regralList.id">
+				<view class="tegralContList">
+					<text class="tegralContListTitle">{{regralList.title}}</text>
+					<text class="date">{{regralList.date}}</text>
+				</view>
+				<text class="grade">
+					+{{regralList.grade}}分
+				</text>
+			</cell>
+		</list>
+	</div>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				userInfo:{},
+				headName: '',
+				showHead: true,
+				regralLists:[]
+			}
+		},
+		onLoad() {
+			uni.$api.user.getuserintegral().then(res => {
+				console.log(res)
+				this.regralLists = res.data.data
+			}).catch(err => {
+				console.log(err)
+			})
+		},
+		onShow() {
+			this.userInfo = uni.getStorageSync('userInfo')
+			if(this.userInfo.headUrl == ''){
+				this.showHead = false
+				this.headName = this.userInfo.name.charAt(this.userInfo.name.length-2) + this.userInfo.name.charAt(this.userInfo.name.length-1)
+			}
+		},
+		methods: {
+			toRule() {
+				uni.navigateTo({
+					url:'/pages/tabbar/tabbar-5/myTegral/tegralRule'
+				})
+			},
+			goBack(){
+				uni.navigateBack(1)
+			}
+		},
+	}
+</script>
+
+<style>
+.tegralWrap{
+	position: relative;
+	width: 750rpx;
+	background-color: #F4F5FB;
+}
+.tegralTop{
+	height: 594rpx;
+}
+.tegralTopCont{
+	width: 750rpx;
+	height: 112rpx;
+	display: flex;
+	flex-direction: row;
+}
+.headImg{
+	width: 112rpx;
+	height: 112rpx;
+	margin-left: 40rpx;
+	border-width: 4rpx;
+	border-style: solid;
+	border-color: rgba(241, 79, 93, 0.15);
+	border-radius: 50%;
+	border-width: 2rpx;
+	border-color: #FFF;
+	margin-right: 32rpx;
+}
+.defaultHead{
+	margin-left: 40rpx;
+	margin-right: 32rpx;
+	width: 112rpx;
+	height: 112rpx;
+	background-color: #F75252;
+	border-radius: 50%;
+	border-width: 4rpx;
+	border-style: solid;
+	border-color: rgba(255, 196, 196, 0.67);
+}
+.headName{
+	font-size: 32rpx;
+	font-weight: 400;
+	color: #FFFFFF;
+	text-align: center;
+	line-height: 96rpx;
+}
+.headCont{
+	width: 536rpx;
+	flex-direction: row;
+	justify-content: space-between;
+}
+.headLeft{
+	justify-content: center;
+}
+.num{
+	font-size: 38rpx;
+	font-family: PingFangSC-Medium, PingFang SC;
+	font-weight: 500;
+	color: #FFFFFF;
+	line-height: 42rpx;
+}
+.unit{
+	margin-top: 20rpx;
+	font-size: 26rpx;
+	font-family: PingFangSC-Regular, PingFang SC;
+	font-weight: 400;
+	color: rgba(255,255,255,0.6);
+	line-height: 26rpx;
+}
+.headRight{
+	flex-direction: row;
+	align-items: center;
+}
+.rule{
+	font-size: 28rpx;
+	font-family: PingFangSC-Regular, PingFang SC;
+	font-weight: 400;
+	color: #FFFFFF;
+	line-height: 26rpx;
+}
+.tegralCont{
+	position: absolute;
+	top: 300rpx;
+	left: 0rpx;
+	bottom: 0;
+	background-color: #FFFFFF;
+	border-top-left-radius: 36rpx;
+	border-top-right-radius: 36rpx;
+	justify-content: center;
+	padding-left: 30rpx;
+}
+.addTegral{
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 690rpx;
+	height: 138rpx;
+	border-bottom-width: 1rpx;
+	border-bottom-color: #EEEFF3;
+}
+.date{
+	font-size: 24rpx;
+	font-family: HelveticaNeue;
+	color: #C2C3C8;
+	line-height: 24rpx;
+	margin-top: 15rpx;
+}
+.grade{
+	flex-direction: row;
+	font-size: 24rpx;
+	font-family: PingFangSC-Regular, PingFang SC;
+	font-weight: 400;
+	color: #00BCAB;
+	line-height: 24rpx;
+}
+</style>

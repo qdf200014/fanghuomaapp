@@ -1,0 +1,400 @@
+<template>
+	<view class="flex flex-1 flex-column" style="background-color: #FFF; min-height: 768rpx;">
+		<list class="flex flex-1 flex-column align-center px-3" @touchstart="">
+			<template v-if="keywordMode === ''">
+				<cell class="listSize flex-row justify-between align-center border-bottom position-relative">
+					<text style="position: absolute;left: 0rpx;font-size: 32rpx;font-weight: 500;color: #F25643;line-height: 32rpx;">*</text>
+					<text class="disTitle">标题:</text>
+					<input type="text" placeholder="请输入会商标题" :maxlength="20" @confirm="confirm" v-model="disTitle"
+						placeholder-style="font-size: 14rpx;font-weight: 400;color: #949599;" style="width: 550rpx; font-size: 28rpx; text-align: right; lines: 1; text-overflow: ellipsis;" />
+				</cell>
+				<cell class="listSize flex-row justify-between align-center border-bottom position-relative">
+					<text style="position: absolute;left: 0rpx;font-size: 32rpx;font-weight: 500;color: #F25643;line-height: 32rpx;">*</text>
+					<text class="disTitle">选择人员：</text>
+					<!-- <input type="text" value="" disabled="true" placeholder="请选择会商人员" v-model="disUser.name" style="width: 350rpx;" @click="choseUser"/> -->
+					<view @click="choseUser " style=" height: 122rpx;" class="flex-row align-center justify-end">
+						<text v-if="disUsers" style="width: 350rpx;font-size: 28rpx;olor: #323234;lines: 1;text-align: right;text-overflow: ellipsis;margin-right: 18rpx;">{{disUsers}} </text>
+						<text v-else style="width: 350rpx;font-size: 28rpx;color: #949599;lines: 1;text-align: right;margin-right: 18rpx;">请选择参与会商人员</text>
+
+						<image src="../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+						</image>
+					</view>
+				</cell>
+				<cell class="listSize flex-row justify-between align-center border-bottom">
+					<text class="disTitle">关联事件：</text>
+					<view class="flex-row justify-center align-center" @click="closeKep">
+						<text v-if="disDetail" style="width: 350rpx; font-size: 28rpx; text-align: right;lines: 1;text-overflow: ellipsis;margin-right: 18rpx;" class="flex-nowrap" @click="choseFireDetail">{{disDetail}}</text>
+						<text v-else style="width: 350rpx;font-size: 28rpx; text-align: right;color: #949599;lines: 1;text-overflow: ellipsis;margin-right: 18rpx;" class="flex-nowrap" @click="choseFireDetail">请选择关联事件</text>
+						<image src="../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+						</image>
+					</view>
+
+				</cell>
+				<cell class="flex-column border-bottom" style="width: 690rpx;">
+					<view class="flex flex-row" style="margin-top: 40rpx; margin-bottom: 54rpx;">
+						<text style="position: absolute;left: 0rpx;font-size: 32rpx;font-weight: 500;color: #F25643;line-height: 32rpx;">*</text>
+						<text class="disTitle">选择会商时间</text>
+					</view>
+					<view class="flex flex-row align-center w-100" style="margin-bottom: 32rpx; height: 44rpx;">
+						<view class="flex flex-row align-center"
+							style="width: 196rpx; height: 44rpx;margin-right: 80rpx;" @click="choseDis(1)">
+							<image src="../../static/discussion/unselected.png" style="width: 44rpx; height: 44rpx; margin-right: 24rpx;" v-if="showOther"></image>
+							<image src="../../static/discussion/select.png" style="width: 44rpx; height: 44rpx; margin-right: 24rpx;" v-else></image>
+							<text style="font-size: 32rpx;font-weight: 500;color: #333333;line-height: 32rpx;">即时会商</text>
+						</view>
+						<view class="flex flex-row align-center" style="width: 196rpx; height: 44rpx;" @click="choseDis(2)">
+							<image src="../../static/discussion/unselected.png"style="width: 44rpx; height: 44rpx; margin-right: 24rpx;" v-if="showOrder"></image>
+							<image src="../../static/discussion/select.png" style="width: 44rpx; height: 44rpx; margin-right: 24rpx;" v-else></image>
+							<text style="font-size: 32rpx;font-weight: 500;color: #333333;line-height: 32rpx;">预约会商</text>
+						</view>
+					</view>
+					<view class="flex flex-row align-center" @click="closeKep"
+						style="width: 670rpx; height: 113rpx; background-color: #F4F4FB; border-radius: 16rpx; margin-bottom: 30rpx;"
+						v-if="showThis">
+						<view class="flex align-center" style="width: 230rpx;height: 112rpx;margin-left: 30rpx;">
+							<text style="font-size: 28rpx;font-weight: 400;color: #323234;line-height: 28rpx;">设置会商时间:</text>
+						</view>
+						<view class="flex align-center justify-around" @click="openEndCalendar" style="width: 400rpx; height: 112rpx;">
+							<text style="font-size: 28rpx;" @click="openStartCalendar">{{time || "请选择会商时间"}}</text>
+							<vote-picker ref="dateEnd" :startTime="endStart" :nowLast="nowLast" @change="changeEndTime">
+							</vote-picker>
+							<image src="../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx; transform: rotate(90deg);"></image>
+						</view>
+
+					</view>
+				</cell>
+			</template>
+
+			<cell v-if="keywordMode === '' || keywordMode === 'agenda'" class="flex-column justify-between">
+				<view class="flex flex-row align-center position-relative">
+					<text class="disTitle" style="margin-top: 40rpx;">会商议程：</text>
+				</view>
+				<textarea placeholder="请输入会商议程" v-model="agenda" style="width: 690rpx;height: 389rpx;font-size: 28rpx;color: #333;background-color: #F4F5FB;border-radius: 6rpx;margin-top: 24rpx;padding-left: 32rpx;padding-top: 24rpx;" />
+			</cell>
+			<cell style="height: 300rpx;" v-if="showKeyboard"></cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	let _self = null;
+	import fireList from '../tabbar-1-detail/bussinessList/bussinessList';
+	import votePicker from '../vote/create/vote-picker.nvue';
+	import {
+		mapGetters,
+		mapActions
+	} from 'vuex';
+	import dayjs from 'dayjs'
+	export default {
+		components: {
+			fireList,
+			votePicker
+		},
+		data() {
+			return {
+				showKeyboard: false,
+				showOrder: true,
+				showOther: false,
+				time: '',
+				disUser: '',
+				disUsers:'',
+				disUserName: [],
+				disDetail: '',
+				agenda: '',
+				endStart: new Date(),
+				disTitle: '',
+				UserIds: '',
+				ArticleId: '',
+				disUserId: [],
+				goFromUrl: null,
+				dataList: [],
+				showThis: false,
+				type: 1,
+				nowLast: true,
+				nowYear: '',
+
+				// 判断是否正在创建群聊
+				isCreateTeam: false,
+				// 键盘的聚焦模式
+				keywordMode: '',
+
+
+				nbTitle: '标题',
+				titleIcon: '/static/logo.png',
+				titleIconRadius: '20px',
+				subtitleText: 'subtitleText',
+				nbLoading: false,
+				nbFrontColor: '#000000',
+				nbBackgroundColor: '#ffffff'
+			}
+		},
+		onLoad(event) {
+			console.log(event)
+			this.nowYear = dayjs().format('YYYY-')
+			this.disDetail = event.disTitle
+			this.ArticleId = event.ArticleId
+			this.setListener()
+			let _This = this
+			uni.$on('selectFire', function(data) {
+				console.log(data)
+				_This.disDetail = data.title
+				_This.ArticleId = data.articleId
+			})
+		},
+		computed: {
+			...mapGetters({
+				selectedList: 'user/selectedList'
+			})
+		},
+		mounted() {
+			_self = this
+		},
+		onUnload() {
+			uni.$off('im-selectCreateList')
+		},
+		onNavigationBarButtonTap() {
+			this.creatSure()
+		},
+		methods: {
+			keyboardheightchange(e, name) {
+				console.log(e, name);
+				if (e.detail.height > 0) {} else {
+					this.keywordMode = ''
+				}
+			},
+			closeKep() {
+				uni.hideKeyboard();
+			},
+			openEndCalendar() {
+				this.$refs.dateEnd.open();
+			},
+			changeEndTime(date) {
+				this.time = dayjs(date).format('MM-DD HH:mm:ss');
+			},
+			popupClose() {
+				this.$refs.fireList.close();
+			},
+			setListener() {
+				//拿到会商人员信息
+				let _self = this
+				uni.$off('im-selectCreateList')
+				uni.$on('im-selectCreateList', function(data) {
+					_self.dataList = []
+					_self.disUserId = []
+					_self.disUser = []
+					_self.dataList = data
+					console.log('ssssssssssssssssssssss', _self.dataList);
+					let disUserName = _self.dataList.map(item => item.name)
+					_self.disUserId = _self.dataList.map(item => item.userId)
+					for (let i = 0; i < disUserName.length; i++) {
+						// _self.disUser += disUserName[i] + '、'
+						_self.disUser.push(disUserName[i])
+					}
+					_self.disUsers = _self.disUser.join('、')
+					console.log(_self.disUsers)
+					for (let i = 0; i < _self.disUserId.length; i++) {
+						_self.UserIds += _self.disUserId[i] + ','
+					}
+				})
+			},
+
+			//选择会商类型
+			choseDis(type) {
+				this.type = type
+				console.log(type)
+				if (type == 1) {
+					this.showOther = false
+					this.showOrder = true
+					this.showThis = false
+				} else {
+					this.showOther = true
+					this.showOrder = false
+					this.showThis = true
+				}
+			},
+			//点击完成收起小键盘
+			confirm() {
+				this.hideKeyboard();
+			},
+			hideKeyboard() {
+				uni.hideKeyboard();
+			},
+			//选择会伤人员
+			choseUser() {
+				this.closeKep();
+				console.log('##################3', this.dataList)
+				this.clearSelected(this.dataList)
+				// this.dataList = this.dataList.map(item => {
+				// 	item.selectValue = true
+				// })
+				this.selectUser(this.dataList);
+				uni.navigateTo({
+					url: '../addrBook/index?sourceType=2'
+				})
+			},
+			//选择火情列表
+			// selectFire(event){
+			// 	this.$refs.fireList.close();
+			// 	uni.setNavigationBarTitle({
+			// 		title:'创建会商'
+			// 	})
+			// 	// handleEvent
+			// 	console.log(event);
+			// 	this.disDetail = event.title
+			// 	this.ArticleId = event.articleId
+			// },
+			//打开火情页面
+			choseFireDetail() {
+				// uni.setNavigationBarTitle({
+				// 	title:'要闻'
+				// })
+				// this.goFromUrl = 'createdHold';
+				// this.$refs.fireList.open();
+				uni.navigateTo({
+					url: '/pages/tabbar-1-detail/bussinessList/bussinessList?souceType=1'
+				})
+			},
+			//选择会商时间
+			bindTimeChange: function(e) {
+				console.log(e, 'dsdsd')
+				this.time = e.detail.value
+				this.nowTime = dayjs().format('YYYY-MM-DD ')
+			},
+			//点击确定按钮
+			creatSure() {
+				console.log(_self.time)
+				if (_self.isCreateTeam) {
+					return;
+				}
+
+				//获取会商id并创建会商
+				if (!_self.disTitle) {
+					uni.showToast({
+						title: '请先填写会商标题',	
+						icon: 'none'
+					})
+				} else if (_self.UserIds == []) {
+					uni.showToast({
+						title: '请先选择会商人员',
+						icon: 'none'
+					})
+				} else if (!_self.time && _self.type == 2) {
+					uni.showToast({
+						title: '请先选择会商时间',
+						icon: 'none'
+					})
+				} else {
+					_self.isCreateTeam = true
+
+					let avatarImg = `/static/easy-chat/team/advanced/${parseInt(Math.random() * 10 + 1)}.png`
+
+					_self.$store.dispatch('initNim/nimCreateAdvancedTeam', {
+						name: _self.disTitle,
+						avatar: avatarImg,
+						accounts: _self.disUserId
+					}).then(team_obj => {
+						console.log('qqqqqqqqqqqqqqqqqqqqqqqqqqqqq team_obj', team_obj);
+
+						try {
+							console.log('wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww', _self.type)
+							uni.$api.discussion.addconsultation({
+								'ConsId': team_obj.team.teamId,
+								'Name': _self.disTitle,
+								'Agenda': _self.agenda,
+								'UserIds': _self.UserIds,
+								'MakeTime': _self.type == 1 ? undefined : _self.nowYear + _self.time,
+								'ArticleId': _self.ArticleId
+							}).then(res => {
+								console.log('sssssssssssssssssssssssssssssssssssss', res)
+								uni.navigateBack(1)
+
+								if (res.data.statusCode == 200) {
+
+									uni.navigateTo({
+										url: `/pages/easy-chat/chat?sessionId=team-${team_obj.team.teamId}`
+									})
+
+									uni.showToast({
+										title: '会商创建成功！'
+									})
+								} else {
+
+									uni.showToast({
+										title: '创建群时遇到错误！已回退，请重新尝试。',
+										icon: 'none'
+									})
+
+									_self.isCreateTeam = false
+
+									_self.$store.dispatch('initNim/nimDismissTeam', {
+										teamId: team_obj.team.teamId
+									}).then(res => {})
+
+									console.error('创建群时遇到错误！已回退，请重新尝试。')
+
+								}
+							}).catch(err => {
+								console.log('wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww', err)
+								uni.navigateBack(1)
+								uni.showToast({
+									title: '创建群时遇到错误！已回退，请重新尝试。',
+									icon: 'none'
+								})
+
+								_self.isCreateTeam = false
+
+								_self.$store.dispatch('initNim/nimDismissTeam', {
+									teamId: team_obj.team.teamId
+								}).then(res => {})
+
+								console.error('创建群时遇到错误！已回退，请重新尝试。')
+							})
+
+
+						} catch (e) {
+							//TODO handle the exception
+							console.error('ggggggggggggggggggggggggggggggggggggggg', e)
+							uni.showToast({
+								title: '创建群时遇到错误！已回退，请重新尝试。',
+								icon: 'none'
+							})
+							_self.isCreateTeam = false
+
+							_self.$store.dispatch('initNim/nimDismissTeam', {
+								teamId: team_obj.team.teamId
+							}).then(res => {})
+						}
+
+
+					})
+				}
+			},
+			toVoteList(type) {
+				console.log(type)
+				uni.navigateTo({
+					url: './verdict',
+				})
+			},
+
+			...mapActions({
+				clearSelected: 'user/clearSelected',
+				selectUser: 'user/selectUser',
+				unSelectUser: 'user/unSelectUser'
+			}),
+		}
+	}
+</script>
+
+<style>
+	.listSize {
+		width: 690rpx;
+		height: 112rpx;
+	}
+
+	.disTitle {
+		font-size: 32rpx;
+		font-weight: 500;
+		line-height: 32rpx;
+		margin-left: 15rpx;
+	}
+</style>

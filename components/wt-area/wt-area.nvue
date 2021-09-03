@@ -1,0 +1,174 @@
+<template>
+	<uni-popup ref="areaPopup" type="bottom">
+		<view class="w-100 flex flex-column bg-white" style="height: 1110rpx;border-top-left-radius: 20rpx;border-top-right-radius: 20rpx;">
+			<!-- title -->
+			<view class="title p-3 justify-center align-center position-relative text-center">
+				<text class="font-3" style="color: #191F25;">区域选择</text>
+				<text class="font-5 position-absolute left-0 pl-3" @click="close">关闭</text>
+				<text class="font-5 position-absolute right-0 pr-3 theme-main-color" @click="confirm">确定</text>
+			</view>
+			<!-- address -->
+			<view class="address w-100 flex flex-row justify-start align-center border-bottom flex-wrap">
+				<view class="px-3 flex justify-center align-center" style="height: 100rpx;" v-for="(item, index) in result" :key="index"
+				 @click="selectItem(item, index)">
+					<text class="font-4" v-if="chooseCity" :style="'color: '+(index == (result.length-1) ? '#949599' : '#191F25')+';'">{{item.cityName}}</text>
+					<text class="font-4" v-else :style="'color: '+(index == (result.length-1) ? '#F75252' : '#191F25')+';'">{{item.name}}</text>
+				</view>
+			</view>
+			<!-- areaList -->
+			<!-- #ifdef APP-NVUE -->
+			<list class="areaList flex flex-1 w-100 flex-column">
+				<cell v-for="(item, index) in chooseCity ? areaCode : areaList" :key="index" class="w-100 flex align-center" @click="selectItem(item)"
+				 style="height: 100rpx;">
+					<text class="px-3 font-4 w-100" style="color: #191F25;">{{item.name}}</text>
+				</cell>
+				<cell v-if="!areaList.length || !areaCode.length" class="flex flex-1 justify-center align-center">
+					<text class="font-5">没有更多了～</text>
+				</cell>
+			</list>
+			<!-- #endif -->
+			<!-- #ifndef APP-NVUE -->
+			<scroll-view scroll-y="true" class="areaList flex flex-1 w-100 flex-column">
+				<view v-for="(item, index) in chooseCity ? areaCode : areaList" :key="index" class="w-100 flex align-center" @click="selectItem(item)"
+				 style="height: 100rpx;">
+					<text class="px-3 font-4 w-100" style="color: #191F25;">{{item.name}}</text>
+				</view>
+				<view v-if="!areaList.length || !areaCode.length" class="flex flex-1 justify-center align-center">
+					<text class="font-5">没有更多了～</text>
+				</view>
+			</scroll-view>
+			<!-- #endif -->
+		</view>
+	</uni-popup>
+</template>
+
+<script>
+	import { mapState,mapActions } from 'vuex';
+	export default {
+		props:{
+			chooseCity:{
+				type: Boolean,
+				default: null
+			}
+		},
+		data() {
+			return {
+				currentList: [],
+				areaList: [],
+			}
+		},
+		computed: {
+			...mapState({
+				areaCode: state => {
+					return state['user'].areacodelist
+				},
+				areacodelist: state => state['user'].areacodelist
+			}),
+			areacodelist2() {
+				return this.$store.getters['user/areacodelist']
+			},
+			result() {
+				let _list = [{
+					"id": 0,
+					"parent_id": 0,
+					"name": this.chooseCity ? "区域选择" : "请选择",
+					"cityName": "选择省市",
+					"area": null,
+					"code": null,
+					"type": 0,
+					"level": 0,
+				}];
+				let _curr = this.currentList;
+				let _currLen = _curr.length;
+				if (_currLen) {
+					_list = _curr;
+				}
+				return _list;
+			},
+			roleTree(){
+				if(!this.chooseCity){
+					let _list = this.$store.state.roleTree.roleTree, codeArr = this.result.map(item=>item.code) || [];
+					codeArr.forEach(code=>{
+							null != code ? (_list = _list.find(item=>code == item.code).children || []) :'';
+					});
+					this.areaList = _list;
+					return _list;
+				}
+			},
+		},
+		created() {
+			this.getArea();
+			if(this.chooseCity){
+				this.getareacodelist({attr :1,Area :'0'});
+				this.areaList = this.areaCode
+			}
+		},
+		methods: {
+			...mapActions({
+			  setRoleTree:'roleTree/setRoleTree',
+			  getareacodelist:'user/getareacodelist'
+			}),
+			open() {
+				this.$refs.areaPopup.open();
+				return this.roleTree.length;
+			},
+			close() {
+				this.chooseCity ? this.$emit('chose',null) : ''
+				this.$refs.areaPopup.close();
+			},
+			confirm(item) {
+				// this.chooseCity ? this.$emit('chose',this.currentList[this.currentList.length -1]) : this.$emit('confirm', JSON.parse(JSON.stringify(this.currentList)));
+				this.$emit('confirm', JSON.parse(JSON.stringify(this.currentList)));
+				this.$refs.areaPopup.close();
+			},
+			clear() {
+				this.currentList = [],
+				this.areaList = [],
+				this.setRoleTree();
+			},
+			getArea() {
+				let _roleTreeList = this.roleTree;
+				if (!(Array.isArray(_roleTreeList)) || _roleTreeList.length<=0) {
+					if(!this.chooseCity){
+						this.setRoleTree();
+					}
+				}
+			},
+			selectItem(item, level) {
+				if (undefined != level) {
+					this.currentList = this.currentList.slice(0, level);
+					if(this.chooseCity){
+						console.log(this.currentList);
+						this.getareacodelist({
+							attr :level,
+							Area :item.parent_id
+						});
+						this.$emit('chose',this.currentList[this.currentList.length-1])
+					}
+				} else {
+					this.$emit('chose',item)
+					if(this.chooseCity){
+						this.getareacodelist({
+							attr :item.level + 1,
+							Area :item.code
+						});
+					}
+					this.currentList.push({
+						"id": item.id,
+						"parent_id": item.parent_id || item.parentCode,
+						"name": item.name,
+						"cityName": item.name,
+						"area": item.area,
+						"code": item.code,
+						"type": item.type,
+						"level": item.level,
+					});
+				}
+				return this.roleTree.length;
+			}
+		}
+	}
+</script>
+
+<style>
+</style>

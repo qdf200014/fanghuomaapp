@@ -1,0 +1,303 @@
+<template>
+	<view class="personalWrap flex flex-column w-100 flex-1" style="background-color: #F4F5FB;">
+		<view class="personalTop">
+			<image src="../../../../static/user/personal-bg.png" style="width: 750rpx; height: 471rpx;"></image>
+			<headImg :userinfo="userInfo"
+				style="position: absolute; top: 144rpx; left: 40rpx; width: 120rpx; height: 120rpx; border-radius: 200rpx;">
+			</headImg>
+			<view class="headCont">
+				<view class="headLeft">
+					<text class="headTit">{{ userInfo.name }}</text>
+					<text class="unit">{{ userInfo.phone }}</text>
+				</view>
+				<view class="headRight" @click="goEditData">
+					<image src="../../../../static/personal/editData@2x.png" mode=""
+						style="width: 191rpx; height: 54rpx;"></image>
+				</view>
+			</view>
+		</view>
+		<view class="personalContTop w-100 flex-1 flex flex-column" style="background-color: #F4F5FB;">
+			<view class="flex flex-row align-center justify-center w-100"
+				style="background-color: #FFF; border-top-left-radius: 36rpx; border-top-right-radius: 36rpx;"
+				@click="toForumDetail(3)">
+				<view class="cellList  flex flex-row justify-between align-center" style="width: 690rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../../static/user/attention.png" style="width: 44rpx; height: 44rpx; margin-right: 36rpx;"></image>
+						<text class="titleText">我的关注</text>
+					</view>
+					<image src="../../../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+					</image>
+				</view>
+			</view>
+			<view class="flex flex-row align-center justify-center w-100" style="background-color: #FFF;"
+				@click="toForumDetail(4)">
+				<view class="cellList  flex flex-row justify-between align-center" style="width: 690rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../../static/user/fans.png" style="width: 44rpx; height: 44rpx; margin-right: 36rpx;"></image>
+						<text class="titleText">我的粉丝</text>
+					</view>
+					<image src="../../../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+					</image>
+				</view>
+			</view>
+			<view class="flex flex-row align-center justify-center w-100" style="background-color: #FFF;"
+				@click="toForumDetail(5)">
+				<view class="cellList  flex flex-row justify-between align-center" style="width: 690rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../../static/user/invitation.png" style="width: 44rpx; height: 44rpx; margin-right: 36rpx;"></image>
+						<text class="titleText">我的帖子</text>
+					</view>
+					<image src="../../../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+					</image>
+				</view>
+			</view>
+			<!-- <view class="flex flex-row align-center justify-center w-100" style="background-color: #FFF;"
+				@click="toMyTegral">
+				<view class="cellList  flex flex-row justify-between align-center" style="width: 690rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../../static/user/integral@2x.png"
+							style="width: 44rpx; height: 44rpx; margin-right: 36rpx; "></image>
+						<text class="titleText">我的积分</text>
+					</view>
+					<image src="../../../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+					</image>
+				</view>
+			</view> -->
+			<view class="flex flex-row align-center justify-center w-100" style="background-color: #FFF;"
+				@click="toCollectMine">
+				<view class="cellList  flex flex-row justify-between align-center" style="width: 690rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../../static/user/collect@2x.png"
+							style="width: 44rpx; height: 44rpx; margin-right: 36rpx;"></image>
+						<text class="titleText">我的收藏</text>
+					</view>
+					<image src="../../../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+					</image>
+				</view>
+			</view>
+			<view class="flex flex-row align-center justify-center w-100" style="background-color: #FFF;"
+				@click="toHelp">
+				<view class="cellList  flex flex-row justify-between align-center" style="width: 690rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../../static/user/help@2x.png"
+							style="width: 44rpx; height: 44rpx; margin-right: 36rpx;"></image>
+						<text class="titleText">帮助文档</text>
+					</view>
+					<image src="../../../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+					</image>
+				</view>
+			</view>
+			<view class="flex flex-row align-center justify-center w-100" style="background-color: #FFF;"
+				@click="toService">
+				<view class="cellList  flex flex-row justify-between align-center" style="width: 690rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../../static/user/set@2x.png"
+							style="width: 44rpx; height: 44rpx; margin-right: 36rpx;"></image>
+						<text class="titleText">设置</text>
+					</view>
+					<image src="../../../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;">
+					</image>
+				</view>
+			</view>
+			<!-- 			
+			<view v-if="!isDeveloper" class="flex flex-row align-center justify-center w-100" style="background-color: #FFF;" @click="toDeveloper">
+				<view class="cellList  flex flex-row justify-between align-center" style="width: 690rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../../static/user/set@2x.png" style="width: 44rpx; height: 44rpx; margin-right: 36rpx;"></image>
+						<text class="titleText">开发者</text>
+					</view>
+					<image src="../../../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;"></image>
+				</view>
+			</view> -->
+		</view>
+	</view>
+</template>
+
+<script>
+	import headImg from '@/components/universalHead.nvue';
+
+	import {
+		mapGetters
+	} from 'vuex';
+	export default {
+		components: {
+			headImg
+		},
+		data() {
+			return {
+				show: false,
+				showHead: true,
+				headName: ''
+			}
+		},
+		computed: {
+			...mapGetters({
+				userInfo: 'user/info',
+				isDeveloper: 'developer/isDeveloper'
+			})
+		},
+		methods: {
+			toForumDetail(type, id) {
+				if(this.userInfo.status == 1){
+					uni.$api.forum.autologin({
+						types: type,
+						id: id ? id : 0
+					}).then(res => {
+						console.log(JSON.stringify(res.data.data))
+						uni.showLoading()
+						uni.navigateTo({
+							url: '../../tabbar-1/forum/forumWeb?forumMsg=' + encodeURIComponent(JSON
+								.stringify({
+									'forumUrl': res.data.data
+								}))
+						})
+						uni.hideLoading()
+					}).catch(err => {
+						console.log(err);
+					})
+				}else{
+					uni.showToast({
+						title:'您暂无权限',
+						icon: 'none'
+					})
+				}
+				
+
+			},
+			toMyTegral() {
+				uni.navigateTo({
+					url: '../myTegral/index'
+				})
+			},
+			toCollectMine() {
+				uni.navigateTo({
+					url: '../collectMine/collectMine'
+				})
+			},
+			toHelp() {
+				uni.navigateTo({
+					url: '../help/index'
+				})
+			},
+			toService() {
+				uni.navigateTo({
+					url: '../servicePirvacy/index'
+				})
+			},
+			toDeveloper() {
+				uni.navigateTo({
+					url: '../../../vote/index/index',
+					success: function(res) {
+						console.log(res)
+						res.eventChannel.emitCache('list', {
+							examineList: ['1', '2', '3'],
+							station: 21321,
+							stationList: ['1', '2', '3']
+						})
+					}
+				})
+			},
+			toBook() {
+				uni.navigateTo({
+					url: '../../../addrBook/index'
+				})
+			},
+			toQrCode() {
+				uni.navigateTo({
+					url: '../../../tabbar-4-detail/scanQrCode/scanQrCode'
+				})
+			},
+			goEditData() {
+				if (this.userInfo && this.userInfo.userId) {
+					uni.navigateTo({
+						url: '../editData/index1'
+					})
+				} else {
+					uni.navigateTo({
+						url: '../../../login/index'
+					})
+				}
+
+			},
+			toMountain() {
+				uni.navigateTo({
+					url: '../../../tabbar-4-detail/mountain/mountain'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.titleText {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.personalWrap {
+		position: relative;
+		width: 750rpx;
+		height: 1334rpx;
+		background-color: #F4F5FB;
+	}
+
+	.personalTop {
+		width: 750rpx;
+		height: 471rpx;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.headCont {
+		position: absolute;
+		top: 158rpx;
+		left: 184rpx;
+		width: 566rpx;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.headLeft {
+		justify-content: center;
+	}
+
+	.headTit {
+		font-size: 38rpx;
+		font-weight: 500;
+		color: #303233;
+		line-height: 42rpx;
+	}
+
+	.unit {
+		margin-top: 20rpx;
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #303233;
+		line-height: 26rpx;
+		opacity: 0.7;
+	}
+
+	.cellList {
+		width: 750rpx;
+		height: 112rpx;
+		background-color: #FFFFFF;
+		border-bottom-color: #EEEFF3;
+		border-bottom-width: 1rpx;
+		border-style: solid;
+	}
+
+	.headRight {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.personalContTop {
+		position: absolute;
+		top: 380rpx;
+		left: 0rpx;
+		border-top-left-radius: 36rpx;
+		border-top-right-radius: 36rpx;
+	}
+</style>

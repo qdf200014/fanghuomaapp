@@ -1,0 +1,30 @@
+<template>
+	<view class="login-box">
+		
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+			}
+		},
+		onShow() {
+			uni.navigateTo({
+				url:'/pages/tabbar/tabbar-5/tabbar-me/tabbar-me'
+			})
+		}
+	}
+</script>
+
+<style>
+	page {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		justify-content: center;
+		background-color: #fff;
+	}
+
+</style>

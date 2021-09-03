@@ -1,0 +1,660 @@
+<template>
+	<!-- 日报详情页面 -->
+	<view class="flex flex-column flex-1 w-100">
+		<uni-nav-bar left-icon="back" :statusBar="true" :title="dailyDetailList.userName+'的日报'"
+			v-if="dailyDetailList.userName"></uni-nav-bar>
+		<uni-nav-bar left-icon="back" :statusBar="true" title="日报" v-else></uni-nav-bar>
+		<list class="flex flex-1 w-100 flex-column">
+			<cell>
+				<view class="flex flex-row justify-between w-100 pl-3 pr-3 pt-3" style="background-color: #FFFFFF;">
+					<view class="flex flex-row">
+						<view>
+							<view v-if="dailyDetailList.headUrl">
+								<image :src="dailyDetailList.headUrl || ''"
+									style="width: 96rpx;height: 96rpx;border-radius: 48rpx;"></image>
+							</view>
+							<view class="defaultHead flex" v-else>
+								<text
+									class="headName">{{dailyDetailList.userName.charAt(dailyDetailList.userName.length-2)+dailyDetailList.userName.charAt(dailyDetailList.userName.length-1)}}</text>
+							</view>
+						</view>
+						<view class="flex flex-column justify-center" style="padding-left: 24rpx;">
+							<text class="dayname">{{dailyDetailList.userName}}的日报</text>
+							<text class="daytime">{{dataTrn(dailyDetailList.createTime)}}</text>
+						</view>
+					</view>
+				</view>
+				<text class="daydetail pl-3 pr-3 w-100"
+					style="padding-top: 28rpx;background-color: #FFFFFF;padding-bottom: 28rpx;">{{dailyDetailList.content}}</text>
+				<view v-if="converUrlList!=''" class="w-100 pl-3" style="background-color: #FFFFFF;">
+					<text style="font-size: 28rpx;font-weight: 500;color: #333333;padding-top: 28rpx;">图片：</text>
+					<view style="display: flex;flex-direction: row;flex-wrap: wrap;padding-bottom: 28rpx;">
+						<view v-for="(item,index) in converUrlList" :key="index" class="position-relative">
+							<view style="margin-right: 24rpx;margin-top: 24rpx;">
+								<image :src="item" mode="aspectFill"
+									style="width: 214rpx;height: 143rpx;border-radius: 15rpx;"
+									@click="previewImage(index)">
+								</image>
+							</view>
+
+						</view>
+					</view>
+				</view>
+				<view v-if="videoUrList!=''" class="w-100 pl-3"
+					style="padding-bottom: 30rpx;background-color: #FFFFFF;">
+					<text style="font-size: 28rpx;font-weight: 500;color: #333333;padding-top: 28rpx;">视频：</text>
+					<view style="padding-bottom: 28rpx;" class="flex flex-row flex-wrap">
+						<view v-for="(item,index) in videoUrList" :key="index">
+							<view style="margin-right: 24rpx;margin-top: 24rpx;">
+								<video :src="item" controls
+									style="width: 214rpx;height: 143rpx;border-radius: 15rpx;"></video>
+							</view>
+						</view>
+					</view>
+				</view>
+				<view style="height: 74rpx;background-color: #FFFFFF;"
+					class="w-100 pl-3 pr-3 border-top flex flex-column justify-center align-end" @click="lookmoreMine">
+					<view class="flex flex-row align-center">
+						<text
+							style="font-size: 26rpx;font-weight: 400;color: #487CF1;">{{dailyDetailList.userName}}的日报</text>
+						<image src="../../../static/fireIndex/moreblue.png" mode="" style="width: 13rpx;height: 22rpx;">
+						</image>
+					</view>
+				</view>
+				<view style="width: 750rpx;background-color: #FFFFFF;margin-top: 20rpx;padding-bottom: 30rpx;"
+					class="pr-3">
+					<view class="flex flex-row justify-between w-100 pr-3">
+						<view class="flex flex-row  align-center">
+							<view class="flex flex-row" v-for="(item,index) in selectName" style="padding-left: 30rpx;"
+								@click="haddleSelect(index)">
+								<view class="flex flex-row" style="padding-bottom: 13rpx;"
+									:class="(tabIndex==index) ? 'select_bottom':''">
+									<text
+										:class="(tabIndex == index) ? 'select_name' : 'noselect_name' ">{{item}}</text>
+									<text :class="(tabIndex == index) ? 'select_name' : 'noselect_name' "
+										v-if="item=='已读'"
+										style="padding-left: 11rpx;">{{dailyDetailList.readNum}}</text>
+									<text :class="(tabIndex == index) ? 'select_name' : 'noselect_name' "
+										v-if="item=='点赞'"
+										style="padding-left: 11rpx;">{{dailyDetailList.priseNum}}</text>
+								</view>
+							</view>
+						</view>
+						<view style="height: 71rpx;" class="flex flex-row align-center" @click="golookmore">
+							<text style="font-size: 28rpx;font-weight: 400;color: #949599;">查看全部</text>
+							<image src="../../../static/fireIndex/morehui.png" mode=""
+								style="width: 13rpx;height: 22rpx;">
+							</image>
+						</view>
+					</view>
+					<view v-if="tabIndex==0">
+						<view class="flex flex-row flex-wrap pl-3 align-center" v-if="readUsers!=''">
+							<view style="padding-right: 24rpx;" v-for="(item,index) in readUsers.slice(0,6)"
+								:key="index">
+								<view>
+									<view v-if="item.headUrl">
+										<image :src="item.headUrl || ''"
+											style="width: 56rpx;height: 56rpx;border-radius: 45rpx;"></image>
+									</view>
+									<view class="defaultHead1 flex" v-else>
+										<text
+											class="headName1">{{item.userName.charAt(item.userName.length-2)+item.userName.charAt(item.userName.length-1)}}</text>
+									</view>
+								</view>
+								<view class="flex flex-column justify-center align-center" style="margin-top: 10rpx;">
+									<text
+										style="font-size: 22rpx;font-weight: 400;color: #323234;">{{item.userName}}</text>
+								</view>
+							</view>
+						</view>
+						<view v-else class="flex flex-column justify-center align-center" style="height: 71rpx;">
+							<text style="font-size: 26rpx;font-weight: 400;color: #949599;">还没有人读过哦~</text>
+						</view>
+					</view>
+					<view v-if="tabIndex==1">
+						<view class="flex flex-row flex-wrap pl-3 align-center" v-if="priseUsers!=''">
+							<view style="padding-right: 24rpx;" v-for="(item,index) in priseUsers.slice(0,6)"
+								:key="index">
+								<view>
+									<view v-if="item.headUrl">
+										<image :src="item.headUrl || ''"
+											style="width: 56rpx;height: 56rpx;border-radius: 45rpx;"></image>
+									</view>
+									<view class="defaultHead1 flex" v-else>
+										<text
+											class="headName1">{{item.userName.charAt(item.userName.length-2)+item.userName.charAt(item.userName.length-1)}}</text>
+									</view>
+								</view>
+								<view class="flex flex-column justify-center align-center" style="margin-top: 10rpx;">
+									<text
+										style="font-size: 22rpx;font-weight: 400;color: #323234;">{{item.userName}}</text>
+								</view>
+							</view>
+						</view>
+						<view v-else class="flex flex-column justify-center align-center" style="height: 71rpx;">
+							<text style="font-size: 26rpx;font-weight: 400;color: #949599;">还没有人点赞哦~</text>
+						</view>
+					</view>
+				</view>
+			</cell>
+			<cell>
+				<view class="w-100 pl-3 pr-3 pt-3" style="background-color: #FFFFFF;margin-top: 20rpx;"
+					v-if="dailyCommon.length>0">
+					<text style="font-size: 28rpx;font-weight: 500;color: #333333;">评论 {{commentNum}}</text>
+				</view>
+				<view class="w-100 pl-3 pr-3 pb-3" style="background-color: #FFFFFF;"
+					v-for="(item,index) in dailyCommon" :key="index" @click="deleteCommmit(item,index)"
+					@longpress="logoTime(item,index)">
+					<view style="margin-top: 16rpx;" class="flex flex-row" v-if="item.toUserName">
+						<view>
+							<view v-if="item.headUrl">
+								<image :src="item.headUrl || ''" mode=""
+									style="width: 48rpx;height: 48rpx;border-radius: 45rpx;"></image>
+							</view>
+							<view class="defaultHead2 flex" v-else>
+								<text
+									class="headName2">{{item.userName.charAt(item.userName.length-2)+item.userName.charAt(item.userName.length-1)}}</text>
+							</view>
+						</view>
+						<view class="flex flex-row">
+							<text class="nameCom" style="margin-left: 24rpx;">{{item.userName}}:</text>
+							<text class="contentName">回复:</text>
+							<text class="nameCom">@{{item.toUserName}}</text>
+							<text class="contentName" style="width: 500rpx;">{{item.comment}}</text>
+						</view>
+					</view>
+					<view style="margin-top: 16rpx;" class="flex flex-row" v-else>
+						<view>
+							<view v-if="item.headUrl">
+								<image :src="item.headUrl || ''" mode=""
+									style="width: 48rpx;height: 48rpx;border-radius: 45rpx;"></image>
+							</view>
+							<view class="defaultHead2 flex" v-else>
+								<text
+									class="headName2">{{item.userName.charAt(item.userName.length-2)+item.userName.charAt(item.userName.length-1)}}</text>
+							</view>
+						</view>
+						<text class="nameCom" style="margin-left: 24rpx;">{{item.userName}}:</text>
+						<text class="contentName" style="width: 500rpx;">{{item.comment}}</text>
+					</view>
+					<view style="height: 200rpx;"></view>
+				</view>
+				<view v-show="isLoadMores">
+					<uni-load-more :status="loadStatus"></uni-load-more>
+				</view>
+			</cell>
+		</list>
+		<uni-popup ref="popupReply" type="center">
+			<wt-dialog :maskClick='true' :btns="['取消','确定']" @confirm="replyDaily" title="">
+				<view class="flex flex-column justify-center align-center" style="padding-bottom: 32rpx;">
+					<text style="font-size: 26rpx;font-weight: 400;color: #030303;">是否回复该评论</text>
+				</view>
+			</wt-dialog>
+		</uni-popup>
+		<uni-popup ref="popupDelete" type="center">
+			<wt-dialog :maskClick='true' :btns="['取消','确定']" @confirm="deleteCommmit1" title="">
+				<view class="flex flex-column justify-center align-center" style="padding-bottom: 32rpx;">
+					<text style="font-size: 26rpx;font-weight: 400;color: #030303;">是否删除该评论</text>
+				</view>
+			</wt-dialog>
+		</uni-popup>
+		<view class="flex flex-row p-3 w-100" v-if="showCom" style="background-color: #FFFFFF;margin-top: 20rpx;"
+			:style="(keyHeight==0) ? '':{marginBottom:keyHeight+'px'}">
+			<view style="background-color: #EEEFF3;border-radius:10rpx;width: 587rpx;height: 72rpx;padding-left: 20rpx;"
+				class="flex flex-row align-center">
+				<image src="../../../static/fireIndex/zhu.png" mode="" style="width: 40rpx;height: 40rpx;"></image>
+				<input type="text" class="flex flex-1" @confirm="doneInput" style="margin-left: 8rpx;font-size: 26rpx;"
+					confirm-type="send" placeholder="批注" v-model="textOne" @keyboardheightchange="getkeyHeight"
+					adjust-position="false" />
+			</view>
+			<view class="flex flex-column align-center justify-center">
+				<view class="flex flex-row justify-center align-center" style="margin-left: 30rpx;"
+					v-if="dailyDetailList.isPrised==false" @click="goprise">
+					<image src="../../../static/work/unpizhu.png" mode="" style="width: 48rpx;height: 48rpx;"></image>
+					<view v-if="dailyDetailList.priseNum!=0" style="padding-left: 12rpx;">
+						<text>{{dailyDetailList.priseNum}}</text>
+					</view>
+				</view>
+				<view class="flex flex-row justify-center align-center" style="margin-left: 30rpx;"
+					v-if="dailyDetailList.isPrised==true" @click="goprised">
+					<image src="../../../static/work/pizhued.png" mode="" style="width: 48rpx;height: 48rpx;"></image>
+					<view v-if="dailyDetailList.priseNum!=0" style="padding-left: 12rpx;">
+						<text>{{dailyDetailList.priseNum}}</text>
+					</view>
+				</view>
+			</view>
+		</view>
+		<view class="flex flex-row justify-between p-3 w-100" v-else
+			style="background-color: #FFFFFF;margin-top: 20rpx;"
+			:style="(keyHeight==0) ? '':{marginBottom:keyHeight+'px'}">
+			<view style="background-color: #EEEFF3;border-radius:10rpx;width: 600rpx;height: 72rpx;padding-left: 20rpx;"
+				class="flex flex-row align-center">
+				<view class="flex flex-row">
+					<text class="contentName">回复:</text>
+					<text class="nameCom">@{{name}}</text>
+				</view>
+				<input type="text" class="flex flex-1" style="margin-left: 8rpx;font-size: 26rpx;" confirm-type="send"
+					placeholder="请回复" @confirm="replyInput" v-model="textTwo" @keyboardheightchange="getkeyHeight" />
+			</view>
+			<view class="flex flex-column align-center justify-center">
+				<view class="flex flex-row justify-center align-center" style="margin-left: 30rpx;"
+					v-if="dailyDetailList.isPrised==false" @click="goprise">
+					<image src="../../../static/work/unpizhu.png" mode="" style="width: 48rpx;height: 48rpx;"></image>
+					<view v-if="dailyDetailList.priseNum!=0" style="padding-left: 12rpx;">
+						<text>{{dailyDetailList.priseNum}}</text>
+					</view>
+				</view>
+				<view class="flex flex-row justify-center align-center" style="margin-left: 30rpx;"
+					v-if="dailyDetailList.isPrised==true" @click="goprised">
+					<image src="../../../static/work/pizhued.png" mode="" style="width: 48rpx;height: 48rpx;"></image>
+					<view v-if="dailyDetailList.priseNum!=0" style="padding-left: 12rpx;">
+						<text>{{dailyDetailList.priseNum}}</text>
+					</view>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	import {
+		throttle
+	} from "@/common/common.js";
+	export default {
+		data() {
+			return {
+				dailyDetailList: [],
+				converUrlList: [],
+				videoUrList: [],
+				dailyCommon: [],
+				selectName: ['已读', '点赞'],
+				tabIndex: 0,
+				priseUsers: [], //点赞用户列表
+				readUsers: [], //已读用户列表
+				dailyId: '', //日报id
+				userName: '',
+				userId: '',
+				comment: '',
+				commentId: '', //评论id
+				showCom: true, //底部导航条显示
+				name: '', //被评论人的名字
+				replyComment: '',
+				fromUid: '',
+				replyId: '',
+				parentId: '',
+				commentNum: '',
+				textOne: '',
+				textTwo: '',
+				isPrised: false,
+				delcomment: '',
+				deldailyId: '',
+				keyHeight: 0,
+				dailyPage: 1,
+				dailySize: 10,
+				delindex: -1,
+				loadStatus: 'loading', //加载样式：more-加载前样式，loading-加载中样式，nomore-没有数据样式
+				isLoadMores: false, //是否加载中
+			}
+		},
+		onLoad(e) {
+			console.log(e, '啦啦啦');
+			// this.isPrised = e.isPrised;
+			this.dailyId = e.dailyId;
+			this.dailyNewsDetial();
+			this.getDailyComment()
+		},
+		onShow() {
+			// this.getDailyComment()
+		},
+		mounted() {
+			console.log(this.$store.state.user.info, '用户信息');
+			let userInfo = this.$store.state.user.info;
+			this.userID = userInfo.userId;
+			this.prisename = userInfo.name;
+			this.priseHead = userInfo.headUrl;
+		},
+		onReachBottom() {
+			if (!this.isLoadMores) { //此处判断，上锁，防止重复请求
+				this.isLoadMores = true
+				this.dailyPage += 1
+				this.getDailyComment()
+			}
+		},
+		methods: {
+			getDailyComment() {
+				uni.$api.dailynews.getdailycomment({
+						dailyid: this.dailyId,
+						page: this.dailyPage,
+						limit: this.dailySize,
+					})
+					.then(res => {
+						console.log(res, '获取普通日报评论列表成功');
+						if (res.data.statusCode == 200) {
+							if (res.data.data) {
+								this.dailyCommon = this.dailyCommon.concat(res.data.data)
+								if (res.data.data.length < this.dailySize) {
+									this.isLoadMores = true
+									this.loadStatus = 'nomore'
+								} else {
+									this.isLoadMores = false
+								}
+							} else {
+								this.isLoadMores = true
+								this.loadStatus = 'nomore'
+							}
+
+						} else {
+							this.isLoadMores = false
+							if (this.dailyPage > 1) {
+								this.dailyPage -= 1
+							}
+						}
+
+					})
+					.catch(err => {
+						console.log(err, '获取普通日报评论列表失败')
+						this.isLoadMores = false
+						if (this.dailyPage > 1) {
+							this.dailyPage -= 1
+						}
+					})
+			},
+			getkeyHeight(e) {
+				this.keyHeight = e.detail.height;
+			},
+			dailyNewsDetial() {
+				uni.$api.dailynews.getdailydetail({
+						dailyId: this.dailyId
+					})
+					.then(res => {
+						console.log(res, 'getdailydetail_RES');
+						this.dailyDetailList = res.data.data;
+						this.commentNum = res.data.data.commentNum;
+						this.converUrlList = res.data.data.converUrlList;
+						this.videoUrList = res.data.data.videoUrList;
+						// console.log(this.videoUrList, '视频列表')
+						this.readUsers = res.data.data.readUsers;
+						this.priseUsers = res.data.data.priseUsers;
+						this.userName = res.data.data.userName;
+						this.userId = res.data.data.userId;
+						// console.log(this.converUrlList, '图片列表');
+					})
+					.catch(err => {
+						console.log(err)
+					})
+			},
+			// 点击图片进行预览
+			previewImage(index) {
+				uni.previewImage({
+					current: index,
+					urls: this.dailyDetailList.converUrlList,
+				})
+			},
+			dataTrn(time) {
+				return dayjs(time).format('YYYY/MM/DD HH:mm');
+			},
+			// 点击已读和点赞的切换
+			haddleSelect(index) {
+				this.tabIndex = index;
+			},
+			// 已读和点赞查看更多
+			golookmore() {
+				uni.navigateTo({
+					url: '../readPrise/readPrise?dailyId=' + this.dailyId + "&userName=" + this.userName
+				})
+			},
+			// 点击详情页的个人日报跳转
+			lookmoreMine() {
+				uni.navigateTo({
+					url: '../personalDaily/personalDaily?userId=' + this.userId + "&userName=" + this.userName
+				})
+			},
+			doneInput: throttle(function(e) {
+				uni.hideKeyboard();
+				this.comment = e.detail.value
+				uni.$api.dailynews.createdailycomment({
+						dailyId: this.dailyId,
+						comment: this.comment
+					})
+					.then(res => {
+						console.log(res, '评论成功');
+						this.commentNum++;
+						this.textOne = '';
+						let lala = {
+							"userName": this.$store.state.user.info.name,
+							"headUrl": this.$store.state.user.info.headUrl,
+							"comment": this.comment,
+							"fromUid": this.$store.state.user.info.userId,
+						}
+						this.dailyCommon.push(lala)
+					})
+					.catch(err => {
+						console.log(err, '评论失败')
+					})
+			}),
+			logoTime(item) {
+				this.name = item.userName;
+				this.commentId = item.commentId;
+				this.fromUid = item.fromUid;
+				this.replyId = item.replyId;
+				this.parentId = item.parentId;
+				this.$refs.popupReply.open();
+				console.log(this.fromUid, '长按要回复的名字')
+			},
+			deleteCommmit(item, index) {
+				this.delindex = index
+				console.log(item, '删除拿到的评论');
+				this.delcomment = item.commentId;
+				this.deldailyId = item.dailyId;
+				if (item.fromUid == this.$store.state.user.info.userId) {
+					this.$refs.popupDelete.open();
+				} else {
+					console.log('1111')
+				}
+			},
+			deleteCommmit1() {
+				uni.$api.dailynews.delcomment({
+						commentId: this.delcomment,
+						dailyId: this.deldailyId
+					})
+					.then(res => {
+						console.log(res, '删除评论成功');
+						this.commentNum--;
+						this.$refs.popupDelete.close();
+						this.dailyCommon.splice(this.delindex, 1)
+					})
+					.catch(err => {
+						console.log(err, '删除评论失败')
+					})
+			},
+			replyDaily() {
+				this.$refs.popupReply.close();
+				this.showCom = false;
+			},
+			// 去评论评论的内容
+			replyInput: throttle(function(e) {
+				uni.hideKeyboard();
+				console.log(e.detail.value)
+				this.replyComment = e.detail.value;
+				uni.$api.dailynews.createdailycomment({
+						dailyId: this.dailyId,
+						comment: this.replyComment,
+						toUid: this.fromUid,
+						// replyId:this.replyId,
+						parentId: this.parentId
+					})
+					.then(res => {
+						console.log(res, '二级评论创建成功');
+						this.commentNum++;
+						this.textTwo = '';
+						this.showCom = true;
+						let xixi = {
+							"userName": this.$store.state.user.info.name,
+							"headUrl": this.$store.state.user.info.headUrl,
+							"toUserName": this.name,
+							"comment": this.replyComment,
+							"fromUid": this.$store.state.user.info.userId,
+							"toUid": this.fromUid,
+						}
+						this.dailyCommon.push(xixi)
+					})
+					.catch(err => {
+						console.log(err, '二级评论创建失败')
+					})
+			}),
+			// 去点赞
+			goprise: throttle(function() {
+				uni.$api.dailynews.addprise({
+						dailyId: this.dailyId
+					})
+					.then(res => {
+						console.log(res, '点赞成功');
+						this.dailyDetailList.priseNum++;
+						this.dailyDetailList.isPrised = true;
+						this.dailyDetailList.priseUsers.unshift({
+							userId: this.userID,
+							dailyId: this.dailyId,
+							userName: this.prisename,
+							headUrl: this.priseHead
+						})
+					})
+					.catch(err => {
+						console.log(err)
+					})
+			}),
+			// 取消点赞
+			goprised: throttle(function() {
+				uni.$api.dailynews.delprise({
+						dailyId: this.dailyId
+					})
+					.then(res => {
+						console.log(res);
+						this.dailyDetailList.priseNum--;
+						this.dailyDetailList.isPrised = false;
+						let priseMine = this.dailyDetailList.priseUsers;
+						for (let i = 0; i < priseMine.length; i++) {
+							if (priseMine[i].userId == this.userID) {
+								priseMine.splice(i, 1)
+							}
+						}
+					})
+					.catch(err => {
+						console.log(err)
+					})
+			})
+		}
+	}
+</script>
+
+<style>
+	.dayname {
+
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+	}
+
+	.daytime {
+
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.daydetail {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.select_name {
+		font-size: 28rpx;
+		font-weight: 500;
+		color: #333333;
+	}
+
+	.noselect_name {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #333333;
+	}
+
+	.select_bottom {
+		border-bottom-width: 4rpx;
+		border-bottom-color: #487CF1;
+		border-style: solid;
+	}
+
+	.defaultHead {
+		/* display: flex; */
+		justify-content: center;
+		align-items: center;
+		width: 96rpx;
+		height: 96rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+
+	.headName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+
+	.defaultHead1 {
+		/* display: flex; */
+		justify-content: center;
+		align-items: center;
+		width: 56rpx;
+		height: 56rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+
+	.headName1 {
+		font-size: 16rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+
+	.nameCom {
+
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+
+	.contentName {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.defaultHead2 {
+		/* display: flex; */
+		justify-content: center;
+		align-items: center;
+		width: 48rpx;
+		height: 48rpx;
+		background-color: #F75252;
+		border-radius: 45rpx;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+
+	.headName2 {
+		font-size: 14rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+</style>

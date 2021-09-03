@@ -1,0 +1,1025 @@
+<template>
+    <view class="flex flex-1 flex-column">
+        <view class="w-100">
+            <uni-nav-bar left-icon="back" title="防火通讯录" :fixed="true" :statusBar="true" :border="false" :right-text="(sourceType==0 || sourceType==3) ? '': '确定'" @clickRight="clickRight"></uni-nav-bar>
+            <view class="addrbookTop w-100">
+                <view class="searchTitle">
+                    <wt-search-bar @click="test" :radius="100" @input="input" v-model="inputKey" placeholder="搜索联系人" bgColor="#EEEFF3" @cancel="cancel"></wt-search-bar>
+                </view>
+				<!-- 选中的通讯录人员 -->
+                <view class="choseUser" v-if="selectedList.length>0">
+                    <text class="choseText">选择防火通讯录人员</text>
+                    <view class="flex flex-row align-center">
+                        <view class="personnels flex flex-row">
+                            <view class="personnel flex flex-row" v-for="(item,index) of selectedList.slice(0, 5)" :key="item">
+                                <!-- <headImg :userinfo="userInfo" style="position: absolute; top: 144rpx; left: 40rpx; width: 96rpx; height: 96rpx;"></headImg> -->
+                                <image :src="item.headUrl" v-if="item.headUrl" style=" width: 96rpx; height: 96rpx; border-radius: 48rpx;"></image>
+                                <view style="width: 96rpx; height: 96rpx; border-radius: 48rpx;background-color: #F75252;border-width: 4rpx;border-style: solid; border-color: rgba(255, 196, 196, 0.67);" v-else>
+                                    <text class="headName">{{item.name.charAt(item.name.length-2) + item.name.charAt(item.name.length-1)}}</text>
+                                </view>
+                                <image src="../../static/addrBook/delImg@2x.png" @click="cancelUser(item)" style="position: absolute;top: 0rpx; right: 0rpx; width: 30rpx; height: 30rpx; border-radius: 15rpx;"></image>
+                            </view>
+                        </view>
+						<view class="flex align-center justify-center" style="width: 116rpx; height: 116rpx; line-height: 50rpx;" v-if="selectedList.length >= 5? true : false" @click="toMoreUser">
+							<image src="../../static/addrBook/more@2x.png"  style="width: 40rpx; height: 10rpx; margin-left: 74rpx;"></image>
+						</view>
+                    </view>
+                    
+                </view>
+				<!-- 面包屑 -->
+                <view class="cascade">
+                    <zCrumbs v-if="searchShow" ref="crumbs" @crumbsItem="crumbsItem"></zCrumbs>
+                    <text v-else class="searchResult">搜索结果</text>
+                </view>
+            </view>
+        </view>
+		<list class="flex flex-1 w-100 flex-column justify-start align-start" v-if="showDetail">
+			<cell class="flex flex-column w-100">
+				<!-- 本级 -->
+				<view class="vis-a-vis px-3" :border="false" v-if="nowShow" style="margin-top: 16rpx;">
+					<view class="borderT flex flex-row align-center">
+						<image src="../../static/addrBook/sameLevel@2x.png" style="width: 44rpx; height: 44rpx;"></image>
+						<text class="level">本级</text>
+					</view>
+					<view @click="toContactDetil(0)">
+						<view class="flex-row align-center justify-between" style="height: 113rpx; width: 690rpx;">
+							<text style="font-size: 32rpx;font-weight: 400;color: #323234;">{{sameLevel}}</text>
+							<image src="../../static/fireIndex/morehui.png" style="width: 22rpx; height: 22rpx;"></image>
+						</view>
+					</view>
+				</view>
+				<!-- 上级 -->
+				<view class="vis-a-vis px-3" v-if="showSup" style="margin-top: 16rpx;">
+					<view class="borderT flex flex-row align-center">
+						<image src="../../static/addrBook/superior@2x.png" style="width: 44rpx; height: 44rpx;"></image>
+						<text class="level">上级</text>
+					</view>
+					<view @click="toSupDetil(-1)">
+						<view class="flex-row align-center justify-between" style="height: 113rpx; width: 690rpx;">
+							<text style="font-size: 32rpx;font-weight: 400;color: #323234;">{{superior}}</text>
+							<image src="../../static/fireIndex/morehui.png" style="width: 22rpx; height: 22rpx;"></image>
+						</view>
+					</view>
+				</view>
+				<!-- 下级 -->
+				<view class=" vis-a-vis px-3" v-if="showNext" style="margin-top: 16rpx;">
+					<view class="borderT flex flex-row align-center">
+						<image src="../../static/addrBook/junior@2x.png" style="width: 44rpx; height: 44rpx;"></image>
+						<text class="level">下级</text>
+					</view>
+					<view>
+						<view class="flex flex-row align-center justify-between border-bottom" style="height: 113rpx; width: 690rpx;"  v-for="(item,index) of juniorArea" :key="index" @click="toJuniorArea(index)">
+							<text style="
+							font-size: 32rpx;
+							font-weight: 400;
+							color: #323234;">{{item}}</text>
+							<image src="../../static/fireIndex/morehui.png" style="width: 22rpx; height: 22rpx;"></image>
+						</view>
+					</view>
+				</view>
+			</cell>
+		</list>
+            
+        <!-- 通讯录搜索结果 -->
+        <view v-else class="flex flex-1 flex-column ">
+        <view  class="flex flex-1 w-100 flex-column pl-3"  >
+            <wt-list style="background-color: #FFF; "  :api="sourceType == 3 ? 'addressBook.getmailloweruserlist' : 'addressBook.getmaillistuserlist'" :limit="20" ref="searchPeopleList" @resultRequest="resultRequest" :isGetMore="true" :params="{key: inputKey.trim()}" >
+                <template v-slot:dataList="ctx">
+                    <cell class="flex w-100 align-center pl-3" v-for="(item,index) of chengeList(choseList)" :key="index" @click.stop="toPersonal(item,$event)"
+                    style=" 
+                    height: 138rpx; 
+                    border-bottom-width: 1rpx; 
+                    border-bottom-color: #EEEFF3; 
+                    border-style: solid;">
+					
+				   <!-- <checkbox-group name="radio" v-if="sourceType !=0 && sourceType !=3? true : false" style="margin-right: 41rpx;">
+					   <label @click.stop="pitch(item,$event)">
+						   <checkbox :checked="item.isChecked" />
+					   </label>
+				   </checkbox-group> -->
+						<view class="justify-center" v-if="sourceType !=0 && sourceType !=3? true : false" style="width: 80rpx; height: 138rpx;" @click.stop="pitch(item,$event,index)">
+							<image src="../../static/discussion/select.png" style="width: 44rpx; height: 44rpx;" v-if="item.selectValue"></image>
+							<image src="../../static/discussion/unselected.png" style="width: 44rpx; height: 44rpx;" v-if="item.selectValue == false"></image>
+							<image src="../../static/addrBook/checked.png" style="width: 44rpx; height: 44rpx;" v-if="item.selectValue == 3"></image>
+						</view>
+                        <image :src="item.headUrl" v-if="item.headUrl" class="searchImg"></image>
+                        <view class="searchHead" v-else>
+                            <text class="headName">{{item.name.charAt(item.name.length-2)+item.name.charAt(item.name.length-1)}}</text>
+                        </view>
+                        <view class="searchMsg flex flex-column justify-center">
+                            <view class="NameTit flex flex-row">
+                                <text class="searchName">{{item.name}}</text>
+                                <text class="duty">{{item.jobName}}</text>
+                            </view>
+                            <text :class="sourceType == 0 ? 'searchAddr' : 'searchAddress'">{{item.address}}</text>
+                        </view>
+                        <view class="connection flex flex-row align-center pr-3" v-if="sourceType==0? true : false">
+                            <image src="../../static/addrBook/sendMsg@2x.png" mode="" style="width: 74rpx; height: 74rpx; margin-right: 60rpx;"
+                            @click.stop="sendMsg(item,$event)"></image>
+                            <image src="../../static/addrBook/callPhone@2x.png" mode="" style="width: 74rpx; height: 74rpx;" 
+                            @click.stop="openUnitname(item,index,$event)"></image>
+                        </view>
+						<view class=" flex flex-row pr-3 right-0 flex-1 align-end justify-end" v-if="sourceType==3">
+							<view class="flex justify-center align-center" hover-class="hover-8" @click.stop="lookTa(item)" style="background-color: #00BCAB;width: 212rpx;height: 56rpx;border-radius: 28rpx;">
+								<text class="text-white font-sm">查看Ta的日报</text>
+							</view>
+						</view>
+                    </cell>
+                </template>
+            </wt-list>
+        </view>
+        </view>
+        <view v-if="showNo" class="flex flex-column justify-center align-center" style="position: fixed; top: 0rpx; left: 0rpx; right: 0rpx; bottom: 0rpx; background-color: #F4F5FB;" >
+			<uni-nav-bar left-icon="back" title="防火通讯录" :fixed="true" :statusBar="true" :border="false"></uni-nav-bar>
+            <image src="../../static/addrBook/noAccess@2x.png" style="width: 750rpx; height: 300rpx;"></image>
+            <view class="text-center">
+                <text style="
+                font-size: 28rpx;
+                font-weight: 400;
+                color: #666666;">您暂无权限~</text>
+            </view>
+        </view>
+        <view class="confirm flex w-100 align-center justify-center" v-if="sourceType == 0? false : showBtn">
+            <view class="confirmBtn flex justify-center align-center" @click="backLast">
+                <text class="btnStyle">确定</text>
+            </view>
+        </view>
+        <uni-popup ref="popupWtNameDialog" type="bottom">
+            <view class="w-100 flex justify-center align-center p-2">
+                <wt-dialog :btns="[{
+                    text:'取消',
+                }]" :btnMode="4" :title="`是否致电  ${name}`" @confirm="wtDialogNameConfirm" @close="wtDialogCancel">
+                    <text class="mb-3 text-center" @click="callPhone">{{phone}}</text>
+                </wt-dialog>
+            </view>
+        </uni-popup>
+    </view>
+</template>
+ 
+<script>
+    import { mapGetters, mapActions } from 'vuex';
+    import zCrumbs from "@/components/xiaolu-tree/components/z-crumbs/z-crumbs.vue"
+    import { debounce } from "@/App.vue"
+    import headImg from '@/components/universalHead.nvue'
+    export default {
+        components: {
+            zCrumbs,
+            headImg
+        },
+        data(){
+            return {
+                showNo:false,
+                showBtn:false,
+                searchLink: false,
+                linkmanList: [],
+                inputKey:'',
+                searchShow: true,
+				nowShow:true,
+                showSup: true,
+                showDetail: true,
+                showNext: true,
+                showHead: true,
+                userInfo: {},
+                arr: [],
+                Area: '',
+                sameLevel: '',
+                junior: [],
+                juniorArea: [],
+                superior: '',
+                superiors:[],
+                superiores:[],
+                areaLevel: '',
+                areaCode:'',
+                brand: [],
+                showChoseUser: false,
+                parentCode: '',
+                sourceType:0,    // 页面来源    [0 默认通讯录| 1 选人+ 发消息 | 2 选人+ 会商 ｜3 查看日报]
+                dataList:[],
+                name:'',
+                phone:'',
+                choseUser:[],
+                page: '1',
+				showCheck: true,
+				isCity: false,
+				choseList:[]
+            }
+        },
+        watch: {
+            inputKey(val) {
+                this.refresh(val);
+            }
+        },
+        created() {
+			
+            let This = this;
+            this.refresh = getApp().globalData.debounce((val) => {
+                // console.log('--------------------------------------------');
+                This.$refs.searchPeopleList.refreshData();
+            }, 1000)
+            // this.toJuniorArea = getApp().globalData.debounce(() => {
+            //     this.toJuniorArea();
+            // })
+            
+        },
+        computed:{
+            ...mapGetters({
+                selectedList:'user/selectedList'
+            }),
+			teamMembersObj() {
+				return this.$store.getters['initNim/teamMembersObj']
+			},
+			teamObj() {
+				return this.$store.getters['initNim/teamObj']
+			},
+			currentSessionId() {
+				return this.$store.getters['initNim/currentSessionId']
+			},
+			to() {
+				return this.currentSessionId && this.currentSessionId.split('-')[1]
+			}
+        },
+        onLoad(event) {
+			console.log(event)
+            // this.toJuniorArea = debounce(this.toJuniorArea,500)
+			
+			// console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', this.teamObj[this.to]);
+			console.log(event,'event\\\\\\\\\\\\\\\\')
+            if(event && event.sourceType){
+                this.sourceType = event.sourceType;
+                if(this.sourceType == 3){
+                    this.searchShow = true
+					this.nowShow = false
+                    this.showSup = false
+                }
+            }
+            if(this.sourceType == 2){
+			}else{
+				this.clearSelected();    // 清空已选择用户
+			}
+            
+            // 下面的东西你是在做什么
+			this.userInfo = this.$store.state.user.info;
+			if(this.userInfo.status !== 1){
+				this.showNo = true
+			}
+            console.log(this.userInfo)
+            if(this.userInfo.levelId == 0 && this.sourceType != 3){
+                this.showSup = false
+                this.sameLevel = '国家级'
+                this.Area = 0
+            }else{
+				if(this.sourceType == 3){
+					this.showSup = false
+				}
+            }
+            if(this.userInfo.levelId == 1 && this.sourceType != 3){
+                this.superior = '国家级'
+                this.sameLevel = this.userInfo.provinceName
+                this.Area = this.userInfo.province
+            }
+            if(this.userInfo.levelId == 2){
+                this.superior = this.userInfo.provinceName
+                this.sameLevel = this.userInfo.cityName
+                this.Area = this.userInfo.city
+            }
+            if(this.userInfo.levelId == 3){
+				if(this.userInfo.cityName == "市辖区"){
+					this.superior = this.userInfo.provinceName
+					this.isCity = true
+				}else{
+					this.superior = this.userInfo.cityName
+					this.isCity = false
+				}
+                this.sameLevel = this.userInfo.areaName
+                this.Area = this.userInfo.area
+            }
+            if(this.userInfo.levelId == 4){
+                this.superior = this.userInfo.areaName
+                this.sameLevel = this.userInfo.countyName
+                this.Area = this.userInfo.county
+            }
+            if(this.userInfo.levelId == 5){
+                this.superior = this.userInfo.countyName
+                this.sameLevel = this.userInfo.villageName
+                this.Area = this.userInfo.village
+            }
+            this.arr = [this.userInfo.province,this.userInfo.city,this.userInfo.area,this.userInfo.county,this.userInfo.village]
+            this.arr = this.arr.filter(current => {
+                return current !== null && current !== ''
+            })
+            this.areaLevel = this.userInfo.levelId
+            this.areaCode = this.Area
+            this.supCode = this.arr[this.arr.length - 1]
+            this.superiors = []
+            this.queryRegion(this.userInfo.levelId,this.Area)
+            
+            
+            // this.clearSelected();    // 清空已选择用户
+            this.setListener()
+            // this.selectUser(list);    // 已选择用户
+            
+            // this.unSelectUser(list);    // 删除用户
+        },
+        methods:{
+			chengeList(data){
+				if(this.sourceType == 'addMember'){
+					let memberIndex = null
+					let memberId = this.teamMembersObj[this.to].members.map(item => item.account)
+					let userIdList = data.map(item => item.userId)
+					for (let i = 0; i < memberId.length; i++) {
+						if(userIdList.indexOf(memberId[i]) > -1){
+							memberIndex = userIdList.indexOf(memberId[i])
+							data[memberIndex].selectValue = 3
+						}
+					}
+					
+					console.log(data[memberIndex] && data[memberIndex].selectValue)
+					console.log(data)
+					return data;
+				}
+				return data;
+			},
+			resultRequest(e) {
+				// console.log('rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr',e)
+				this.choseList = e.data.data
+				this.choseList = this.choseList.map(item => {
+					item.selectValue = false
+					item.disabled = false
+					return item
+				})
+				console.log('rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr',this.choseList)
+			},
+			setListener() {
+				//拿到会商人员信息
+				console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',this.selectedList)
+				let _self = this
+				uni.$off('selectedList')
+				uni.$on('selectedList',function(data){
+					console.log('ssssssssssssssssssssss',data)
+				}),
+				console.log(_self.disUser)
+			},
+			
+			
+			
+			//去更多人
+			toMoreUser(){
+				// uni.$emit('moreList',this.selectedList)
+				this.selectUser(this.selectedList);
+				uni.navigateTo({
+					url: '../vote/participant/participant?souteType=2'
+				})
+			},
+			// 查看他的所有日报
+			lookTa(item){
+				uni.navigateTo({
+					url:'../tabbar-1-detail/personalDaily/personalDaily?userId='+item.userId + "&userName=" + item.name
+				})
+			},
+            //搜索
+            input(){
+                this.inputKey = this.inputKey.value.trim()
+                if(this.inputKey == ''){
+                    this.searchShow = true
+                    this.showNext = true
+                    this.searchLink = false
+                    this.selectedList.length > 0
+                }else{
+                    this.showDetail = false
+                    // this.searchShow = false
+                }
+            },
+            test(e){
+                console.log('test_', e);
+            },
+            //点击取消的逻辑
+            cancel(){
+				this.clearSelected()
+                if(this.sourceType == 3){
+                    this.selectedList.length > 0
+                    this.searchLink = false
+                    this.searchShow = true
+					this.nowShow = false
+                    this.showBtn = false
+                    this.showSup = false,
+                    this.showDetail = true,
+                    this.showNext = true
+                }else{
+                    this.selectedList.length > 0
+                    this.searchLink = false
+                    this.showBtn = false
+                    this.showSup = false,
+                    this.showDetail = true,
+                    this.showNext = true
+                }
+                
+                if(this.inputKey !== ''){
+                    this.searchShow = true
+                    this.showNext = false
+                }else{
+                    this.searchShow = true
+                }
+                
+            },
+            sendMsg(item,event){
+                // #ifdef APP-NVUE
+                event.stopPropagation()
+                // #endif
+                uni.navigateTo({
+                    url: '/pages/easy-chat/chat?sessionId=p2p-' + item.userId
+                })
+            },
+            openUnitname(item,index,event){
+                // #ifdef APP-NVUE
+                event.stopPropagation()
+                // #endif
+                uni.makePhoneCall({
+                    phoneNumber: item.phone, //仅为示例
+                });
+            },
+            wtDialogNameConfirm(done,value){
+                done()
+            },
+			//选择通讯录人员
+            pitch(item,event,index){
+                // #ifdef APP-NVUE
+                event.stopPropagation()
+                // #endif
+				item.selectValue = !item.selectValue
+                if(item.selectValue == true){
+                    this.selectUser([item]);
+                } else {
+                    this.unSelectUser([item]);
+                }
+				let list = this.choseList
+				list[index] = item
+				this.choseList = [...list]
+				
+            },
+            cancelUser(item){
+                console.log(item)
+                item.selectValue = false
+                 this.unSelectUser([item])
+            },
+            backLast(){
+                if(!this.sourceType) return
+                this.selectUser(this.choseUser);
+                this.showDetail = true
+                this.searchShow = true
+				if(this.sourceType == 3){
+					this.nowShow = false
+				}
+				
+                this.showNext = true
+                this.selectedList.length > 0
+                this.searchLink = false
+                this.showBtn = false
+            },
+            toPersonal(item,event){
+                console.log(item)
+                // #ifdef APP-NVUE
+                event.stopPropagation()
+                // #endif
+                uni.navigateTo({
+                    url:'./personalPage?userId=' + item.userId + '&sourceType=' + this.sourceType
+                })
+            },
+            ...mapActions({
+                clearSelected:'user/clearSelected',
+                selectUser:'user/selectUser',
+                unSelectUser:'user/unSelectUser'
+            }),
+				clickRight(){
+					console.log(this.selectedList.length)
+                if(this.sourceType && this.sourceType !=3){
+                    // 点击确定选人列表 
+                    console.log(this.selectedList)
+					
+     //                if(this.selectedList.length < 2){
+					// 	uni.showToast({
+					// 	    title: '最少3人才能成为群聊',
+					// 	    icon: 'none'
+					// 	});
+					// 	return ;
+					// }
+                    
+                    console.log('this.selectedList_', this.selectedList);
+					
+					// 即时创建群聊
+					if (this.sourceType === 'createNormalTeamImmediate' && this.selectedList.length>=2) {
+					    let idArr = []
+					    let nameArr = [this.userInfo.name,]
+					    this.selectedList.map(item => {
+					    	idArr.push(item.userId)
+					    	nameArr.push(item.name)
+					    })
+					    
+					    this.$store.dispatch('initNim/nimCreateNormalTeam', {
+					    	name: nameArr.join('、'),
+					    	accounts: idArr
+					    }).then(res => {
+							console.log(res)
+							let team_obj = res
+							uni.$api.addressBook.addteam({
+								TeamId: team_obj.team.teamId,
+								Name: nameArr.join('、'),
+								UserIds:idArr.toString()
+							}).then(res => {
+								if(res.statusCode == 200){
+									uni.navigateBack()
+									uni.showToast({
+										title: '创建群聊成功!',
+										icon: 'success'
+									})
+								}else{
+									this.$store.dispatch('initNim/nimDismissTeam', {
+										teamId: team_obj.team.teamId
+									}).then(res => {
+										uni.navigateBack()
+										uni.showToast({
+											title: '解散成功!'
+										})
+									})
+								}
+							}).catch(err => {
+								this.$store.dispatch('initNim/nimDismissTeam', {
+									teamId: team_obj.team.teamId
+								}).then(res => {
+									uni.navigateBack()
+									uni.showToast({
+										title: '解散成功!'
+									})
+								})
+							})
+							
+					    })
+					    return;
+					}else {
+						uni.showToast({
+						    title: '最少3人才能成为群聊',
+						    icon: 'none'
+						});
+					}
+                    
+                    if (this.sourceType === 'addMember') {
+						if(this.teamObj[this.to].memberNum + this.selectedList.length > 100){
+							uni.showToast({
+								title:'本群限制最大人数为100，请核对人数',
+								icon:'none'
+							})
+						}else{
+							uni.$emit('im-selectAddmember', this.selectedList)
+							uni.navigateBack();
+						}
+                    }
+                    
+                    if (this.sourceType === 'createNormalTeam') {
+                        uni.$emit('im-createNormalTeam', this.selectedList)
+						uni.navigateBack();
+                    }
+                    
+                    let arr = []
+                    
+                    if(1 == this.sourceType){
+                        // 选人+发消息
+                        this.selectedList.map(item => {
+                            let obj = {}
+                            obj.scene = 'p2p'
+                            obj.to = item.userId
+                            arr.push(obj)
+                        })
+                        uni.$emit('im-selectContactOk', arr)
+                        
+                        uni.navigateBack({
+                            delta: 2
+                        })
+                    }
+                    else if(this.selectedList.length>=2) {
+						
+                        // 选人+创建群 
+                        let account = []
+                        let accountName = []
+                        this.selectedList.map(item => {
+                            account.push(item.userId)
+                        })
+                        uni.$emit('im-selectCreateTeam', account)
+                        uni.$emit('im-selectCreateList', this.selectedList)
+                        console.log(this.selectedList,'aaaaaa')
+                        uni.navigateBack({
+                            delta: 1
+                        })
+                    }else {
+						uni.showToast({
+						    title: '最少3人才能成为群聊',
+						    icon: 'none'
+						});
+					}
+                    
+                    
+                }
+            },
+            
+            gttuserInfo(){
+                uni.$api.user.getuserinfo().then(res => {
+                    this.userInfo = res.data.data
+                    console.log(this.userInfo)
+                    if(this.userInfo.levelId == 0){
+                        
+                        this.Area = 0
+                    }else{
+                        this.showSup = false
+                    }
+                    if(this.userInfo.levelId == 1){
+                        this.Area = this.userInfo.province
+						if(this.sourceType == 3){
+							this.showSup = false
+						}else{
+							this.showSup = true
+						}
+                        
+                        this.superior = '国家级'
+                        this.sameLevel = this.userInfo.provinceName
+                    }else{
+                        this.showSup = true
+                    }
+                    if(this.userInfo.levelId == 2){
+                        this.Area = this.userInfo.city
+                        this.sameLevel = this.userInfo.cityName
+                    }
+                    if(this.userInfo.levelId == 3){
+                        this.Area = this.userInfo.area
+                        this.sameLevel = this.userInfo.areaName
+                    }
+                    if(this.userInfo.levelId == 4){
+                        this.Area = this.userInfo.county
+                        this.sameLevel = this.userInfo.countyName
+                    }
+                    if(this.userInfo.levelId == 5){
+                        this.Area = this.userInfo.village
+                        this.sameLevel = this.userInfo.villageName
+                    }
+                    this.arr = [this.userInfo.province,this.userInfo.city,this.userInfo.area,this.userInfo.county,this.userInfo.village]
+                    this.arr = this.arr.filter(current => {
+                        return current !== null && current !== ''
+                    })
+                    this.areaLevel = this.userInfo.levelId
+                    this.areaCode = this.Area
+                    this.supCode = this.arr[this.arr.length - 2]
+					console.log(this.arr[this.arr.length - 2])
+                    this.queryRegion(this.userInfo.levelId + 1,this.Area)
+                    this.superiors = []
+                }).catch(err => {
+                    console.log(err)
+                })
+            },
+            toJuniorArea(index){
+                this.showSup = false
+				if(this.sourceType == 3){
+					this.nowShow = false
+				}else {
+					this.nowShow = true
+				}
+                this.areaLevel = this.junior[index].level,
+                this.areaCode = this.junior[index].code
+                this.parentCode = this.junior[index].parentCode
+                console.log(this.junior[index])
+                this.$refs.crumbs.crumbsList.push(this.junior[index])
+                this.sameLevel = this.juniorArea[index]
+                this.queryRegion(this.areaLevel,this.junior[index].code,index)
+            },
+            
+            toContactDetil: function(level){
+				console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', this.sourceType);
+                uni.navigateTo({
+                    url: '/pages/addrBook/contact?msg='+encodeURIComponent(JSON.stringify({
+                            'attr': this.areaLevel + level,
+                            'area': this.areaCode,
+                            'title': '本级人员',
+                            sourceType:this.sourceType
+                        })),
+                    success: res => {},
+                    fail: () => {},
+                    complete: () => {}
+                });
+            },
+            
+            toSupDetil: function(level){
+                console.log(level)
+                console.log(this.areaLevel + level)
+                console.log(this.arr[this.arr.length - 2])
+				if(this.isCity){
+					uni.navigateTo({
+					    url: '/pages/addrBook/contact?msg='+encodeURIComponent(JSON.stringify({
+					            'attr': this.areaLevel -2,
+					            'area': this.arr[this.arr.length - 3],
+					            'title': '上级人员',
+								'isCity': this.isCity,
+					            sourceType:this.sourceType
+					        })),
+					    success: res => {},
+					    fail: () => {},
+					    complete: () => {}
+					});
+				}else{
+					uni.navigateTo({
+					    url: '/pages/addrBook/contact?msg='+encodeURIComponent(JSON.stringify({
+					            'attr': this.areaLevel + level,
+					            'area': this.arr[this.arr.length - 2],
+					            'title': '上级人员',
+					            sourceType:this.sourceType
+					        })),
+					    success: res => {},
+					    fail: () => {},
+					    complete: () => {}
+					});
+				}
+            },
+            
+            crumbsItem(e,crumbsList) {
+                if(e.id == 0){
+                    uni.$api.user.getuserinfo().then(res => {
+                        this.userInfo = res.data.data
+                        console.log(this.userInfo)
+                        if(this.userInfo.levelId == 0){
+                            this.showSup = false
+                            this.sameLevel = '国家级'
+                        }else{
+							if(this.sourceType == 3){
+								this.showSup = false
+								this.nowShow = false
+							}else{
+								this.showSup = true
+							}
+                            
+                        }
+                        if(this.userInfo.levelId == 1){
+                            this.superior = '国家级'
+                            this.sameLevel = this.userInfo.provinceName
+                        }
+                        if(this.userInfo.levelId == 2){
+                            this.superior = this.userInfo.provinceName
+                            this.sameLevel = this.userInfo.cityName
+                        }
+                        if(this.userInfo.levelId == 3){
+                            this.superior = this.userInfo.cityName
+                            this.sameLevel = this.userInfo.areaName
+                        }
+                        if(this.userInfo.levelId == 4){
+                            this.superior = this.userInfo.areaName
+                            this.sameLevel = this.userInfo.countyName
+                        }
+                        if(this.userInfo.levelId == 5){
+                            this.superior = this.userInfo.countyName
+                            this.sameLevel = this.userInfo.villageName
+                        }
+                        this.arr = [this.userInfo.province,this.userInfo.city,this.userInfo.area,this.userInfo.county,this.userInfo.village]
+                        this.arr = this.arr.filter(current => {
+                            return current !== null && current !== ''
+                        })
+                        this.areaLevel = this.userInfo.levelId
+                        this.areaCode = this.Area
+                        this.supCode = this.arr[this.arr.length - 1]
+                        this.superiors = []
+                        this.queryRegion(this.userInfo.levelId + 1,this.Area)
+                    }).catch(err => {
+                        console.log(err)
+                    })
+                }else{
+                    this.queryRegion(e.level,e.code)
+                    console.log(e.code)
+                    this.areaLevel = e.level
+                    this.areaCode = e.code
+                    this.sameLevel = e.name
+                    this.showSup = false
+                    this.superior = this.superiores[this.superiores.length -(this.superiores.length - e.level) -2]
+                }
+            },
+            queryRegion(attr,Area,index){
+                console.log(Area)
+                uni.$api.user.getareacodelist({
+					"types":  1,
+                    "attr": attr + 1,
+                    "Area": String(Area) || '0'
+                }).then(res => {
+                    console.log(res)
+                    this.junior = res.data.data
+                    if(this.userInfo.status == 1 && res.data.data == null){
+                        this.showNo = false
+                    }
+                    if(this.userInfo.status !== 1){
+						this.showNo = true
+                        this.showSup = false,
+                        this.showDetail = false,
+                        this.showNext = false
+                    }
+                    this.superiors.push(this.sameLevel)
+                    // for (var i = 0; i < this.sameLevel.length; i++) {
+                    //     if (this.superiores .indexOf(this.superiors[i]) === -1) {
+                    //         this.superiores .push(this.superiors[i])
+                    //     }
+                    // }
+                    this.superiores = this.superiores.filter((i => i && i !== null))
+                    console.log(this.superiores)
+                    
+                    if(this.junior.length < 1){
+                        this.showNext = false
+                    }else{
+                        this.showNext = true
+                    }
+                    this.juniorArea = this.junior.map(item => item.name)
+                }).catch(err => {
+                    console.log(err)
+                })
+            }
+        }
+    }
+</script>
+ 
+<style>
+.addrbookTop{
+    background-color: #FFF;
+}
+.personnels{
+    width: 600rpx;
+    margin-top: 24rpx;
+    padding-left: 30rpx;
+    padding-right: 30rpx;
+}
+.level{
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #323234;
+	line-height: 32rpx;
+	margin-left: 16rpx;
+}
+.borderT{
+	width: 690rpx; 
+	height: 96rpx; 
+	border-bottom-width: 1rpx;
+	border-bottom-color: #EEEFF3;
+	border-style: solid;
+}
+.choseUser{
+    height: 225rpx;
+    margin-top: 30rpx;
+}
+.personnel{
+    position: relative;
+    width: 96rpx;
+    height: 96rpx;
+    margin-right: 24rpx;
+    border-radius: 48rpx;
+}
+.choseText{
+    font-size: 32rpx;
+    font-weight: 500;
+    color: #323234;
+    padding-left: 30rpx;
+}
+.searchTitle{
+    width: 750rpx;
+    height: 104rpx;
+}
+.cascade{
+    height: 94rpx;
+}
+.vis-a-vis{
+    width: 750rpx;
+    /* height: 210rpx; */
+    background-color: #FFF;
+}
+.junior{
+    width: 750rpx;
+    background-color: #FFF;
+    margin-bottom: 16rpx
+}
+ 
+.headImg {
+    width: 96rpx;
+    height: 96rpx;
+    margin-right: 24rpx;
+    border-radius: 48rpx;
+    border-width: 4rpx;
+    border-color: rgba(255, 196, 196, 0.67);
+    border-style: solid;
+}
+.searchHead{
+    width: 96rpx;
+    height: 96rpx;
+    background-color: #F75252;
+    border-radius: 50%;
+    border-width: 4rpx;
+    border-style: solid;
+    border-color: rgba(255, 196, 196, 0.67);
+}
+.searchResult{
+    padding-left: 30rpx;
+    line-height: 96rpx;
+    font-size: 30rpx;
+    font-weight: 400;
+    color: #949599;
+}
+.defaultHead{
+    position: absolute;
+    top: 144rpx;
+    left: 40rpx;
+    width: 96rpx;
+    height: 96rpx;
+    background-color: #F75252;
+    border-radius: 50%;
+    border-width: 4rpx;
+    border-style: solid;
+    border-color: rgba(255, 196, 196, 0.67);
+}
+.headName{
+    font-size: 32rpx;
+    font-weight: 400;
+    color: #FFFFFF;
+    text-align: center;
+    line-height: 96rpx;
+}
+.linkUse{
+    padding-top: 8rpx;
+    padding-bottom: 8rpx;
+    padding-left: 16rpx;
+    padding-right: 16rpx;
+    font-size: 22rpx;
+    font-weight: 400;
+    color: #F07A4E;
+    border-radius: 20rpx;
+}
+ 
+ 
+.searchImg{
+    width: 96rpx;
+    height: 96rpx;
+    border-radius: 48rpx;
+}
+.searchMsg{
+    height: 96rpx;
+    margin-left: 24rpx;
+    margin-right: 20rpx;
+}
+.searchName{
+    width: 150rpx;
+    font-size: 32rpx;
+    font-weight: 400;
+    color: #487CF1;
+    margin-right: 16rpx;
+    lines: 1;
+    text-overflow: ellipsis;
+}
+.duty{
+    padding: 4rpx 16rpx;
+    border-width: 1rpx;
+    border-style: solid;
+    font-size: 22rpx;
+    border-color: #F07A4E;
+    color: #F07A4E;
+    border-radius: 20px;
+}
+.searchAddr{
+    width: 342rpx;
+    font-size: 24rpx;
+    font-weight: 400;
+    color: #949599;
+    margin-top: 19rpx;
+    lines: 1;
+    text-overflow: ellipsis;
+}
+.searchAddress{
+	width: 342rpx;
+    font-size: 24rpx;
+    font-weight: 400;
+    color: #949599;
+    margin-top: 19rpx;
+    lines: 1;
+    text-overflow: ellipsis;
+}
+ 
+.confirm{
+    position: fixed;
+    bottom: 0rpx;
+    width: 750rpx;
+    height: 128rpx;
+    background-color: #FFFFFF;
+    box-shadow: 0px -8px 14px 0px rgba(169, 169, 169, 0.07), 0px 1px 0px 0px #E5E5E5;
+}
+.confirmBtn{
+    width: 686rpx;
+    height: 88rpx;
+    background-color: #487CF1;
+    border-radius: 44rpx;
+}
+.btnStyle{
+    font-size: 36rpx;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+.showSearch{
+    padding-top: 575rpx;
+}
+.noshowSearch{
+    padding-top: 350rpx;
+}
+</style>

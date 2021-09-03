@@ -1,0 +1,106 @@
+<template>
+	<view  style="background-color: #FFFFFF;" class="flex flex-column flex-1 w-100">
+		<!-- 违规未回执详情 -->
+		<uni-nav-bar left-icon="back" title="违规举报详情" :statusBar="true" @clickLeft="navigateBack"></uni-nav-bar>
+		<list class="flex flex-column w-100 flex-1 w-100">
+			<cell class="p-3 w-100">
+				<view style="border-radius: 16rpx;background-color: #F4F5FB;">
+					<view class="pl-3 pr-3 pt-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">举报人</text>
+						<text class="violation_bottom">{{violationed.username}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">手机号</text>
+						<text class="violation_bottom">{{violationed.phone}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">举报时间</text>
+						<text class="violation_bottom">{{dateTran(violationed.created_at)}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">举报地点</text>
+						<text class="violation_bottom">{{violationed.park_name}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">举报地址</text>
+						<text class="violation_bottom">{{violationed.place}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">举报位置</text>
+						<text class="violation_bottom">{{violationed.lng}}，{{violationed.lat}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text style="font-size: 32rpx;font-weight: 400;color: #606266;">违规图片/视频</text>
+						<view class="flex flex-row justify-between flex-wrap">
+							<view  v-for="(item,index) in imageList" :key="index" style="padding-top: 28rpx;">
+								<wt-media :media="headUrl+item.url"   style="width: 300rpx;height: 200rpx;border-radius: 15rpx;"></wt-media>
+							</view>
+						</view>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">描述</text>
+						<text class="violation_bottom">{{violationed.describe}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">回执时间</text>
+						<text class="violation_bottom">{{dateTran(violationed.handle_date)}}</text>
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		data(){
+			return{
+				violationed:'',
+				imageList:[],
+				title:'',
+				headUrl:'https://fhm-oss.limefamily.cn/fhm/'
+			}
+		},
+		onLoad(e) {
+			console.log(e);
+			this.title=e.title;
+			uni.$api.violation.getviolationdetail({
+				id:e.id
+			})
+			.then(res=>{
+				console.log(res,'详情数据');
+				this.violationed = res.data.data;
+				this.imageList = res.data.data.images;
+			})
+			.catch(err=>{
+				console.log(err)
+			})
+		},
+		methods:{
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+			navigateBack(){
+				uni.navigateBack(1)
+			}
+		}
+	}
+</script>
+
+<style>
+	.violation_top {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #606266;
+		padding-bottom: 14rpx;
+	}
+
+	.violation_bottom {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+</style>

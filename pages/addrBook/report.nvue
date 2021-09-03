@@ -1,0 +1,94 @@
+<template>
+	<view class="flex flex-1 w-100 flex-column justify-between align-center px-3">
+		<uni-nav-bar left-icon="back" title="用户举报" :fixed="true" :statusBar="true"></uni-nav-bar>
+		<view class="w-100 flex flex-column justify-center px-3" style="height: 96rpx;">
+			<text class="reason">请告诉我们你想举报该用户的理由</text>
+		</view>
+		<list class="flex w-100 flex-column px-3 bg-white">
+			<cell class="flex flex-row justify-between align-center border-bottom" v-for="(item,index) in reportList" style="width: 690rpx; height: 112rpx;">
+				<text class="textSize" style="width: 600rpx;">{{item.violationValue}}</text>
+				<view class="flex flex-column" @click="pitch(item,index)">
+					<image src="../../static/discussion/select.png" style="width: 44rpx; height: 44rpx;" v-if="item.currentChose"></image>
+					<image src="../../static/discussion/unselected.png" style="width: 44rpx; height: 44rpx;" v-else></image>
+				</view>
+			</cell>
+		</list>
+		<view class="position-fixed bottom-0 w-100 px-3" style="padding-bottom: 10rpx;">
+			<view class="align-center justify-center" style="width: 690rpx; height: 96rpx; background-color: #007AFF; border-radius: 18rpx;" @click="report">
+				<text style="font-size: 32rpx; color: #FFF;">举报</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data(){
+			return {
+				reportList: [],
+				ViolationType: '',
+				ToUser: ''
+			}
+		},
+		onLoad(e) {
+			console.log(e)
+			this.getReportList()
+			this.ToUser = e.userId
+		},
+		methods:{
+			pitch(item,index){
+				console.log(1111,item)
+				this.ViolationType = item.violationType
+				console.log(this.ViolationType,'ssssssss')
+				let list = this.reportList
+				
+				for (let i = 0; i < this.reportList.length; i++) {
+					list[i].currentChose = false
+				}
+				list[index].currentChose = true
+				
+				this.reportList = [...list]
+				console.log(list,'llll')
+			},
+			getReportList(){
+				uni.$api.addressBook.getviolationtype().then(res => {
+					this.reportList = res.data.data
+					console.log(this.reportList)
+					this.reportList = this.reportList.map(item => {
+						item.currentChose = false
+						return item
+					})
+					console.log('rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr',this.reportList)
+				}).catch(err =>{
+					
+				})
+			},
+			report(){
+				uni.$api.addressBook.addreport({
+					ViolationType: this.ViolationType,
+					ToUser: this.ToUser
+				}).then(res => {
+					if(res.data.statusCode == 200){
+						uni.navigateTo({
+							url:'./reportSuccess'
+						})
+					}
+				}).catch(err => {
+					console.log(err)
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+.reason{
+	color: #999999;
+	font-weight: 400;
+	font-size: 28rpx;
+}
+.textSize{
+	font-size: 28rpx;
+	font-weight: 400;
+}
+</style>

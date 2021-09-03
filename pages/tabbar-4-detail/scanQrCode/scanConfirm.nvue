@@ -1,0 +1,104 @@
+<template>
+	<view class="flex flex-1 flex-column w-100">
+		<uni-nav-bar left-icon="back" title="扫码认证" :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-1 w-100 flex-column">
+			<cell class="p-3 flex flex-row align-center">
+				<image src="../../../static/work/jinshanzheng.png" style="width: 50rpx;height: 39rpx;"></image>
+				<text class="pl-1 font-1" style="font-size: 50rpx;">{{option.park_name}}</text>
+			</cell>
+			<cell class="p-3"><text class="font-1">用户行为</text></cell>
+			<cell class="p-3 flex flex-row py-3">
+				<view class="border flex justify-center align-center rounded" :class="userActive? '' :'theme-second-green-border'" style="width: 200rpx;height: 60rpx;" @click="selectUserActive(0)">
+					<text class="font-2" :class="userActive? '' :'theme-second-green-color'">进山</text>
+				</view>
+				<view class="border flex justify-center align-center rounded ml-3" :class="userActive? 'theme-second-green-border' :''" style="width: 200rpx;height: 60rpx;" @click="selectUserActive(1)">
+					<text class="font-2" :class="userActive? 'theme-second-green-color' :''">出山</text>
+				</view>
+			</cell>
+			
+			<cell class="p-3"><text class="font-1">所在卡口</text></cell>
+			
+			<cell class="flex flex-column w-100 justify-center align-center p-3">
+				<view v-for="(item, index) in entranceList" :key="index" @click="selectEntrance(index)" :class="entranceIndex == index ? 'theme-second-green-border' :''" class="border rounded flex align-center justify-center mb-2" style="width: 690rpx;height: 60rpx;">
+					<text class="font-2" :class="entranceIndex == index ? 'theme-second-green-color' :''">{{item.name}}</text>
+				</view>
+			</cell>
+		</list>
+		<view class="w-100 flex justify-between align-center px-3 border-top" style="height: 128rpx;background: #FFFFFF;">
+			<view class="flex justify-center align-center" hover-class="hover-8" style="width: 333rpx;height: 88rpx;border-color: #487CF1;border-radius: 44rpx;border-width: 1px;" @click="back">
+				<text class="font-2" style="color: #487CF1;">返回</text>
+			</view>
+			<view class="flex justify-center align-center" hover-class="hover-8" style="width: 333rpx;height: 88rpx;background-color: #487CF1;border-radius: 44rpx;border-width: 1px;border-color: #487CF1;" @click="confirm">
+				<text class="font-2" style="color: #FFFFFF;">确认</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				option:{
+					park_name:''
+				},
+				userActive:0,
+				entranceList:[],
+				entranceIndex:null
+			}
+		},
+		onLoad(event) {
+			this.option = JSON.parse(decodeURIComponent(event.query));
+			this.selectUserActive(0);
+		},
+		methods: {
+			back(){
+				uni.navigateBack();
+			},
+			selectUserActive(active){
+				this.userActive = active;
+				this.entranceIndex = null;
+				this.getEntranceList();
+			},
+			selectEntrance(index){
+				this.entranceIndex = index;
+			},
+			confirm(){
+				if(null == this.entranceIndex) return uni.showToast({
+					title: '请选择卡口',
+					icon: 'none'
+				});
+				uni.$api.appointment.userPass({
+					id:this.option.id
+				},{
+					entrance_id:this.entranceList[this.entranceIndex].id
+				})
+				.then(res=>{
+					console.log('userPass_RES', res);
+					uni.navigateTo({
+						url:'./success'
+					})
+				})
+				.catch(err=>{
+					console.log('userPass_ERR', err);
+				})
+			},
+			getEntranceList(){
+				uni.$api.appointment.entranceList({
+					type:this.userActive
+				})
+				.then(res=>{
+					console.log('getEntranceList_RES', res);
+					this.entranceList = res.data.data;
+					this.entranceList[0] && (this.option.park_name = this.entranceList[0].park_name);
+				})
+				.catch(err=>{
+					console.log('getEntranceList_ERR', err);
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+</style>

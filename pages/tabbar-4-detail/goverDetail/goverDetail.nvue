@@ -1,0 +1,102 @@
+<template>
+	<view class="flex flex-1 flex-column w-100" style="background-color: #FFFFFF;">
+		<!-- 导航栏 -->
+		<uni-nav-bar left-icon="back" title="通知" :statusBar="true" @clickLeft="navigateBack" :border="false"> </uni-nav-bar>
+		<list class="flex flex-column flex-1 w-100">
+			<cell class="pl-3 pr-3">
+				<!-- 信息详情部分 -->
+				<view>
+					<view style="width: 690rpx;">
+						<text class="fire_detail" style="width: 690rpx;line-height: 70rpx;">{{goveDetail.title}}</text>
+					</view>
+					<view class="flex flex-row" style="width: 690rpx;margin-top: 8rpx;">
+						<text class="detail_name">来源：{{goveDetail.author}}</text>
+						<text class="detail_time">{{dateTran(goveDetail.createTime)}}</text>
+					</view>
+					<view style="margin-top: 16rpx;margin-bottom: 48rpx;">
+						<mp-html :content="goveDetail.content" />
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	import mpHtml from '@/components/mp-html/mp-html';
+	import dayjs from 'dayjs';
+	// import uniCell from '@/components/uni-cell.vue';
+	// import sessionList from '../../easy-chat/session-list.nvue';
+	export default {
+		components: {
+			mpHtml,
+			// uniCell,
+			// sessionList
+		},
+		data() {
+			return {
+				id: 0,
+				goveDetail: []
+			}
+		},
+		onLoad(e) {
+			console.log(e.id)
+			this.id = e.id;
+			uni.$api.govement.getgovecontent({
+					id: this.id,
+				})
+				.then(res => {
+					console.log('getgovecontent_RES', res);
+					this.goveDetail = res.data.data || [];
+				})
+				.catch(err => {
+					console.log('getgovecontent_ERR', err);
+				})
+
+		},
+		methods: {
+			//返回上一级
+			navigateBack1() {
+				uni.navigateBack(1)
+			},
+			dateTran(time) {
+				return dayjs(time).format('YYYY.MM.DD HH:mm');
+			},
+		}
+	}
+</script>
+
+<style>
+	/* #ifndef APP-PLUS */
+	page {
+		flex: 1;
+		display: flex;
+		width: 750rpx;
+		flex-direction: column;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+
+	/* #endif */
+	.fire_detail {
+		font-size: 46rpx;
+		font-weight: 600;
+		color: #323234;
+	}
+
+	.detail_name {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.detail_time {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+		margin-left: 54rpx;
+	}
+</style>

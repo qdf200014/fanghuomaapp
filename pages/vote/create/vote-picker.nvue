@@ -1,0 +1,188 @@
+<template>
+    <uni-popup type="bottom" ref="voteTimePicker">
+		<view class="left-0 right-0 bottom-0 w-100 bg-white">
+		    <view class="flex flex-row w-100 justify-between px-4 py-2 align-center">
+				<view hover-class="hover-8" @click="cancelVotePicker"><text class="font-4">取消</text></view>
+				<view hover-class="hover-8" @click="confimVotePicker"><text class="font-4" style="color: #F75252;">确定</text></view>
+		    </view>
+		    <picker-view v-if="visible" @click="pickDown" :indicator-style="indicatorStyle" :value="timeValue" @change="bindChange" class="picker-view">
+				<picker-view-column>
+				    <view class="item" v-for="(item,index) in years" :key="index">{{item}}年</view>
+				</picker-view-column>
+		        <picker-view-column>
+		            <view class="item" v-for="(item,index) in months" :key="index">{{item}}月</view>
+		        </picker-view-column>
+		        <picker-view-column>
+		            <view class="item" v-for="(item,index) in days" :key="index">{{item}}日</view>
+		        </picker-view-column>
+		        <picker-view-column>
+		            <view class="item" v-for="(item,index) in hours" :key="index">{{item}}时</view>
+		        </picker-view-column>
+		        <picker-view-column>
+		            <view class="item" v-for="(item,index) in minutes" :key="index">{{item}}分</view>
+		        </picker-view-column>
+		    </picker-view>
+		</view>
+	</uni-popup>
+</template>
+<script>
+    export default {
+		props:{
+			startTime:{
+				type:[String, Object],
+				default:()=>new Date()
+			},
+			nowLast:{
+				type:Boolean,
+				default:()=>null
+			}
+		},
+        data: function () {
+            const date = new Date()
+            const years = []
+            const year = date.getFullYear()
+            const months = []
+            const month = date.getMonth() + 1
+            const days = []
+            const day = date.getDate()
+			if(this.nowLast == true){
+				for (let i = year; i <= year; i++) {
+				    years.push(i)
+				}
+			}else{
+				for (let i = year; i <= year+10; i++) {
+					years.push(i)
+				}	
+			}
+            
+            for (let i = month; i <= 12; i++) {
+                months.push(i)
+            }
+            for (let i = day; i <= 31; i++) {
+                days.push(i)
+            }
+			
+			const hours = [];
+			const hour = date.getHours();
+			const minutes = [];
+			const minute = date.getMinutes();
+			for (let i = 0; i <= 23; i++) {
+			    hours.push(i);
+			}
+			for (let i = 0; i <= 59; i++) {
+			    minutes.push(i);
+			}
+			
+            return {
+                title: 'picker-view',
+                years,
+                year,
+                // months,
+                month,
+                // days,
+                day,
+				// hours,
+				hour,
+				// minutes,
+				minute,
+                value: [0, 0, 0, 0, 0],
+                visible: true,
+                indicatorStyle: `height: 50px;`
+            }
+        },
+		computed:{
+			currentTime(){
+				let _t = 		  this.year + 
+							'-' + (this.month>9?this.month:('0'+this.month)) +
+							'-' + (this.day>9?this.day:('0'+this.day)) + 
+							' ' + (this.hour>9?this.hour:('0'+this.hour)) + 
+							':' + (this.minute>9?this.minute:('0'+this.minute));
+				return _t;
+			},
+			startTimeObj(){
+				let currentT = new Date(this.startTime);
+				return {
+					year: currentT.getFullYear(),
+					month: currentT.getMonth()+1,
+					day: currentT.getDate(),
+					hour: currentT.getHours(),
+					minute: currentT.getMinutes(),
+				}
+			},
+			months(){
+				let _m = [], _ms = this.startTimeObj.year == this.year?this.startTimeObj.month:1, _me = 12;
+				for (var i = _ms; i <= _me; i++) {
+					_m.push(i);
+				}
+				return _m;
+			},
+			days(){
+				let _d = [], _ds = (this.startTimeObj.year == this.year && this.startTimeObj.month == this.month)?this.startTimeObj.day:1, _de = (new Date(this.year, this.month, 0)).getDate() + 1;
+				for (var i = _ds; i < _de; i++) {
+					_d.push(i);
+				}
+				return _d;
+			},
+			hours(){
+				let _h = [], _hs = (this.startTimeObj.year == this.year && this.startTimeObj.month == this.month && this.startTimeObj.day == this.day)?this.startTimeObj.hour:0, _he = 24;
+				for (var i = _hs; i < _he; i++) {
+					_h.push(i);
+				}
+				return _h;
+			},
+			minutes(){
+				let _mm = [], _mms = (this.startTimeObj.year == this.year && this.startTimeObj.month == this.month && this.startTimeObj.day == this.day && this.startTimeObj.hour == this.hour)?this.startTimeObj.minute:0, _mme = 60;
+				for (var i = _mms; i < _mme; i++) {
+					_mm.push(i);
+				}
+				return _mm;
+			},
+			timeValue(){
+				let value_before = this.value;
+				// let vy  = Math.max(0, this.years.findIndex(item=>item == this.year));
+				// let vm  = Math.max(0, this.months.findIndex(item=>item == this.month));
+				// let vd  = Math.max(0, this.days.findIndex(item=>item == this.day));
+				// let vh  = Math.max(0, this.hours.findIndex(item=>item == this.hour));
+				// let vmm = Math.max(0, this.minutes.findIndex(item=>item == this.minute));
+				// let _value = [vy, vm, vd, vh, vmm];
+				// console.log('_value', this.year, this.month, this.day, this.hour, this.minute);
+				return value_before;
+			}
+		},
+        methods: {
+			open(){
+				this.$refs.voteTimePicker.open();
+			},
+			cancelVotePicker(){
+				this.$refs.voteTimePicker.close();
+			},
+			confimVotePicker(){
+				this.$emit('change', this.currentTime);
+				this.cancelVotePicker();
+			},
+            bindChange: function (e) {
+                const val = e.detail.value
+				this.value = val;
+                this.year = this.years[val[0]]
+                this.month = this.months[val[1]]
+                this.day = this.days[val[2]]
+				this.hour = this.hours[val[3]];
+				this.minute = this.minutes[val[4]];
+            }
+        }
+    }
+</script>
+<style>
+    .picker-view {
+        width: 750rpx;
+        height: 600rpx;
+        margin-top: 20rpx;
+    }
+    .item {
+        height: 50px;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+		transform: scale(0.8);
+    }
+</style>

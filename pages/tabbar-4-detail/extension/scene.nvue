@@ -1,0 +1,107 @@
+<template>
+	<view>
+		<view class="p-3">
+			<view style="background-color: #F4F5FB;border-radius: 8rpx;" class="area">
+				<view class="flex flex-row">
+					<text class="area_title">已应用场景：</text>
+					<text class="area_title">已启用防火码的应用场景数量</text>
+				</view>
+				<view class="flex flex-row">
+					<text class="area_title">场景总量：</text>
+					<text class="area_title">已录入系统的应用场景总量</text>
+				</view>
+			</view>
+		</view>
+		<view>
+			<view class="flex flex-row" style="padding-left: 126rpx;height: 100rpx;background-color: #EFEFEF;">
+				<view style="width: 200rpx;height: 100rpx;" class="flex align-center justify-center">
+					<text class="tab_name">场景应用率</text>
+				</view>
+				<view style="width: 200rpx;height: 100rpx;" class="flex align-center justify-center">
+					<text class="tab_name">已应用场景</text>
+				</view>
+				<view style="width: 200rpx;height: 100rpx;" class="flex align-center justify-center">
+					<text class="tab_name">场景总体</text>
+				</view>
+			</view>
+			<view class="flex flex-row"  v-for="(item,index) in sceneList" :key="index" :style="{'background-color': (index%2==0 ? '#F7F7F7':'#EFEFEF')}">
+				<view style="width: 126rpx;" class="flex align-center justify-center">
+					<text style="padding-left: 26rpx;width: 126rpx;text-align: center;" class="entar_data">{{item.name}}</text>
+				</view>
+				<view style="width: 200rpx;height: 100rpx;" class="flex align-center justify-center">
+					<text class="line-1 entar_data">{{dataRpe(item.percentage)}}</text>
+				</view>
+				<view style="width: 200rpx;height: 100rpx;" class="flex align-center justify-center">
+					<text class="entar_data">{{item.active}}</text>
+				</view>
+				<view style="width: 200rpx;height: 100rpx;" class="flex align-center justify-center">
+					<text class="entar_data">{{item.total}}</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import getPercent from '@/utils/getPercent.js';
+	export default {
+		data(){
+			return{
+				sceneList:[]
+			}
+		},
+		methods:{
+			dataRpe(data){
+				
+				return getPercent(data || 0, 1);
+			}
+		},
+		created() {
+			uni.$api.extension.getscene()
+			.then(res=>{
+				console.log(res,'getscene_RES');
+				let data = res.data.data.data
+				this.sceneList = data;
+			})
+			.catch(err=>{
+				console.log(err,'getscene_ERR')
+			})
+		}
+	}
+</script>
+
+<style>
+.level {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+		line-height: 32rpx;
+		margin-left: 14rpx;
+	}
+
+	.area_title {
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #949599;
+		line-height: 36rpx;
+	}
+
+	.area {
+		padding-top: 17rpx;
+		padding-bottom: 15rpx;
+		padding-left: 24rpx;
+		padding-right: 20rpx;
+	}
+	.tab_name{
+		
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #303233;
+	}
+	.entar_data{
+		
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #606266;
+	}
+</style>

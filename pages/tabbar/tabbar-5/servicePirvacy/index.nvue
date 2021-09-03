@@ -1,0 +1,158 @@
+<template>
+	<div class="w-100 flex flex-1 flex-column justify-center align-center position-relative">
+		<uni-nav-bar left-icon="back" title="设置" :statusBar="true"></uni-nav-bar>
+		<uni-list class="flex-1 w-100">
+			<uni-list-item link to="/pages/tabbar/tabbar-5/servicePirvacy/pirvacy">
+				<template slot="header">
+					<text style="
+					font-size: 32rpx;
+					font-weight: 400;
+					color: #333333;">服务协议</text>
+				</template>
+			</uni-list-item>
+			<uni-list-item title="" link to="/pages/tabbar/tabbar-5/servicePirvacy/service">
+				<template slot="header">
+					<text style="
+					font-size: 32rpx;
+					font-weight: 400;
+					color: #333333;">隐私政策</text>
+				</template>
+			</uni-list-item>
+			<uni-list-item title="" :clickable="true" @click="openWtDialog(0)" :rightText="sizeStr">
+				<template slot="header">
+					<text style="
+					font-size: 32rpx;
+					font-weight: 400;
+					color: #333333;">清理缓存</text>
+				</template>
+			</uni-list-item>
+			<uni-list-item title="" :clickable="true" @click="openWtDialog(1)">
+				<template slot="header">
+					<text style="
+					font-size: 32rpx;
+					font-weight: 400;
+					color: #333333;">注销用户</text>
+				</template>
+			</uni-list-item>
+			<uni-list-item></uni-list-item>
+		</uni-list>
+		<text class="font-4 p-1 w-100 text-center position-absolute left-0" style="bottom: 100rpx;">防火码 V{{appVersion.version}}_{{appVersion.versionCode}}</text>
+		<view class="quitLogin" @click="quit" hover-class="hover-8">
+			<text style="color: #FFF;">退出登录</text>
+		</view>
+		
+		<!-- dialog -->
+		<uni-popup ref="popupWtDialog" type="center">
+			<wt-dialog :btnMode="1" :title="dialogIndex>=0 ? dialog[dialogIndex].title : ''" :content="dialogIndex>=0 ? dialog[dialogIndex].content : ''" @confirm="wtDialogConfirm" @close="wtDialogCancel">
+			</wt-dialog>
+		</uni-popup>
+	</div>
+</template>
+
+<script>
+	//#ifdef APP-PLUS
+	import WTCache from '@/common/wt-cache/index.js';
+	//#endif
+	export default {
+		data(){
+			return {
+				dialog:[{
+					title:'清理缓存',
+					content: '是否要清理缓存'
+				},{
+					title:'账户注销',
+					content: '账户注销后不可恢复，是否继续？'
+				}],
+				dialogIndex:-1,
+				sizeStr:''
+			}
+		},
+		computed:{
+			appVersion(){
+				return this.$store.state.app.runtime;
+			}
+		},
+		onLoad() {
+			console.log('设置页面');
+			this.checkCache();
+		},
+		methods:{
+			// 打开确认窗口
+			openWtDialog(index){
+				this.dialogIndex = index;
+				this.$refs.popupWtDialog.open();
+			},
+			// dialog确认按钮,单按钮回调
+			wtDialogConfirm(done, val){
+				switch (this.dialogIndex){
+					case 0:
+					this.clearCache();
+						break;
+					case 1:
+					this.logoutUser();
+						break;
+					default:
+						break;
+				}
+				done();
+				this.dialogIndex = -1;
+			},
+			// dialog取消按钮回调
+			wtDialogCancel(){
+				this.dialogIndex = -1;
+			},
+			//注销用户
+			logoutUser(){
+				uni.$api.user.logoffuser().then(res => {
+					if(200 == res.data.statusCode){
+						this.quit();
+					}
+				}).catch(err => {
+					console.log(err)
+				})
+			},
+			//退出登录
+			quit(){
+				this.$store.dispatch('initNim/logOut')
+				uni.removeStorageSync('token')
+				uni.removeStorageSync('userInfo')
+				plus.runtime.restart();
+				// uni.reLaunch({
+				// 	url: '../../../login/index'
+				// });
+			},
+			// 清理缓存
+			clearCache(){
+				console.log('clearCache');
+				//#ifdef APP-PLUS
+				let cache = new WTCache();
+				cache.clearCache();
+				// this.$store.state.roleTree.clear();
+				this.sizeStr = '0B';
+				//#endif
+			},
+			// 计算缓存
+			checkCache(){
+				//#ifdef APP-PLUS
+				let cache = new WTCache();
+				cache.formatSize().then(str=>{
+					this.sizeStr = str;
+					console.log('cache.formatSize();',str);
+				}).catch(err=>{
+					console.log(err);
+				});
+				//#endif
+			}
+		}
+	}
+</script>
+
+<style>
+.quitLogin{
+	justify-content: center;
+	align-items: center;
+	width: 750rpx;
+	height: 100rpx;
+	background-color:  #F75252;
+}
+</style>

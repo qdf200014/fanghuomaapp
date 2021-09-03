@@ -1,0 +1,60 @@
+<template>
+	<view class="w-100 position-relative p-3 flex mt-2 flex-column justify-center bg-white">
+		<text class="font-2 pb-2" style="width: 512rpx;lines: 1; text-overflow: ellipsis;">{{item.title}}</text>
+		<view class="flex flex-row align-center">
+			<image :src="'/static/img/vote/'+(isEnding ? 'time3' :'time2')+'.png'" style="width: 30rpx;height: 30rpx;"></image>
+			<text class="font-4 px-2">{{item.endTime}}</text>
+			<image :src="'/static/img/vote/'+(isEnding ? 'ending' :'voting')+'.png'" style="width: 140rpx;height: 56rpx;"></image>
+		</view>
+		<image src="/static/img/vote/voteicon.png" class="right-0 position-absolute" style="width: 218rpx;height: 164rpx;right: 15rpx;"></image>
+	</view>
+	<!-- 因为点击事件冲突，无法使用该组件进行侧滑监听 -->
+	<!-- <uni-swipe-action>
+		<uni-swipe-action-item :right-options="options" @click="clickSwiperAction">
+			<view>{{item.title}}</view>
+		</uni-swipe-action-item>
+	</uni-swipe-action> -->
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		props: {
+			item: {
+				type: [Object, String, Array],
+				default: () => {}
+			}
+		},
+		data() {
+			return {
+				options: [{
+					text: '删除',
+					style: {
+						backgroundColor: '#dd524d'
+					}
+				}]
+			}
+		},
+		computed: {
+			isEnding() {
+				let isEnd = true;
+				let _currT = dayjs(new Date()).valueOf(),
+					_endT = dayjs(this.item.endTime).valueOf();
+				if (_endT > _currT) isEnd = false;
+				return isEnd;
+			}
+		},
+		// methods:{
+		// 	voteInfo(){
+		// 		this.$emit('voteInfo');
+		// 	},
+		// 	clickSwiperAction(e) {
+		// 		this.$emit('deleteItem');
+		// 	}
+		// }
+	}
+</script>
+
+<style>
+
+</style>

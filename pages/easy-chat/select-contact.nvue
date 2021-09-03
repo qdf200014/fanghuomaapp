@@ -1,0 +1,105 @@
+<template>
+	<view class="im-flex-1 im-flex-column">
+		<!-- 顶部导航栏 -->
+		<nim-chat-navigation>
+			<view class="im-flex-column im-align-center">
+				<view class="im-flex im-flex-nowrap im-align-center">
+					<text class="im-font-38 im-font-black-2">选择联系人</text>
+				</view>
+			</view>
+			<!-- <view slot="right" class="im-flex">
+				<text class="im-font-34 im-font-red-2">确定</text>
+			</view> -->
+		</nim-chat-navigation>
+		
+		<list class="im-flex-column im-flex-1">
+			<!-- <cell>
+				<view class="im-flex im-align-center im-bg-grey-5 im-mx-3 im-round-1 im-py-2 im-px-2 im-mt-2"><text class="im-font-28 im-font-light">搜索</text></view>
+		
+				<view class="im-line-1 im-mt-2"></view>
+			</cell> -->
+			<cell>
+				<navigator url="/pages/addrBook/index?sourceType=1">
+					<view class="im-flex im-align-center im-justify-between im-px-3">
+						<text class="im-font-32 im-font-black-2 im-py-3">选择通讯录人员</text>
+						<image src="/static/easy-chat/chat/arrow-right.png" mode="aspectFill" style="width: 24rpx;height: 24rpx;"></image>
+					</view>
+				</navigator>
+			</cell>
+			<cell>
+				<view class="im-bg-grey-1 im-flex im-align-center im-pb-2"></view>
+			</cell>
+			<cell>
+				<view class="im-flex-column im-px-3 im-py-3 im-border-bottom">
+					<text class="im-font-38 im-font-black-2">最近聊天</text>
+				</view>
+			</cell>
+			<cell v-for="(item, index) in sessionArr" :key="item.id">
+				<session-contact-item :session="item" @itemClick="itemClick" :showIcon="true"></session-contact-item>
+			</cell>
+			<cell><view class="im-list-bottom"></view></cell>
+		</list>
+		
+		<nim-popup v-model="showPopup" title="发送给:" @clickOk="clickOk">
+			<session-contact-item :session="session"></session-contact-item>
+			
+			<view class="im-my-3 im-bg-grey-7 im-p-3 im-mx-3">
+				<text class="im-font-light im-font-25">[链接]{{ title }}</text>
+			</view>
+		</nim-popup>
+	</view>
+</template>
+
+<script>
+import sessionContactItem from '@/components/easy-chat/session-contact-item.vue';
+import nimPopup from '@/components/easy-chat/nim-popup.vue'
+import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+
+export default {
+	components: {
+		sessionContactItem,
+		nimPopup,
+		nimChatNavigation
+	},
+	data() {
+		return {
+			showPopup: false,
+			session: null,
+			title: ''
+		}
+	},
+	onLoad(event) {
+		this.title = event.title
+	},
+	computed: {
+		sessionArr() {
+			let arr = []
+			let topArr = []
+			this.$store.getters['initNim/sessionArr'].map(item => {
+				if (item.isTop) {
+					topArr.push(item)
+				} else {
+					arr.push(item)
+				}
+			})
+			return topArr.concat(arr)
+		}
+	},
+	methods: {
+		itemClick(item) {
+			console.log(item);
+			this.session = Object.assign({}, item.session)
+			this.showPopup = true
+		},
+		clickOk() {
+			uni.$emit('im-selectContactOk', [{
+				scene: this.session.scene,
+				to: this.session.to
+			}])
+			uni.navigateBack()
+		}
+	}
+};
+</script>
+
+<style scoped></style>

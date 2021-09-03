@@ -1,0 +1,316 @@
+<template>
+	<view class="flex-column flex-1" style="background-color: #FFF;">
+		<!-- 顶部导航栏 -->
+		<nim-chat-navigation>
+			<view class="im-flex-column im-align-center">
+				<view class="im-flex im-flex-nowrap im-align-center">
+					<text class="im-font-38 im-font-black-2">{{ title }}</text>
+				</view>
+			</view>
+			<view v-if="isShowOkBtn" slot="right" class="im-flex" @tap="clickOk">
+				<text class="im-font-34 im-font-red-2">确定</text>
+			</view>
+		</nim-chat-navigation>
+		
+		<list class="flex flex-1 flex-column">
+			<cell v-for="(item, index) in memberArr" :key="item" class="im-flex im-align-center im-px-4 im-justify-between" @click.stop="toPerson(userObj[item.account],$event)">
+				<template v-if="userObj[item.account] && !isFilterMe(item)">
+					<view class="im-flex flex align-center" style="height: 138rpx;">
+						<template v-if="isShowSelectBtn">
+							<view style="width: 50rpx; height: 50rpx;">
+								<radio v-if="isSelectOwner(item)" :value="item.account" :checked="selectArr.indexOf(item.account) > -1" @click.stop="onClick(item,$event,userObj[item.account])" style="width: 50rpx; height: 50rpx;" />
+							</view>
+						</template>
+						
+						<image v-if="userObj[item.account].avatar" :src="userObj[item.account].avatar" style="width: 96rpx; height: 96rpx; border-radius: 200rpx; margin-left: 26rpx; margin-right: 24rpx;"></image>
+						<view class="defaultHead " v-else>
+							<text class="headName ">{{userObj[item.account].nick.charAt(userObj[item.account].nick.length-2)+userObj[item.account].nick.charAt(userObj[item.account].nick.length-1)}}</text>
+						</view>
+						<text v-if="item.type === 'owner' && teamInfo.type === 'advanced'" class="im-font-28 im-font-light im-mr-2">[主持人]</text>
+						<text class="im-font-30 im-font-black-2">{{ userObj[item.account].nick }}</text>
+					</view>
+					<image src="../../static/discussion/creator.png" v-if="item.type === 'owner'" style="width: 36rpx; height: 36rpx;"></image>
+				</template>
+			</cell>
+		</list>
+		<uni-popup ref="popupAreaWtDialog" type="center">
+			<wt-dialog :btns="[{text : '取消'},{
+				text:'确认',
+			}]" :btnMode="2" title="提示" @confirm="wtDialogConfirm" :content="`确认选择 ${choseUser.nick} 为新主持人，你将自动放弃主持人身份`" @close="wtDialogCancel">
+			</wt-dialog>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+	import chatCall from '@/common/function/chatCall.js';
+	export default {
+		data() {
+			return {
+				selectArr: [],
+				// remove 移除群成员
+				model: '',
+				choseUser: {}
+			}
+		},
+		computed: {
+			title() {
+				let text = '会商成员'
+				switch (this.model) {
+					case 'remove':
+						text = '移除群成员'
+						break;
+					case 'seeAll':
+						text = '会商成员'
+						if (this.teamInfo.type !== 'advanced') {
+							text = '群成员'
+						}
+						break;
+					case 'audioCall':
+						text = '语音呼叫成员'
+						break;
+					case 'videoCall':
+						text = '视频呼叫成员'
+						break;
+					case 'changeOwner':
+						text = '转让主持人'
+						break;
+					case 'seeAllNormal':
+						text = '群聊成员'
+						break;
+				}
+				return text
+			},
+			teamMembersObj() {
+				return this.$store.getters['initNim/teamMembersObj'] || {}
+			},
+			// 当前会话的id
+			currentSessionId() {
+				return this.$store.getters['initNim/currentSessionId']
+			},
+			teamObj() {
+				return this.$store.getters['initNim/teamObj'] || {}
+			},
+			// 当前群的详细信息
+			teamInfo() {
+				if (this.teamObj[this.to]) {
+					return this.teamObj[this.to]
+				}
+				return {}
+			},
+			// 群成员
+			memberArr() {
+				let teamMembersArr = this.teamMembersObj[this.to].members
+				let teamMembersArrList = []
+				for(let i=0; i<teamMembersArr.length; i++){
+					if(teamMembersArr[i].type == 'owner'){
+						teamMembersArrList.unshift(teamMembersArr[i])
+					}else{
+						teamMembersArrList.push(teamMembersArr[i])
+					}
+				}
+				console.log('this.teamMembersObj[this.to]', teamMembersArrList);
+				return this.teamMembersObj[this.to] && teamMembersArrList || []
+			},
+			userObj() {
+				return this.$store.getters['initNim/userObj'] || {}
+			},
+			userUID() {
+				return this.$store.getters['initNim/userUID']
+			},
+			to() {
+				if (this.currentSessionId) {
+					return this.currentSessionId.split('-')[1];
+				}
+				return ''
+			},
+			// 是否展示勾选按钮
+			isShowSelectBtn() {
+				if (this.model === 'seeAll') {
+					return false
+				}
+				return true
+			},
+			// 是否展示确定按钮
+			isShowOkBtn() {
+				if (this.model === 'seeAll') {
+					return false
+				}
+				return true
+			},
+			// 是否能勾选群主
+			isSelectOwner() {
+				return item => {
+					if (this.model === 'remove' && item.type === 'owner') {
+						return false
+					}
+					if (this.model === 'changeOwner' && item.type === 'owner') {
+						return false
+					}
+					return true
+				}
+			},
+			// 是否过滤自己
+			isFilterMe() {
+				return item => {
+					if (this.model === 'seeAll' || this.model === 'changeOwner') { // 不过滤
+						return false
+					} else {
+						// 过滤逻辑
+						if (item.account === this.userUID) {
+							return true
+						} else {
+							return false
+						}
+					}
+				}
+			},
+			// 选择模式
+			checkMode() {
+				if (this.model === 'changeOwner') { // 单选
+					return 'Single'
+				} else { // 多选
+					return 'Multiple'
+				}
+			}
+		},
+		components: {
+			nimChatNavigation
+		},
+		onLoad(event) {
+			console.log('页面接受的参数', event);
+			this.model = event.model
+		},
+		onShow() {
+			console.log(this.userObj)
+		},
+		methods: {
+			wtDialogConfirm(){
+				this.$store.dispatch('initNim/nimTransferTeam', {
+					teamId: this.to,
+					account: this.selectArr[0]
+				}).then(res => {
+					// this.openAreaWtDialog();
+					uni.navigateBack()
+					uni.showToast({
+						title:'转让主持人成功',
+						icon:'success'
+					})
+				})
+			},
+			openAreaWtDialog(){
+				this.$refs.popupAreaWtDialog.open();
+			},
+			wtDialogCancel(done){
+				 this.done()
+			},
+			api_updconsultationsusers(where) {
+				uni.$api.consultation.updconsultationsusers({
+					guid: this.to,
+					// 1加人 -1删人
+					types: -1,
+					// 人员id
+					where: where
+				}).then(res => {
+					// console.log('接口调用成功ddddddddddddddddddddddddddddddddddddddd', res);
+				}).catch(err => {
+					// console.error('ssssssssssssssssssssss', err);
+				})
+			},
+			toPerson(item,event){
+				// #ifdef APP-NVUE
+				event.stopPropagation()
+				// #endif
+				uni.navigateTo({
+					url:'../addrBook/personalPage?userId=' + item.account + '&sourceType=' + 0 
+				})
+			},
+			onClick(item,event,user) {
+				// #ifdef APP-NVUE
+				event.stopPropagation()
+				// #endif
+				console.log(item);
+				console.log(user);
+				this.choseUser = user
+				// 判断是否为单选模式
+				if (this.checkMode === 'Single') {
+					console.log(item.account)
+					this.selectArr = []
+					this.selectArr.push(item.account)
+				} else { // 多选模式
+					let index = this.selectArr.indexOf(item.account)
+					if (index > -1) {
+						this.selectArr.splice(index, 1)
+					} else {
+						this.selectArr.push(item.account)
+					}
+				}
+				
+				
+			},
+			clickOk() {
+				console.log(this.selectArr);
+				if (this.selectArr.length <= 0) {
+					uni.showToast({
+						title: '请选择人员',
+						icon: 'none'
+					})
+					return ;
+				}
+				switch (this.model) {
+					case 'remove':
+						this.$store.dispatch('initNim/nimRemoveTeamMembers', {
+							teamId: this.to,
+							accounts: this.selectArr
+						}).then(res => {
+							
+							if (this.teamInfo.type === 'advanced') {
+								this.api_updconsultationsusers(this.selectArr.join(','))
+							}
+							
+							uni.navigateBack()
+							uni.showToast({
+								title: '移除群成员成功'
+							})
+						})
+						break;
+						// 音视频通话
+					case 'audioCall':
+						chatCall.team[this.model](this, this.selectArr, this.$store.getters['initNim/teamObj'][this.to]);
+						break;
+					case 'videoCall':
+						chatCall.team[this.model](this, this.selectArr, this.$store.getters['initNim/teamObj'][this.to]);
+						break;
+					case 'changeOwner':
+						console.log('扎实大苏打');
+						console.log(this.selectArr);
+						this.openAreaWtDialog();
+						
+						break;
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+.defaultHead{
+	justify-content: center;
+	align-items: center;
+	width: 96rpx;
+	height: 96rpx;
+	background-color: #F75252;
+	border-radius: 200;
+	border-width: 4rpx;
+	border-style: solid;
+	border-color: rgba(255, 196, 196, 0.67);
+	margin-left: 26rpx; 
+	margin-right: 24rpx;
+}
+.headName{
+	font-size: 32rpx;
+	font-weight: 400;
+	color: #FFFFFF;
+}
+</style>

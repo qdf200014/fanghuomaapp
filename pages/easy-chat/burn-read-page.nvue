@@ -1,0 +1,321 @@
+<template>
+	<div class="im-flex-column im-flex-1">
+		<!-- 顶部导航栏 -->
+		<nim-chat-navigation class="im-bg-grey-1">
+			<view class="im-flex-column im-align-center">
+				<view class="im-flex im-flex-nowrap im-align-center">
+					<text class="im-font-38 im-font-black-2">阅后即焚</text>
+				</view>
+			</view>
+			
+			<view v-if="msg.flow !== 'out'" slot="right" class="im-flex">
+				<text class="im-font-32">{{ deleteTime / 1000 }}</text>
+			</view>
+		</nim-chat-navigation>
+		
+		<view class="im-flex-column">
+			<!-- 展示文本消息 -->
+			<view v-if="type === 'text'" class="im-flex im-flex-wrap">
+				<text class="im-font-38 im-font-light">{{ msg.fromNick }} : </text>
+				<text class="im-font-38 im-font-black-2" style="max-width: 660rpx">{{ msgData.text }}</text>
+			</view>
+		</view>
+		<view class="im-flex-column im-justify-center im-align-center im-flex-1">
+			<!-- 展示图片消息 -->
+			<view v-if="type === 'image'" class="im-flex im-align-center" @tap="onClickImg">
+				<image :src="msgData.file.url" mode="widthFix" style="width: 750rpx;"></image>
+			</view> 
+			<!-- 展示视频消息 -->
+			<view v-else-if="type === 'video'" class="im-flex im-align-start im-flex-1">
+				 <video class="im-w-100" style="height: 700rpx;" id="myVideo" :src="msgData.file.url" autoplay controls></video>
+			</view>
+			<!-- 展示语音消息 -->
+			<view v-else-if="type === 'audio'" class="im-flex-column" style="width: 700rpx;">
+				<view class="im-flex im-align-center">
+					<progress :percent="useTime / msgData.file.dur * 100" style="max-width: 550rpx"/>
+					<text class="im-ml-1 im-font-32">{{ audioSurplusTime }}</text>
+				</view>
+				 <view class="im-flex im-align-center im-mt-5 im-justify-center" @tap="palyAudio">
+				 	<text class="im-font-32">{{ audioTip }}</text>
+				 </view>
+			</view>
+			
+			
+			
+			<!-- <view v-if="msg.flow === 'out' && msg.scene === 'team'" class="im-flex-column im-mt-5 im-justify-start im-align-start" style="width: 700rpx;"> -->
+				<!-- 已读列表 -->
+				<!-- <text v-if="readAccounts.length > 0" class="im-font-32">已读列表</text>
+				<view class="im-flex im-flex-wrap im-align-center">
+					<view class="im-flex im-align-center" v-for="(item,index) in readAccounts" :key="item">
+						<nim-avatar :account="item" style="width: 60rpx;height: 60rpx;"></nim-avatar>
+						<text class="im-font-28 im-px-1 im-py-1">{{ userObj[item] && userObj[item].nick }}</text>
+					</view>
+				</view> -->
+				<!-- 未读列表 -->
+				<!-- <text v-if="unreadAccounts.length > 0" class="im-font-32">未读列表</text>
+				<view class="im-flex im-flex-wrap im-align-center">
+					<view class="im-flex im-align-center" v-for="(item,index) in unreadAccounts" :key="item">
+						<nim-avatar :account="item" style="width: 60rpx;height: 60rpx;"></nim-avatar>
+						<text class="im-font-28 im-px-1 im-py-1">{{ userObj[item] && userObj[item].nick }}</text>
+					</view>
+				</view>
+				
+			</view> -->
+		</view>
+		
+	</div>
+</template>
+
+<script>
+	import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+	import nimAvatar from '@/components/easy-chat/nim-avatar.vue'
+	
+	let burnTime = null;
+	let playAudioTimeOut = null;
+	
+	// 用于检查已读是否完成
+	let allReadInterval = null;
+	
+	
+	
+	export default {
+		components: {
+			nimChatNavigation,
+			nimAvatar
+		},
+		data() {
+			return {
+				msg: null,
+				// 删除倒计时
+				deleteTime: 0,
+				
+				innerAudioContext : uni.createInnerAudioContext(),
+				// 判断是否播放中
+				isPlay: false,
+				audioTip: '播放',
+				
+				// 已读列表
+				readAccounts: [],
+				// 未读列表
+				unreadAccounts: [],
+				// 语音聊天 总时长 已用时长
+				audioTime: 0,
+				useTime: 0,
+				
+				// 此条消息是否已经完成阅读
+				isAllRead: false
+			}
+		},
+		computed: {
+			type() {
+				return this.msgData.type
+			},
+			msgData() {
+				return this.content.data
+			},
+			content() {
+				return JSON.parse(this.msg.content)
+			},
+			// 当前会话的id
+			currentSessionId() {
+				return this.$store.getters['initNim/currentSessionId']
+			},
+			scene() {
+				return this.msg && this.msg.scene
+			},
+			to() {
+				return this.msg && this.msg.to
+			},
+			userObj() {
+				return this.$store.getters['initNim/userObj'] || {}
+			},
+			// 音频的剩余时间
+			audioSurplusTime() {
+				return parseInt((this.msgData.file.dur - this.useTime) / 1000)
+			},
+			// nim
+			nim () {
+				return this.$store.getters['initNim/nim']
+			}
+		},
+		watch: {
+			isAllRead(n) {
+				if (n) {
+					uni.showToast({
+						title: '此条消息已经被查看完成，退出后自动销毁。',
+						icon: 'none',
+						duration: 4000
+					})
+					clearInterval(allReadInterval)
+				}
+			}
+		},
+		onLoad(event) {
+			let msg = JSON.parse(decodeURIComponent(event.msg))
+			this.msg = msg
+			this.deleteTime = this.msgData.burnTime
+			if (this.msg.flow === 'in') {
+				this.startTime()
+			}
+			
+			if (this.scene === 'team') {
+				this.sendTeamMsgReceipt()
+				this.searchTeamUnreadList()
+			}
+		},
+		onReady() {
+			if (this.type === 'audio') {
+				this.palyAudio()
+			}
+			
+			allReadInterval = setInterval(() => {
+				if (this.scene === 'p2p' && this.msg.flow === 'out') {
+					this.isAllRead = this.nim.isMsgRemoteRead(this.msg)
+				}
+			}, 1000)
+		},
+		mounted() {
+			this.innerAudioContext.onPlay(() => {
+				// console.log('开始播放');
+				this.isPlay = true
+				this.audioTip = "播放中~"
+				
+				// 清空时长 重新开始计时
+				this.useTime = 1000
+				this.startAudioTime()
+			});
+			this.innerAudioContext.onError((res) => {
+				console.error('播放遇到错误', res);
+				this.isPlay = false
+			});
+			this.innerAudioContext.onStop(() => {
+				// console.log('停止播放');
+				this.isPlay = false
+				this.audioTip = "重新播放"
+				clearTimeout(playAudioTimeOut)
+			})
+			this.innerAudioContext.onEnded(() => {
+				// console.log('音频自然播放结束事件');
+				this.isPlay = false
+				this.audioTip = "重新播放"
+				clearTimeout(playAudioTimeOut)
+				this.tipAudio()
+			})
+		},
+		onUnload() {
+			clearTimeout(burnTime)
+			clearTimeout(playAudioTimeOut)
+			clearInterval(allReadInterval)
+			
+			if (this.msg.flow === 'in') {
+				this.deleteMsg()
+			}
+			this.innerAudioContext.destroy()
+			
+			if (this.isAllRead) {
+				this.deleteMsg()
+			}
+		},
+		methods: {
+			onClickImg() {
+				uni.previewImage({
+					urls: [this.msgData.file.url]
+				})
+			},
+			// 标记群组消息已读
+			sendTeamMsgReceipt() {
+				// this.$store.dispatch('initNim/nimSendTeamMsgReceipt', {
+				// 	teamMsgReceipt: [{
+				// 		teamId: this.to,
+				// 		idServer: this.msg.idServer,
+				// 		idClient: this.msg.idClient
+				// 	}]
+				// })
+				this.$store.state.initNim.nim.sendTeamMsgReceipt({
+					teamMsgReceipts: [{
+						teamId: this.msg.to,
+						idServer: this.msg.idServer
+					}],
+					done: (error, obj, content) => {
+						console.log('标记群组消息已读', error, obj, content)
+						if (error) {
+						} else {
+						}
+					}
+				})
+			},
+			// 查询群组的消息已读未读列表
+			searchTeamUnreadList() {
+				
+				// 只处理自己发送的消息
+				if (this.msg.flow === 'in') {
+					return ;
+				}
+				
+				this.$store.dispatch('initNim/nimGetTeamMsgReadAccounts', {
+					teamId: this.to,
+					idServer: this.msg.idServer
+				}).then(data => {
+					console.log(data);
+					this.readAccounts = data.readAccounts
+					this.unreadAccounts = data.unreadAccounts
+					// 再此处判断未读列表是否为空
+					if (data.unreadAccounts.length <= 0) {
+						this.isAllRead = true
+					}
+				})
+			},
+			palyAudio() {
+				this.innerAudioContext.stop()
+				this.innerAudioContext.src = this.msgData.file.url
+				
+				this.isLoading = true
+				this.innerAudioContext.play()
+			},
+			// 计算开始播放的时长
+			startAudioTime() {
+				if (playAudioTimeOut) {
+					clearTimeout(playAudioTimeOut)
+				}
+				playAudioTimeOut = setTimeout(() => {
+					// 累加已用时长
+					this.useTime += 1000
+					this.startAudioTime()
+				}, 1000)
+			},
+			// 播放提示音
+			tipAudio() {
+				let inner2 = uni.createInnerAudioContext()
+				inner2.src = '/static/easy-chat/mp3/audio-end.wav'
+				inner2.autoplay = true
+				inner2.play()
+				inner2.onEnded(() => {
+					// console.log('tishixin jieshu');
+					inner2.destroy()
+				})
+			},
+			// 开启时间
+			startTime() {
+				burnTime = setTimeout(() => {
+					this.deleteTime -= 1000
+					if (this.deleteTime <= 0) {
+						uni.navigateBack()
+						clearTimeout(burnTime)
+						return ;
+					}
+					this.startTime()
+				}, 1000)
+			},
+			// 删除消息
+			deleteMsg() {
+				this.$store.dispatch('initNim/nimDeleteMsgSelf', {
+					msg: this.msg
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

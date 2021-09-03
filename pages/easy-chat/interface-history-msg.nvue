@@ -1,0 +1,141 @@
+<template>
+	<view class="im-bg-grey-1 im-flex-1">
+		<!-- 顶部导航栏 -->
+		<nim-chat-navigation >
+			<view class="im-flex-column im-align-center">
+				<view class="im-flex im-flex-nowrap im-align-center">
+					<text class="im-font-34 im-font-black im-text-ellipsis">历史消息</text>
+				</view>
+			</view>
+		</nim-chat-navigation>
+		
+		<list ref="list" class="im-bg-white im-flex-1" @loadmore="loadmore"  :loadmoreoffset="100">
+			<cell v-for="item in msgArr" :key="item.msgid">
+				
+				<!-- 时间显示 -->
+				<view v-if="item.type === 'time'" class="im-flex im-align-center im-justify-center im-py-2">
+					<text class="im-font-30 im-font-light">{{ item.time | filterTime }}</text>
+				</view>
+				
+				<interface-msg-text class="im-border-bottom" v-if="item.type === 0" :msg="item" ></interface-msg-text>
+				<interface-msg-image class="im-border-bottom" v-else-if="item.type === 1" :msg="item" ></interface-msg-image>
+				<interface-msg-video class="im-border-bottom" v-else-if="item.type === 3" :msg="item"></interface-msg-video>
+				<interface-msg-audio class="im-border-bottom" v-else-if="item.type === 2" :msg="item"></interface-msg-audio>
+				<interface-msg-custom class="im-border-bottom" v-else-if="item.type === 100" :msg="item"></interface-msg-custom>
+				
+			</cell>
+		</list>
+		
+		
+	</view>
+</template>
+
+<script>
+	import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+	import interfaceMsgText from '@/components/easy-chat/interface-msg-text.vue'
+	import interfaceMsgImage from '@/components/easy-chat/interface-msg-image.vue'
+	import interfaceMsgVideo from '@/components/easy-chat/interface-msg-video.vue'
+	import interfaceMsgAudio from '@/components/easy-chat/interface-msg-audio.vue'
+	import interfaceMsgCustom from '@/components/easy-chat/interface-msg-custom.vue'
+	import dayjs from 'dayjs'
+	
+	export default {
+		components: {
+			nimChatNavigation,
+			interfaceMsgText,
+			interfaceMsgImage,
+			interfaceMsgVideo,
+			interfaceMsgAudio,
+			interfaceMsgCustom
+		},
+		data() {
+			return {
+				teamId: '',
+				msgArr: [],
+				beginTime: '',
+				endTime: ''
+			}
+		},
+		filters: {
+			filterTime(time) {
+				return dayjs(time).format('YYYY-MM-DD')
+			}
+		},
+		onLoad(event) {
+			console.log('页面接受的参数', event, dayjs().valueOf(), dayjs().subtract(7, 'day').valueOf());
+			this.teamId = event.teamId
+			
+			this.beginTime = dayjs().subtract(7, 'day').valueOf()
+			
+			this.api_getHistory()
+		},
+		onReady() {
+			
+		},
+		methods: {
+			api_getHistory() {
+				this.endTime = dayjs(this.beginTime).add(7, 'day').valueOf()
+				
+				
+				
+				uni.$api.consultation.gethistory({
+					tid: this.teamId,
+					beginTime: this.beginTime,
+					endTime: this.endTime,
+					limit: 20
+				}).then(res => {
+					console.log(res);
+					let data = JSON.parse(res.data.data)
+					console.log(data);
+					if (data.msgs.length > 0) {
+						this.msgArr = this.msgArr.concat(data.msgs)
+						this.handleMsg()
+					}
+					
+				})
+			},
+			loadmore() {
+				console.log('更多');
+				// this.$refs['list'].resetLoadmore()
+				this.api_getHistory()
+			},
+			handleMsg(msg) {
+				let _arr = []
+				
+				let nowTime = new Date().getTime()
+				
+				this.msgArr.map((item, index) => {
+					
+					// console.log(this.isSameDay(item.sendtime, nowTime));
+					if (this.isSameDay(item.sendtime, nowTime)) {
+						
+					} else {
+						_arr.push({
+							type: 'time',
+							time: item.sendtime
+						})
+					}
+					
+					_arr.push(item)
+					
+					nowTime = item.sendtime
+					
+					if (this.msgArr.length - 1 === index) {
+						this.beginTime = dayjs(item.sendtime).subtract(7, 'day').valueOf()
+					}
+					
+				})
+				
+				this.msgArr = [..._arr]
+				
+			},
+			isSameDay(oldDay, newDay) {
+				return  new Date(oldDay).toDateString() === new Date(newDay).toDateString();
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

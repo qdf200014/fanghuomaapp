@@ -1,0 +1,186 @@
+<template>
+	<view style="background-color: #F4F5FB;" class="flex flex-column flex-1 w-100">
+		<uni-nav-bar left-icon="back" title="论坛消息" :statusBar="true"  :isOperation="true"></uni-nav-bar>
+		<list class="flex flex-1 w-100">
+			<cell>
+				<template v-if="remark.length === 0">
+					<view  class="flex flex-row w-100 align-center"  style="height: 140rpx;" @click="toForum(6)">
+						<image src="/static/forum/remark.png" style="width: 96rpx; height: 96rpx; margin-left: 30rpx; margin-right: 24rpx;"></image>
+						<view class="msg border-bottom justify-center">
+							<text class="title">评论</text>
+							<text class="content">暂无数据</text>
+						</view>
+					</view>
+				</template>
+				
+				<template v-else>
+					<view  class="flex flex-row w-100 align-center" v-for="(item,index) of remark.slice(0,1)"  style="height: 140rpx;" @click="toForum(6)">
+						<image src="/static/forum/remark.png" style="width: 96rpx; height: 96rpx; margin-left: 30rpx; margin-right: 24rpx;"></image>
+						<view class="msg border-bottom justify-center">
+							<text class="title">评论</text>
+							<text class="content">{{item.content}}</text>
+						</view>
+						<text class="corner" v-if="remark.length>1">{{remark.length}}</text>
+					</view>
+				</template>
+				
+				<template v-if="likeUp.length === 0">
+					<view  class="flex flex-row w-100 align-center" style="height: 140rpx;" @click="toForum(7)">
+						<image src="/static/forum/giveUp.png" style="width: 96rpx; height: 96rpx; margin-left: 30rpx; margin-right: 24rpx;"></image>
+						<view class="msg border-bottom justify-center">
+							<text class="title">点赞</text>
+							<text class="content">暂无数据</text>
+						</view>
+					</view>
+				</template>
+				
+				<template v-else>
+					<view  class="flex flex-row w-100 align-center" v-for="(item,index) of likeUp.slice(0,1)"  style="height: 140rpx;" @click="toForum(7)">
+						<image src="/static/forum/giveUp.png" style="width: 96rpx; height: 96rpx; margin-left: 30rpx; margin-right: 24rpx;"></image>
+						<view class="msg border-bottom justify-center">
+							<text class="title">点赞</text>
+							<text class="content">{{item.content}}</text>
+						</view>
+						<text class="corner" v-if="likeUp.length>1">{{likeUp.length}}</text>
+					</view>
+				</template>
+				
+				<template v-if="focus.length === 0">
+					<view  class="flex flex-row w-100 align-center" style="height: 140rpx;" @click="toForum(8)">
+						<image src="/static/forum/fan.png" style="width: 96rpx; height: 96rpx; margin-left: 30rpx; margin-right: 24rpx;"></image>
+						<view class="msg border-bottom justify-center">
+							<text class="title">粉丝</text>
+							<text class="content">暂无数据</text>
+						</view>
+					</view>
+				</template>
+				
+				<template v-else>
+					<view class="flex flex-row w-100 align-center" v-for="(item,index) of focus.slice(0,1)"  style="height: 140rpx;" @click="toForum(8)">
+						<image src="/static/forum/fan.png" style="width: 96rpx; height: 96rpx; margin-left: 30rpx; margin-right: 24rpx;"></image>
+						<view class="msg border-bottom justify-center">
+							<text class="title">粉丝</text>
+							<text class="content">{{item.content}}</text>
+						</view>
+						<text class="corner" v-if="focus.length>1">{{focus.length}}</text>
+					</view>
+				</template>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				remark: [],
+				likeUp: [],
+				focus: []
+			}
+		},
+		onLoad() {
+			this.geiFormMsg();
+		},
+		computed: {
+			systemMsgArr() {
+				// 在此页面 检测到数据更新 不用记录未读数
+				uni.setStorageSync('systemUnreadNum', 0)
+				return this.$store.getters['initNim/systemMsgArr']
+			},
+			formatSysMsgArr() {
+				let arr = this.systemMsgArr.slice(0, this.pageSize)
+				return arr
+			}
+		},
+		onBackPress() {
+			console.log('阻止返回');
+			uni.switchTab({
+			    url: '/pages/tabbar/tabbar-2/tabbar-2'
+			});
+			return true
+		},
+		
+		methods: {
+			//获取论坛消息列表
+			geiFormMsg(){
+				uni.$api.forum.getnotices({
+					key:'12,13,14',
+					types: 2
+				}).then(res => {
+					console.log(res)
+					if(res.data.statusCode == 200){
+						this.remark = (res.data.data.filter((item) =>{if( item.type == 12){
+							return item
+						}}))
+						this.likeUp = (res.data.data.filter((item) =>{if( item.type == 13){
+							return item
+						}}))
+						this.focus = (res.data.data.filter((item) =>{if( item.type == 14){return item}}))
+						console.log(this.remark)
+						console.log(this.likeUp)
+						console.log(this.focus)
+					}
+				}).catch(err => {
+					console.log(err)
+				})
+			},
+			toForum(index,id){
+				this.clearnotices(index)
+				uni.$api.forum.autologin({
+					types: index,
+					id: id ? id : 0
+				}).then(res => {
+					console.log(JSON.stringify(res.data.data) )
+					uni.showLoading()
+					
+					uni.navigateTo({
+						url:'/pages/tabbar/tabbar-1/forum/forumWeb?forumMsg=' + encodeURIComponent(JSON.stringify({
+						'forumUrl': res.data.data
+						}))
+					})
+					
+					uni.hideLoading()
+				}).catch(err => {
+					console.log(err);
+				})
+			},
+			clearnotices(type){
+				uni.$api.forum.clearnotices({types: type+6}).then(res => {
+					console.log(res)
+				}).catch(err => {
+					console.log(err);
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.title{
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #323234;
+		line-height: 32rpx;
+		margin-bottom: 16rpx;
+	}
+	.msg{
+		width: 540rpx;
+		height: 140rpx;
+	}
+	.corner{
+		background-color: #F25643;
+		border-radius: 16rpx;
+		font-size: 24rpx;
+		color: #FFFFFF;
+		line-height: 24rpx;
+		padding: 2 10rpx;
+		margin-right: 30rpx;
+	}
+	.content{
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+		line-height: 26rpx;
+	}
+</style>

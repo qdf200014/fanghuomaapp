@@ -1,0 +1,114 @@
+<template>
+	<!-- 点击首页的查看更多跳转到此页 -->
+	<view class="flex flex-column flex-1 w-100" style="background-color: #F4F5FB;">
+		<view v-if="searchRecordNum> 0 ? true : false" style="padding-bottom: 32rpx;padding-left: 42rpx;margin-top: 24rpx;background-color: #FFFFFF;" class="border-bottom pt-3">
+			<text class="all_title">交流</text>
+		</view>
+		<list v-if="searchRecordNum > 0" class="border-test">
+			<cell class="im-bg-white" v-for="item in sessionArr" :key="item.id">
+				<session-item :session="item" :searchKey="inputKey" @searchSuccess="sessionSearchSucess"></session-item>
+			</cell>
+		</list>
+		<view v-if="searchRecordNum > 0 ? false : true" class="flex flex-1 w-100 justify-center" style="background-color: #FFFFFF;">
+			<nodata></nodata>
+		</view>
+	</view>
+</template>
+
+<script>
+	import nodata from '@/components/nodata.nvue'
+	import sessionItem from '@/components/easy-chat/session-item.vue'
+	
+	export default {
+		computed: {
+			sessionArr() {
+				let arr = []
+				let topArr = []
+				this.$store.getters['initNim/sessionArr'].map(item => {
+					if (item.isTop) {
+						topArr.push(item)
+					} else {
+						arr.push(item)
+					}
+				})
+				return topArr.concat(arr)
+			},
+		},
+		props: {
+			inputKey: {
+				type: String,
+				default: () => null
+			}
+		},
+		data() {
+			return {
+				searchRecordNum: 0
+			}
+		},
+		components:{
+			nodata,
+			sessionItem
+		},
+		methods: {
+			sessionSearchSucess() {
+				console.log('sessionSearchSucess');
+				this.searchRecordNum++
+			}
+		}
+	}
+</script>
+
+<style>
+	.all_title{
+		
+		font-size: 38rpx;
+		font-weight: 600;
+		color: #323234;
+	}
+	.all_name{
+		
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+	.all_box{
+		
+		height: 38rpx;
+		border-radius: 20rpx;
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #F07A4E;
+		padding-left: 16rpx;
+		padding-right: 16rpx;
+	}
+	.all_type{
+		
+		font-size: 22rpx;
+		font-weight: 400;
+		color: #F07A4E;
+	}
+	.look_more{
+		
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+	.defaultHead {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 96rpx;
+		height: 96rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+	
+	.headName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+</style>

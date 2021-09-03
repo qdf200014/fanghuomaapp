@@ -1,0 +1,434 @@
+<template>
+	<!-- 写日报 -->
+	<view style="background-color:#F4F5FB;" class="flex flex-column w-100 flex-1">
+		<uni-nav-bar left-icon="back" title="日报" :statusBar="true">
+			<view class="flex flex-1 justify-end" slot="right" @click="rightText">
+				<text style="color: #F75252;">保存</text>
+			</view>
+		</uni-nav-bar>
+		<view class="flex flex-1 flex-column w-100">
+			<list class="flex flex-1 flex-column w-100" style="background-color: #FFFFFF;">
+				<cell class="flex flex-column w-100">
+					<view style="width: 750rpx;height: 56rpx;background-color: #F4F5FB;"
+						class="flex flex-row justify-between align-center pl-3 pr-3">
+						<text class="timebao">您的日报将会被上级人员查看请认真填写哦！</text>
+						<text class="timebao">实时保存</text>
+					</view>
+						<textarea placeholder="请输入日报内容" @input="newsContent" auto-height="true"  v-if="isContent" cursor-spacing="500"
+							@keyboardheightchange="keyClick"   v-model="contentText" :focus="focus" adjust-position="false" 
+							style="font-size: 32rpx;font-weight: 400;color: #000000;padding-left: 30rpx;padding-top: 10rpx;border-width: 1rpx;border-style: solid;border-color: rgba(255,255,255,.5);min-height:500rpx;padding-right: 30rpx;"/>
+						<view  @click="bindContentFocus" v-else style="min-height:500rpx;">
+							<text class="scollContent">{{contentText}}</text>
+						</view>
+		
+						 <!-- <chenyu-textarea :height="auto-height"/> -->
+					<!-- 上传图片部分 -->
+					<view style="background-color: #FFFFFF;padding-left: 30rpx;padding-top: 30rpx;"
+						v-if="picerList!=''">
+						<text class="pic_title">图片：</text>
+						<view style="display: flex;flex-direction: row;flex-wrap: wrap;padding-bottom: 28rpx;">
+							<view v-for="(item,index) in picerList" :key="index" class="position-relative">
+								<view style="margin-right: 24rpx;margin-top: 24rpx;">
+									<image :src="item" mode="aspectFill"
+										style="width: 214rpx;height: 143rpx;border-radius: 15rpx;"
+										@click="previewImage(index)"></image>
+								</view>
+								<image src="../../../static/fireIndex/delete.png" style="width: 30rpx;height: 30rpx;"
+									class="pic_posit" @click="delPic(index)"></image>
+							</view>
+						</view>
+					</view>
+					<!-- 上传视频部分 -->
+					<view style="background-color: #FFFFFF;padding-left: 30rpx;" v-if="playsrcList!=''">
+						<text class="pic_title">视频：</text>
+						<view style="display: flex;flex-direction: row;flex-wrap: wrap;padding-bottom: 28rpx;">
+							<view v-for="(item , index) in playsrcList" class="position-relative">
+								<view style="margin-right: 24rpx;margin-top: 24rpx;">
+									<video style="width: 214rpx;height: 143rpx;border-radius: 15rpx;" class="border"
+										:src="item"></video>
+								</view>
+								<image src="../../../static/fireIndex/delete.png" style="width: 30rpx;height: 30rpx;"
+									class="prc_posit" @click="delPrc(index)"></image>
+							</view>
+						</view>
+					</view>
+					<view style="height: 300rpx;"></view>
+				</cell>
+			</list>
+			
+		</view>
+		<view style="position: fixed;bottom: 0;left: 0;">
+			<view style="width: 750rpx;height: 96rpx;background-color: #FFFFFF;margin-top: 16rpx;"
+				class="flex flex-row justify-center justify-between align-center pl-3 pr-3 border-bottom"
+				@click="chosePic">
+				<text class="pic_name">图片</text>
+				<image src="../../../static/fireIndex/newsPic.png" mode="" style="width: 40rpx;height: 39rpx;"></image>
+			</view>
+			<view style="width: 750rpx;height: 96rpx;background-color: #FFFFFF;"
+				class="flex flex-row justify-center justify-between align-center pl-3 pr-3" @click="videoChange">
+				<text class="pic_name">视频</text>
+				<image src="../../../static/fireIndex/newsPlay.png" mode="" style="width: 40rpx;height: 39rpx;"></image>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import {
+		throttle
+	} from "@/common/common.js";
+	import chenyu_textarea from '@/components/chenyu-textarea/chenyu-textarea.vue';
+	export default {
+		data() {
+			return {
+				contentText: '',
+				imgList: null,
+				playsrc: [], //视频数组
+				picerList: [], //选择的图片数组
+				imglist: [],
+				playlist: [],
+				isVideo: true,
+				playsrcList: [],
+				mtype: '',
+				isContentFocus:true,
+				isInputContentFocus:false,
+				isContent:true,
+				focus:false,
+			}
+		},
+		components: {
+			 "chenyu-textarea":chenyu_textarea,
+		},
+		created() {
+			uni.$api.dailynews.getdailymould()
+				.then(res => {
+					console.log(res.data.data.mouldType);
+					this.mouldContent = JSON.parse(res.data.data.mouldContent)
+					this.mtype = res.data.data.mouldType;
+				})
+				.catch(err => {
+					console.log(err)
+				})
+		},
+		methods: {
+			keyClick(e){
+				let keyHeight = e.detail.height;
+				if(keyHeight == 0 ){
+					this.isContent = false;
+				}else{
+					this.isContent = true;
+				}
+			},
+			bindContentFocus(e){
+				console.log(e,'点击事件')
+				this.isContent = true;
+				this.focus = true;
+			},
+			// 获取输入的日报内容
+			newsContent(e) {
+				this.contentText = e.detail.value;
+			},
+			// 点击按钮删除图片
+			delPic(index) {
+				uni.showModal({
+					title: "提示",
+					content: "是否要删除该图片",
+					success: (res) => {
+						if (res.confirm) {
+							this.picerList.splice(index, 1)
+						}
+					}
+				})
+			},
+			// 点击按钮删除视频
+			delPrc(index) {
+				uni.showModal({
+					title: "提示",
+					content: "是否要删除该视频",
+					success: (res) => {
+						if (res.confirm) {
+							this.playsrcList.splice(index, 1)
+						}
+					}
+				})
+			},
+			// 点击图片进行预览
+			previewImage(index) {
+				console.log('index', index)
+				uni.previewImage({
+					current: index,
+					urls: this.picerList,
+				})
+			},
+			// 从相册选择图片
+			chosePic() {
+				uni.chooseImage({
+					count: 9, //默认9
+					sizeType: ['compressed'],
+					sourceType: ['album'],
+					success: (res => {
+						const tempFilePaths = res.tempFilePaths;
+						this.picerList = tempFilePaths;
+						console.log(this.picerList, '上传的图片数组')
+					})
+				});
+			},
+			// 选择视频
+			videoChange() {
+				uni.chooseVideo({
+					success: (res => {
+						console.log(res.size, '视频大小')
+						this.playsrc.push(res.tempFilePath);
+						if (this.playsrc.length <= 3) {
+							this.playsrcList = this.playsrc;
+						} else {
+							this.playsrcList = this.playsrc.slice(0, 3);
+							uni.showToast({
+								title: '视频不能超过三段',
+								icon: 'none'
+							})
+						}
+					})
+				})
+			},
+			// 点击保存创建日报
+			rightText: throttle(function(e) {
+				uni.showLoading();
+
+
+				new Promise((resolve, reject) => {
+						Promise.all(this.picerList.map((item, templistIndex) => {
+								return new Promise((resolve, reject) => {
+									plus.zip.compressImage({ //压缩上传
+										src: item,
+										dst: "_doc/" + Date.now() + '_' +
+											templistIndex + ".jpg",
+										width: "750px"
+									}, res => {
+										resolve(res);
+									}, err => {
+										reject({
+											index: templistIndex,
+											data: err,
+											message: '图片压缩失败！'
+										})
+									});
+								})
+							}))
+							.then(list => {
+								console.log('图片压缩');
+								console.log(list, '--------------------');
+								resolve(list)
+							})
+							.catch(err => {
+								console.log(err);
+								reject(err)
+							})
+					})
+					.then(templist => {
+						// 上传图片
+						console.log(templist, '压缩后的图片')
+						if (templist.length > 0) {
+							return uni.$api.fileUpload.multifileupload({
+									type: 1
+								}, templist.map((file, index) => {
+									return {
+										name: JSON.stringify(index),
+										uri: file.target
+									}
+								}))
+								.then(res => {
+									console.log(res, '上传图片成功')
+									return Promise.resolve(res.data.data)
+								})
+								.catch(err => {
+									return Promise.reject()
+								})
+
+						} else {
+							// console.log(err, '请求图片失败')
+							return Promise.resolve();
+						}
+					})
+					.then(ConverUrl => {
+						// 上传视频
+						console.log(ConverUrl, '从resolve传来的图片')
+						// 如果有视频
+						if (this.playsrcList.length) {
+							return Promise.all(this.playsrcList.map((item, templistIndex) => {
+									return new Promise((resolve, reject) => {
+										plus.zip.compressVideo({
+											src: item,
+											quality: 'medium'
+										}, res => {
+											console.log(res, '视频压缩成功');
+											resolve({
+												ConverUrl,
+												videoUrl: res.tempFilePath
+											})
+										}, err => {
+											console.log(err, '视频压缩失败')
+										})
+									})
+								}))
+								.then(file => {
+									return Promise.resolve(file)
+								})
+								.catch(err => {
+									console.log('压缩视频传出失败', err)
+								})
+						} else {
+							return Promise.resolve({
+								ConverUrl
+							})
+						}
+					})
+					.then(videolist => {
+						// 对只有视频，或者只有图片进行处理
+						let videoArr = [];
+						let coverArr = [];
+						if (this.playsrcList.length) {
+							let files = videolist;
+							files.forEach((item) => {
+								console.log(item);
+								videoArr.push(item.videoUrl);
+								coverArr = item.ConverUrl;
+							})
+							console.log(coverArr)
+						} else {
+							coverArr = videolist.ConverUrl;
+							console.log(coverArr)
+						}
+						if (videoArr.length > 0) {
+							return uni.$api.fileUpload.multifileupload({
+									type: 2
+								}, videoArr.map((file, index) => {
+									return {
+										name: JSON.stringify(index),
+										uri: 'file://' + file
+									}
+								}))
+								.then(res => {
+									console.log(res, '请求的视频');
+									let videoUpload = res.data.data;
+									return Promise.resolve({
+										coverArr,
+										videoUpload
+									})
+								})
+								.catch(err => {
+									return Promise.reject();
+								})
+						} else {
+							return Promise.resolve({
+								coverArr
+							});
+						}
+					})
+					.then(list => {
+						// 提交日报
+						uni.$api.dailynews.createdaily({
+								DailyType: this.mtype,
+								Abstract: this.contentText,
+								Content: this.contentText,
+								ConverUrl: list.coverArr,
+								VideoUrl: list.videoUpload
+							})
+							.then(res => {
+								console.log(res, '创建日报成功');
+								uni.showToast({
+									title: '创建日报成功',
+									icon: 'none'
+								});
+								setTimeout(() => {
+									uni.navigateBack(1)
+								}, 1500)
+							})
+							.catch(err => {
+								console.log(err, '创建日报失败')
+							})
+					})
+					.catch(err => {
+						console.log('上传日报失败！！！', err);
+					})
+					.finally(() => {
+						uni.hideLoading();
+					})
+			})
+
+
+		},
+	}
+</script>
+
+<style>
+	.timebao {
+
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.textcontent {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #000000;
+	}
+
+	.pic_name {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.pic {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.pic_title {
+
+		font-size: 28rpx;
+		font-weight: 500;
+		color: #333333;
+	}
+
+	.pic_posit {
+		position: absolute;
+		top: 10rpx;
+		right: 10rpx;
+	}
+
+	.play_posit {
+		position: absolute;
+		top: 50rpx;
+		left: 70rpx;
+	}
+
+	.prc_posit {
+		position: absolute;
+		top: 10rpx;
+		right: 10rpx;
+	}
+
+	.textconent {
+		border-width: 1rpx;
+		border-color: rgba(255, 255, 255, 0.1);
+		border-style: solid;
+	}
+	.scollContent{
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #000000;
+		padding-left: 30rpx;
+		padding-right: 30rpx;
+		padding-top: 10rpx;
+/* 		border-width: 1rpx;
+		border-style: solid;
+		border-color: rgba(255,255,255,.5); */
+	}
+</style>

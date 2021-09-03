@@ -1,0 +1,22 @@
+<template>
+	<view>
+		<uni-nav-bar title="日报详情" :statusBar="true"></uni-nav-bar>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				
+			}
+		},
+		methods: {
+			
+		}
+	}
+</script>
+
+<style>
+
+</style>

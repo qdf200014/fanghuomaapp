@@ -1,0 +1,144 @@
+<template>
+	<!-- 高危人群预测 -->
+	<view class="flex flex-1 flex-column w-100" style="background-color:#F4F5FB;">
+		<uni-nav-bar left-icon="back" title="高危人群预警" :statusBar="true"></uni-nav-bar>
+		<view style="flex-direction: row;justify-content: center;align-items: center;background-color: #FFFFFF;height: 96rpx;">
+			<view class="uni-tab-item flex justify-center align-center" v-for="(tab,index) in tabList"
+			 :ref="'tabitem'+index" :data-id="index" :data-current="index" @click="handerToggle(index)" :class="tabIndex==index ? ' border-title-active' : ''">
+				<text class="uni-tab-item-title" :class="tabIndex==index ? 'uni-tab-item-title-active' : ''">{{tab.name}}</text>
+			</view>
+		</view>
+		<!-- 注意wt-list本身不具有flex布局，使用时包一层容器 -->
+		<view class="position-relative flex flex-1 w-100" v-if="tabIndex>-1">
+			<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+			<wt-list api="riskhigh.getriskhigh" :params="{status: 2 - tabIndex}" ref="riskhighlist" resKey="data.items">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+		
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="{dataList}">
+		
+					<!-- 循环处理数据 -->
+					<cell v-for="(item,index) in dataList">
+						<!-- // 已回执 -->
+						<riskReply v-if="tabIndex" :item="item"></riskReply>
+						<!-- // 未回执 -->
+						<noreply v-else :item="item" :index="index"></noreply>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+		<view style="height:24rpx;"></view>
+	</view>
+</template>
+
+<script>
+	import wtList from '@/components/wt-list/wt-list.nvue';
+	import noreply from './noreply.nvue';
+	import riskReply from './riskReply.nvue'
+	export default {
+		data() {
+			return {
+				tabList: [
+				{
+					name: '未回执',
+				}, 
+				{
+					name: '已回执'
+				}],
+				tabIndex: 0,
+			}
+		},
+		components:{
+			wtList,
+			noreply,
+			riskReply
+		},
+		onLoad() {
+			uni.$on('removeSosItem', res=>{
+				this.removeItem(res.index)
+			})
+		},
+		onUnload() {
+			uni.$off('removeSosItem')
+		},
+		methods: {
+			handerToggle(index){
+				this.tabIndex = -1;
+				this.$nextTick(()=>{
+					this.tabIndex = index;
+				})
+				console.log(index);
+			},
+			removeItem(index){
+				this.$refs.riskhighlist.removeItem(index)
+			},
+		}
+	}
+</script>
+
+<style>
+	.gcolor {
+		/* width: 375rpx; */
+		/* height: 30rpx; */
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #487CF1;
+		/* line-height: 30rpx; */
+		/* text-align: center; */
+		border-bottom-width: 4rpx;
+		border-style: solid;
+		border-color: #487CF1;
+	}
+
+	.mcolor {
+		/* width: 375rpx; */
+		/* 	height: 30rpx; */
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #949599;
+		/* 	line-height: 30rpx;
+	text-align: center; */
+
+	}
+	.uni-tab-item {
+	  /* #ifndef APP-PLUS */
+	  display: inline-block;
+	  /* #endif */
+	  flex-wrap: nowrap;
+	  width: 375rpx;
+	}
+	
+	.uni-tab-item-title {
+	  color: #555;
+	  font-size: 15px;
+	  height: 40px;
+	  line-height: 40px;
+	  flex-wrap: nowrap;
+	  /* #ifndef APP-PLUS */
+	  white-space: nowrap;
+	  /* #endif */
+	}
+	
+	.uni-tab-item-title-active {
+	  color: #007AFF;
+	}
+	.border-title-active{
+		border-bottom-width: 4rpx;
+		border-bottom-color: #487CF1;
+		border-style: solid;
+	}
+	.swiper-item {
+	  flex: 1;
+	  flex-direction: column;
+	}
+	
+	.page-item {
+	  flex: 1;
+	  flex-direction: row;
+	  position: absolute;
+	  left: 0;
+	  top: 0;
+	  right: 0;
+	  bottom: 0;
+	}
+</style>

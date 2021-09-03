@@ -1,0 +1,532 @@
+{
+	// #ifdef MP-WEIXIN || MP-ALIPAY
+	/**
+	 * 微信小程序 支付宝小程序
+	 */
+	"pages": [
+		{
+		    "path" : "pages/xcxClient/index/index"
+		},{
+            "path" : "pages/xcxClient/test/test"
+        } ,{
+            "path" : "pages/xcxClient/login/login"
+        }
+        ,{
+            "path" : "pages/xcxClient/menu/scanCode/scanCode"
+        }
+		
+	],
+	// #endif
+	// #ifdef H5
+	/**
+	 * h5页面不要改动
+	 */
+	"pages": [{
+			"path": "pages/register/index"
+		},
+		{
+			"path": "pages/tabbar/tabbar-5/servicePirvacy/pirvacy"
+		},
+		{
+			"path": "pages/tabbar/tabbar-5/servicePirvacy/service"
+		},
+		{
+			"path": "pages/register/registerSuccess"
+		}, {
+			"path": "pages/tabbar-1-detail/fireDetail/fireDetail"
+		}
+	],
+	// #endif
+	// #ifdef APP-PLUS
+	"pages": [{
+            "path" : "pages/lunchPage/lunchPage2"
+        },{ // 启动页不要改
+			"path": "pages/lunchPage/lunchPage"
+		},
+		{
+			"path": "pages/login/index"
+		},
+		{
+			"path": "pages/tabbar/tabbar-1/tabbar-1"
+		},
+		{
+			"path": "pages/login/forgetPwd/forgetPwd"
+			
+		},
+		{
+			"path": "pages/tabbar/tabbar-5/feedback/index"
+		},
+		{
+			"path": "pages/tabbar/tabbar-5/editData/index1"
+		},
+		{
+			"path": "pages/register/index",
+			"style":{
+				"app-plus":{
+					"softinputMode":"adjustPan",
+					"titleNView": {
+						"titleText":"注册"
+					}
+				}
+			}
+		}, {
+			"path": "pages/register/registerSuccess"
+		},
+		{
+			"path": "pages/tabbar/tabbar-1/forum/forumWeb"
+		},
+		{
+			"path": "pages/tabbar/tabbar-2/tabbar-2"
+		},
+		{
+			"path": "pages/tabbar/tabbar-3/tabbar-3"
+		},
+		{
+			"path": "pages/tabbar/tabbar-5/myTegral/index"
+		}, {
+			"path": "pages/tabbar/tabbar-5/myTegral/tegralRule"
+		}, {
+			"path": "pages/tabbar/tabbar-5/servicePirvacy/index"
+		}, {
+			"path": "pages/tabbar/tabbar-5/servicePirvacy/pirvacy"
+		}, {
+			"path": "pages/tabbar/tabbar-5/servicePirvacy/service"
+		}, {
+			"path": "pages/tabbar/tabbar-5/help/index"
+		}, {
+			"path": "pages/tabbar/tabbar-5/feedback/index"
+		},
+		{
+			"path": "pages/tabbar-3-detial/tabbar-3-release/tabbar-3-release"
+		},
+		{
+			"path": "pages/tabbar-3-detial/tabbar-3-video/tabbar-3-video"
+		},
+		{
+			"path": "pages/tabbar-3-detial/tabbar-3-qa/tabbar-3-qa"
+		}, {
+			"path": "pages/tabbar-1-detail/fireDetail/fireDetail"
+		}, {
+			"path": "pages/tabbar-1-detail/bussinessList/bussinessList"
+		}, {
+			"path": "pages/tabbar-1-detail/searchDetail/searchDetail"
+		}, {
+			"path": "pages/tabbar-1-detail/historyToday/historyToday"
+		}, {
+			"path": "pages/tabbar-4-detail/daily/daily"
+		}, {
+			"path": "pages/tabbar-4-detail/government/government"
+		},
+		//会商模块
+		{
+			"path": "pages/discussion/index"
+		},{
+			"path": "pages/discussion/creatDiscussion",
+			"style":{
+				"app-plus":{
+					"softinputMode":"adjustPan",
+					"titleNView": {
+						"titleText":"创建会商",
+						"buttons": [{
+							"type": "none",
+							"color": "#F75252",
+							"float": "right",
+							"fontSize": "17px",
+							"text": "确定",
+							"width": "80px"
+						}]
+					}
+				}
+			}
+		},{
+			"path": "pages/discussion/disSign"
+		},{
+			"path": "pages/discussion/voteList"
+		},{
+			"path": "pages/discussion/verdict"
+		},
+		//通讯录模块
+		{
+			"path": "pages/addrBook/contact"
+		},{
+			"path": "pages/addrBook/personalPage"
+		},{
+			"path": "pages/addrBook/index"
+		},{
+			"path": "pages/addrBook/report"
+		},{
+			"path": "pages/addrBook/reportSuccess"
+		},
+		// vote投票模块 start
+		{
+			"path": "pages/vote/index/index"
+		}, {
+			"path": "pages/vote/create/create"
+		},
+		{
+			"path": "pages/vote/participant/participant"
+		},
+		{
+			"path": "pages/vote/list/index"
+		}, {
+			"path": "pages/vote/participant/participant"
+		}, {
+			"path": "pages/vote/list/index"
+		},
+		{
+			"path": "pages/vote/create/create"
+		},
+		{
+			"path": "pages/vote/vote"
+		}
+		// vote投票模块 end
+		, {
+			"path": "pages/tabbar-4-detail/goverDetail/goverDetail"
+		}, {
+			"path": "pages/tabbar-4-detail/riskhigh/riskhigh"
+		}, {
+			"path": "pages/tabbar-4-detail/riskhigh/noreply"
+		}, {
+			"path": "./pages/tabbar-4-detail/riskhigh/riskReply"
+		}, {
+			"path": "pages/tabbar-4-detail/riskhigh/noreplydetail"
+		}, {
+			"path": "pages/tabbar-4-detail/riskhigh/lookpeers"
+		}, {
+			"path": "pages/tabbar-4-detail/riskhigh/riskReplydetail"
+		}
+		, {
+			"path": "pages/tabbar-4-detail/approval/approval"
+		}, {
+			"path": "pages/tabbar-1-detail/conclusion/conclusion"
+		}, {
+			"path": "pages/tabbar/tabbar-5/tabbar-me/tabbar-me"
+		}, {
+			"path": "pages/tabbar/tabbar-4/tabbar-4"
+		}, {
+			"path": "pages/tabbar-4-detail/violation/violation"
+		}, {
+			"path": "pages/tabbar-4-detail/violation/unviolationDetail"
+		}, {
+			"path": "pages/tabbar-4-detail/violation/violationedetail"
+		}, {
+			"path": "pages/tabbar-4-detail/violation/unviolation"
+		}, {
+			"path": "pages/tabbar-4-detail/violation/violationed"
+		}, {
+			"path": "pages/tabbar-4-detail/fireWarn/fireWarn"
+		}, {
+			"path": "pages/tabbar-4-detail/fireWarn/firewarnedetail"
+		}, {
+			"path": "pages/tabbar-4-detail/fireWarn/unfirewarndetail"
+		}, {
+			"path": "pages/tabbar-4-detail/sos/sos"
+		}, {
+			"path": "pages/tabbar-4-detail/sos/sosedetail"
+		}, {
+			"path": "pages/tabbar-4-detail/sos/unsosdetail"
+		}, {
+			"path": "pages/tabbar-1-detail/busSearch/busSearch"
+		}, {
+			"path": "pages/tabbar-4-detail/twoCode/twoCode"
+		}, {
+			"path": "pages/tabbar-4-detail/extension/extension"
+		}, {
+			"path": "pages/vote/index/u-charts/u-charts"
+		}, {
+			"path": "pages/tabbar-4-detail/extension/extension"
+		}, {
+			"path": "pages/tabbar-4-detail/appointment/appointment"
+		}, {
+			"path": "pages/tabbar-4-detail/appointment/unappoint"
+		}, {
+			"path": "pages/tabbar-4-detail/appointment/appointed"
+		}, {
+			"path": "pages/tabbar-4-detail/appointment/unappointDetail"
+		}, {
+			"path": "pages/tabbar-4-detail/appointment/appointedetail"
+		}, {
+			"path": "pages/tabbar-4-detail/appointment/upeople"
+		}, {
+            "path" : "pages/tabbar-4-detail/mountain/mountain"
+        },{
+            "path" : "pages/tabbar-4-detail/mountain/peopleTime"
+        },{
+            "path" : "pages/tabbar-4-detail/mountain/mountainPeople"
+        },{
+            "path" : "pages/tabbar-4-detail/management/management"
+        },{
+			"path":"pages/tabbar-4-detail/scanQrCode/scanQrCode"
+		},{
+			"path":"pages/tabbar-4-detail/scanQrCode/scanConfirm"
+		},{
+			"path":"pages/tabbar-4-detail/scanQrCode/success"
+		},{
+			"path":"pages/tabbar-4-detail/scanQrCode/peerCar/perCar"
+		},{
+			"path":"pages/tabbar-1-detail/searchDetail/searchFire"
+		},{
+			"path":"pages/tabbar-1-detail/searchDetail/searchAll"
+		},{
+			"path":"pages/tabbar-1-detail/searchDetail/searchPeopleAll"
+		},{
+			"path":"pages/easy-chat/fireReceipt"
+		},{
+			"path":"pages/easy-chat/reminder"
+		},
+		// 以下是nim的页面
+		{
+			"path": "pages/easy-chat/session-list",
+			"style": {
+				"navigationBarTitleText": "会话列表"
+			}
+		},
+		{
+			"path": "pages/easy-chat/team-list",
+			"style": {
+				"navigationBarTitleText": "群组列表"
+			}
+		},
+		{
+			"path": "pages/easy-chat/chat",
+			"style": {
+				"app-plus": {
+					"titleNView": false,
+					"scrollIndicator": "none",
+					"softinputMode":"nothing"
+				}
+			}
+		},
+		{
+			"path": "pages/easy-chat/video",
+			"style": {
+				"app-plus": {
+					"titleNView": false,
+					"scrollIndicator": "none"
+				}
+			}
+		},
+		{
+			"path": "pages/easy-chat/chat-details",
+			"style": {
+				"navigationBarTitleText": "聊天详情"
+			}
+		},
+		{
+			"path": "pages/easy-chat/chat-system",
+			"style": {
+				"navigationBarTitleText": "系统消息"
+			}
+		},
+		{
+			"path": "pages/easy-chat/chat-forum",
+			"style": {
+				"navigationBarTitleText": "论坛消息"
+			}
+		},
+		{
+			"path": "pages/easy-chat/select-contact",
+			"style": {
+				"navigationBarTitleText": "选择联系人"
+			}
+		},
+		{
+			"path": "pages/easy-chat/team-member-list",
+			"style": {
+				"navigationBarTitleText": "群成员"
+			}
+		},
+		{
+			"path": "pages/easy-chat/burn-read-page",
+			"style": {
+				"navigationBarTitleText": "阅后即焚展示页"
+			}
+		},
+		{
+			"path": "pages/easy-chat/chat-search-history",
+			"style": {
+				"navigationBarTitleText": "消息搜索"
+			}
+		},
+		{
+			"path": "pages/easy-chat/change-team-name",
+			"style": {
+				"navigationBarTitleText": "更改群名称"
+			}
+		},
+		{
+			"path": "pages/easy-chat/advanced-list",
+			"style": {
+				"navigationBarTitleText": "会话列表"
+			}
+		},
+		{
+			"path": "pages/easy-chat/interface-history-msg",
+			"style": {
+				"navigationBarTitleText": "历史消息列表"
+			}
+		}
+		// nim结束
+        ,{
+            "path" : "pages/tabbar/tabbar-5/collectMine/collectMine"   
+        },
+		// rtc页面	shart
+		{
+			"path":"pages/rtc/liveroom/liveaudioroom"
+		},
+		{
+			"path":"pages/rtc/liveroom/liveaudioroom-team"
+		},
+		{
+			"path":"pages/rtc/liveroom/liveroom"
+		},
+		{
+			"path":"pages/rtc/liveroom/liveroom-team"
+		},
+		{
+			"path":"pages/rtc/liveroom-0416/liveroom"
+		}
+		// rtc页面 end
+        ,{	// 2021拜年视频 有效期2月7号-2月28号
+            "path" : "pages/happy-new-year-2021/happy-new-year-2021",
+            "style" : {
+				"backgroundColor":"rgba(0,0,0,0.3)",
+				"popGesture":"none"
+			}
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/dailyNews/dailyNews"
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/writenews/writenews"
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/dailyNews/dailyNewsExt/dailyNewsExt"
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/dailyNews/dailyNewsExt/selectExt"
+        },{
+			"path" : "pages/tabbar-1-detail/dailynewsDetail/dailynewsDetail"
+		}
+        ,{
+            "path" : "pages/tabbar-1-detail/readPrise/readPrise"
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/lookmineNews/lookmineNews"
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/forestNews/forestNews"
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/selectNews/selectNews"
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/dailyNews/screenPage"
+        }
+		,{
+			"path":"pages/tabbar-1-detail/personalDaily/personalDaily"
+		}
+        ,{
+            "path" : "pages/tabbar-1-detail/forestDetail/forestDetail",
+            "style" :                                                                                    
+            {
+                "enablePullDownRefresh": false
+            }
+            
+        },{
+            "path" : "pages/tabbar-1-detail/searchDaily/searchDaily"
+		}
+        ,{
+            "path" : "pages/tabbar-4-detail/danger/danger"
+		},{
+		    "path" : "pages/tabbar-4-detail/danger/createDanger"
+		},{
+		    "path" : "pages/tabbar-4-detail/danger/createTwo"
+		},{
+		    "path" : "pages/tabbar-4-detail/danger/contentTwo"
+		},{
+		    "path" : "pages/tabbar-4-detail/danger/dangerDetail"
+		}
+        ,{
+            "path" : "components/wt-steps/wt-steps"
+		},{
+            "path" : "components/wts-data-checkbox/wts-data-checkbox"
+		},
+        {
+            "path" : "pages/vote/index/fileShare/fileShare"
+        }
+        ,{
+            "path" : "pages/vote/index/lookPdf/lookPdf"
+        }
+        ,{
+            "path" : "pages/vote/index/autograph/autograph"
+        }
+        ,{
+            "path" : "pages/tabbar-4-detail/danger/signature/signature",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        ,{
+            "path" : "pages/tabbar-1-detail/fireRisk/fireRisk"
+        }
+       
+    ],
+	// #endif
+
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "防火码",
+		"enablePullDownRefresh": false,
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8",
+		"navigationStyle": "custom",
+		"app-plus": {
+			"bounce": "none",
+			// "softinputMode": "adjustResize",
+			"contentAdjust": false
+		}
+	}
+	// #ifdef APP-PLUS
+	,"tabBar": {
+		"borderStyle": "white",
+		"backgroundColor": "#FFFFFF",
+		"color": "#949599",
+		"selectedColor": "#F75252",
+		"midButton": {
+			"iconWidth": "64px",
+			"width": "65px",
+			"height": "65px",
+			"iconPath": "/static/img/tabbar/call.png"
+		},
+		"list": [{
+				"pagePath": "pages/tabbar/tabbar-1/tabbar-1",
+				"iconPath": "static/img/tabbar/home.png",
+				"selectedIconPath": "static/img/tabbar/homeactive.png",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/tabbar/tabbar-2/tabbar-2",
+				"iconPath": "static/img/tabbar/news.png",
+				"selectedIconPath": "static/img/tabbar/newsactive.png",
+				"text": "交流"
+			},
+			{
+				"pagePath": "pages/tabbar/tabbar-4/tabbar-4",
+				"iconPath": "static/img/tabbar/work.png",
+				"selectedIconPath": "static/img/tabbar/workactive.png",
+				"text": "工作台"
+			},
+			{
+				"pagePath": "pages/tabbar/tabbar-5/tabbar-me/tabbar-me",
+				"iconPath": "static/img/tabbar/mine.png",
+				"selectedIconPath": "static/img/tabbar/mineactive.png",
+				"text": "我的"
+			}
+		]
+	}
+	// #endif
+}

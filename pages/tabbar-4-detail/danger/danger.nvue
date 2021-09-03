@@ -1,0 +1,104 @@
+<template>
+	<view class="flex flex-1 flex-column w-100">
+		<uni-nav-bar left-icon="back" title="隐患整改" :statusBar="true">
+			<view class="flex flex-1 justify-end" slot="right" @click="rightText">
+				<text style="color: #F75252;font-size: 34rpx;">创建</text>
+			</view>
+		</uni-nav-bar>
+		<view class="flex flex-1 w-100 flex-column">
+			<wt-list api="danger.getlist" ref="dangerList">
+				<template v-slot:dataList="ctx">
+					<cell v-for="(item,index) in ctx.dataList" @click="godangerDetail(item)"> 
+						<view class="pl-3 pr-3" style="padding-top: 24rpx;">
+							<view class="pl-3 bg-white flex flex-column justify-between" style="padding-top: 28rpx;padding-bottom: 28rpx;border-radius: 8rpx;padding-right: 24rpx;">
+								<view class="flex flex-row">
+									<image src="../../../static/work/danger.png" mode="" style="width: 95rpx;height: 96rpx;"></image>
+									<view style="padding-left: 15rpx;">
+										<view class="flex flex-row justify-between">
+											<text class="danger_title line-2">{{item.redUnitName}}</text>
+											<image src="../../../static/work/right.png" mode="" style="width: 32rpx;height: 32rpx;"></image>
+										</view>
+										<view class="flex flex-row">
+											<view>
+												<text class="danger_content" style="padding-top: 24rpx; width: 450rpx; lines: 2; text-overflow: ellipsis;">被督查单位：{{item.inspectedUnit}}</text>
+												<view  style="padding-top: 24rpx;" class="flex flex-row">
+													<text class="danger_content">{{item.numType == 1 ? '' : item.numProvince}}{{item.numText}}{{item.numType == 1 ? item.numProvince : ''}}{{item.numYear}}{{item.numNumber}}</text>
+												</view>
+												<text class="danger_content" style="padding-top: 24rpx;">{{dataTrn(item.updateTime)}}</text>
+											</view>
+											<view class="flex flex-column justify-center align-end" style="width: 85rpx;">
+												<text class="danger_status" v-if="item.status ==1">已生成</text>
+												<text class="danger_rstatus" v-else>暂存</text>
+											</view>
+										</view>
+									</view>
+								</view>
+							</view>
+						</view>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		data() {
+			return {
+
+			}
+		},
+		methods: {
+			// 点击创建
+			rightText() {
+				uni.navigateTo({
+					url: './createDanger'
+				})
+			},
+			// 去通知单详情页
+			godangerDetail(item) {
+				if(item.status == 1){
+					uni.navigateTo({
+						url: './dangerDetail?id='+item.fhd_id
+					})
+				}else if(item.status == 0){
+					uni.navigateTo({
+						url:'./createDanger?id='+item.fhd_id
+					})
+				}
+			},
+			dataTrn(time){
+				return dayjs(time).format('YYYY-MM-DD HH:mm')
+			}
+		}
+	}
+</script>
+
+<style>
+	.danger_title {
+		width: 400rpx;
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+	}
+
+	.danger_content {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.danger_status {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #C2C3C8;
+	}
+
+	.danger_rstatus {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #F07A4E;
+	}
+</style>

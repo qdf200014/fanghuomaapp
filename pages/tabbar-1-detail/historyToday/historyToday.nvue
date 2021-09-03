@@ -1,0 +1,223 @@
+<template>
+	<view class="flex flex-column flex-1 w-100">
+		<view style="position: relative;">
+			<image src="../../../static/fireIndex/historyToday.png" mode="" style="width: 750rpx;height: 436rpx;"></image>
+			<view style="position: absolute;top: 0;left: 0;">
+				<uni-status-bar/>
+				<view class="justify-between flex flex-row align-center" style="width: 750rpx;padding-left: 30rpx;padding-right: 30rpx;padding-top: 30rpx;">
+					<view class="flex flex-1 justify-start" @click="goBack">
+						<image src="../../../static/fireIndex/left.png" mode="" style="width: 20rpx;height: 35rpx;"></image>
+					</view>
+					<view class="flex-1 flex justify-center">
+						<text style="color: #303133;font-size: 38rpx;">历史今日</text>
+					</view>
+					<view class="flex-1 flex justify-end" @click="goCalendar">
+						<image src="../../../static/fireIndex/calendar.png" mode="" style="width: 40rpx;height: 39rpx;"></image>
+					</view>
+				</view>
+				<view class="flex flex-row justify-between align-center" style="margin-top: 50rpx;padding-left: 30rpx;">
+					<view class="flex flex-row align-center">
+						<image src="../../../static/fireIndex/location.png" style="width: 22rpx;height: 28rpx;"></image>
+						<text style="font-size: 26rpx;font-weight: 400;color: #323234;" class="ml-1">{{city}}</text>
+					</view>
+					<view class="fireCycle">
+						<text style="color: #FFFFFF;font-size: 28rpx;font-weight: bold;">防火期 {{cycBegin}}-{{cycEnd}}</text>
+					</view>
+				</view>
+				<view class="flex flex-row justify-between" style="width: 750rpx;margin-top: 39rpx;padding-left: 30rpx;padding-right: 28rpx;">
+					<view @click="qian" class="flex align-center" style="width: 150rpx;"> 
+						<image src="../../../static/fireIndex/front.png" mode="" style="width: 150rpx;height: 60rpx;"></image>
+					</view>
+					<view class="flex-1 flex justify-center" style="height: 100rpx;">
+						<!-- <text class="Oswald-Regular" style="color: #323234;font-size: 84rpx;font-weight: bold;height: 100rpx;line-height: 100rpx;">{{currentDate | formatTime}}</text> -->
+						<text class="Oswald-Regular" style="color: #323234;font-size: 84rpx;font-weight: bold;height: 100rpx;line-height: 100rpx;">{{currentMonth}}月{{currentDay}}日</text>
+					</view>
+					<view @click="hou" class="flex align-center" style="width: 150rpx;">
+						<image src="../../../static/fireIndex/after.png" mode="" style="width: 150rpx;height: 60rpx;"></image>
+					</view>
+				</view>
+			</view>
+
+		</view>
+		<!-- 时间线部分 -->
+		<list class="flex flex-column w-100 flex-1">
+			<cell class="p-3">
+				<view v-for="(item,index) in historyList" :key="index">
+					<view style="display: flex;flex-direction: row;">
+						<view class="time_box flex justify-center align-center align-start">
+							<text class="line_time">{{item.year}}</text>
+						</view>
+						<view class="flex" style="margin-top: 5rpx;">
+							<view class="circle">
+								<image src="../../../static/fireIndex/circle.png" mode="" style="width: 30rpx;height: 30rpx;"></image>
+							</view>
+							<view style="width: 2rpx;margin-top: 30rpx;" :class="historyList.length-1 == index ?'' : 'line_hidden'"></view>
+							<view style="margin-left: 10rpx;width: 510rpx;">
+								<text class="line_content">{{item.content}}</text>
+								<view style="height: 45rpx;"></view>
+							</view>
+						</view>
+					</view>
+				</view>
+			</cell>
+		</list>
+		<!--日历部分 -->
+		<uni-calendar ref="calendar" :insert="false" :lunar="true" :date="currentDate" @change="change" @confirm="confirm"></uni-calendar>
+	</view>
+</template>
+
+<script>
+	import uniCalendar from '@/components/uni-calendar/uni-calendar.vue';
+	import dayjs from 'dayjs';
+	export default {
+		data() {
+			return {
+				currentDate:dayjs(new Date()).format('YYYY-MM-DD'),
+				city:'',
+				month:'',
+				historyList:[],
+				cyclebycity:` `,//防火周期
+				currentMonth:dayjs(new Date()).format('MM'),
+				currentDay:dayjs(new Date()).format('DD'),
+				cycBegin:'',
+				cycEnd:''
+			}
+		},
+		filters:{
+			formatTime(timeString){
+				let _str = timeString;
+				return _str.replace(/-/ig, ',');
+			}
+		},
+		components: {
+			uniCalendar
+		},
+		onLoad() {
+			uni.getLocation({
+				type: 'gcj02',
+				geocode: true,
+				success: (res) => {
+					console.log('uni.getLocation_RES', res)
+					console.log(res.address.district);
+					this.city = res.address.city;
+					uni.$api.historyIndex.getcyclebycity({
+						province:this.city
+					})
+					.then(res=>{
+						console.log('getcyclebycity_RES',res);
+						this.cyclebycity = res.data.data.cycle;
+						let begin = dayjs(res.data.data.cycleBeginTime).format('MM月DD日')
+						this.cycBegin = begin;
+						let end = dayjs(res.data.data.cycleEndTime).format('MM月DD日')
+						this.cycEnd = end;
+					})
+					.catch(err=>{
+						console.log('getcyclebycity_ERR',err);
+					})
+				}
+			}),
+			this.historyPage();
+			
+		},
+		methods: {
+			
+			goCalendar(){
+				this.$refs.calendar.open();
+			},
+			change(e){
+				console.log(e)
+			},
+			goBack(){
+				uni.navigateBack(1)
+			},
+			qian(){
+				this.currentDate = dayjs(this.currentDate).add(-1, 'day').format('YYYY-MM-DD')
+				console.log(this.currentDate)
+				this.currentMonth = dayjs(this.currentDate).format('MM');
+				this.currentDay = dayjs(this.currentDate).format('DD')
+				this.historyPage();
+			},
+			hou(){
+				this.currentDate = dayjs(this.currentDate).add(+1,'day').format('YYYY-MM-DD')
+				this.currentMonth = dayjs(this.currentDate).format('MM');
+				this.currentDay = dayjs(this.currentDate).format('DD')
+				this.historyPage();
+			},
+			// 根据日期获取历史上今天
+			historyPage() {
+				this.currentMonth = dayjs(this.currentDate).format('MM');
+				this.currentDay = dayjs(this.currentDate).format('DD')
+				uni.$api.historyIndex.gethistodaybydate({
+						Month: this.currentMonth,
+						Date: this.currentDay
+					})
+					.then(res => {
+						console.log('gethistodaybydate1_RES', res);
+						this.historyList = res.data.data;
+					})
+					.catch(err => {
+						console.log('gethistodaybydate1_ERR', err);
+					})
+			},
+			confirm(e){
+				console.log(e);
+				this.currentDate = e.fulldate;
+				this.historyPage();
+			}
+		}
+	}
+</script>
+
+<style>
+	.circle {
+		width: 30rpx;
+		height: 30rpx;
+		margin-right: -15rpx;
+	}
+	
+	.line_content {
+		font-size: 30rpx;
+		font-weight: 500;
+		color: #323234;
+		margin-left: 32rpx;
+		padding-bottom: 20rpx;
+	}
+
+	.line_time {
+		/* height: 26rpx; */
+		/* line-height: 26rpx; */
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+		border-radius: 17rpx;
+		border-width: 2rpx;
+		border-style: solid;
+		border-color: #949599;
+		margin-top: 5rpx;
+		padding-left: 12rpx;
+		padding-right: 12rpx;
+		padding-top: 4rpx;
+		padding-bottom:4rpx;
+	}
+	
+	.time_box {
+		/* height: 34rpx; */
+		width:110rpx;
+		
+		
+	}
+	.line_hidden{
+		background-color:#E1E4ED;
+	}
+	.fireCycle{
+		background-image: linear-gradient(to right, #FEA288, #F04759);
+		border-top-right-radius: 0rpx;
+		border-top-left-radius: 100rpx;
+		border-bottom-left-radius: 100rpx;
+		border-bottom-right-radius: 0rpx;
+		padding-left: 32rpx;
+		padding-right: 32rpx;
+		padding-top: 8rpx;
+		padding-bottom: 7rpx;
+	}
+</style>

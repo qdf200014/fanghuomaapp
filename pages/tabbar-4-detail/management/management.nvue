@@ -1,0 +1,234 @@
+<template>
+	<!-- 人员管理 -->
+	<view class="flex flex-column flex-1 w-100" style="background-color: #FFFFFF;">
+		<uni-nav-bar left-icon="back" title="人员管理" :statusBar="true">
+			<!-- <view class="flex flex-1 justify-end" slot="right" @click="clickShare">
+				<text style="font-size: 34rpx;font-family: PingFangSC-Regular, PingFang SC;font-weight: 400;color: #F75252;">添加</text>
+			</view> -->
+		</uni-nav-bar>
+		<!-- 		<list class="flex flex-1 flex-column w-100 p-3">
+			<cell>
+				<view class="flex flex-row justify-between border-bottom p-2" v-for="(item,index) in mailList" :key="index">
+
+				</view>
+			</cell>
+		</list> -->
+		<!-- 注意wt-list本身不具有flex布局，使用时包一层容器 -->
+		<view class="flex flex-1 w-100">
+			<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+			<wt-list api="approval.getappuserinfoapproval" :params="{status: 2}" ref="manger">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="ctx">
+
+					<!-- 循环处理数据 -->
+					<cell v-for="(item,index) in ctx.dataList" class="flex flex-row justify-between border-bottom p-2">
+						<view class="flex flex-row justify-center align-center">
+							<view>
+								<view v-if="item.headUrl">
+									<image :src="item.headUrl" mode="" style="width: 96rpx;height: 96rpx;border-radius: 48rpx;"></image>
+								</view>
+								<view class="defaultHead" v-else>
+									<text class="headName">{{item.name.charAt(item.name.length-2)+item.name.charAt(item.name.length-1)}}</text>
+								</view>
+							</view>
+							<view><text class="manag_name">{{item.name}}</text></view>
+							<view style="height: 38rpx;border-radius: 20rpx;padding-left: 16rpx;padding-right: 16rpx;padding-top: 8rpx;padding-bottom: 8rpx;"
+							 class="border-manag flex justify-center align-center">
+								<text class="manag_type">{{item.jobName}}</text>
+							</view>
+						</view>
+						<view style="width: 96rpx;height: 96rpx;" class="flex justify-center align-center" @click="delate(item)" v-if="item.isAdmin == 0">
+							<image src="../../../static/work/more.png" mode="" style="width: 40rpx;height: 10rpx;"></image>
+						</view>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+		<uni-popup type="bottom" ref='share'>
+			<wt-share @select="selectShareItem"></wt-share>
+		</uni-popup>
+		<uni-popup type="bottom" ref='delate'>
+			<view class="w-100 p-3">
+				<view style="background-color: #FFFFFF;width: 690rpx;height: 104rpx;border-radius: 4rpx;" class="flex justify-center align-center"
+				 @click="delateUser(item)">
+					<text style="font-size: 34rpx;color: #323234;">删除人员</text>
+				</view>
+				<view style="background-color: #FFFFFF;width: 690rpx;height: 104rpx;border-radius: 4rpx;margin-top: 16rpx;" class="flex justify-center align-center"
+				 @click="close">
+					<text style="font-size: 34rpx;color: #323234;">取消</text>
+				</view>
+			</view>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				attr: '',
+				area: '',
+				mailList: [], //通讯录列表
+				userId: '',
+			}
+		},
+		onLoad() {
+			this.requestUser();
+		},
+		methods: {
+			// 点击添加
+			clickShare() {
+				this.$refs.share.open();
+			},
+			// 打开删除人员
+			delate(item) {
+				this.userId = item.userId;
+				this.$refs.delate.open();
+			},
+			close() {
+				this.$refs.delate.close();
+			},
+			// 请求数据
+			requestUser() {
+				let userInfo = uni.getStorageSync('userInfo') || {};
+				console.log(userInfo);
+				this.attr = userInfo.levelId;
+				if (this.attr == 1) {
+					this.area = userInfo.province;
+				} else if (this.attr == 2) {
+					this.area = userInfo.city;
+				} else if (this.attr == 3) {
+					this.area = userInfo.area;
+				} else if (this.attr == 4) {
+					this.area = userInfo.county;
+				} else if (this.attr == 5) {
+					this.area = userInfo.village;
+				} else if (this.attr == 0) {
+					this.area = 0;
+				}
+				uni.$api.approval.getappuserinfoapproval({
+						attr: this.attr,
+						area: this.area
+					})
+					.then(res => {
+						console.log(res, '拉啊啦啦')
+						this.mailList = res.data.data;
+					})
+					.catch(err => {
+						console.log(err, '出错了')
+					})
+			},
+			// 删除用户
+			delateUser() {
+				uni.$api.user.delappuser({
+						userId: this.userId
+					})
+					.then(res => {
+						console.log(res);
+						setTimeout(() => {
+							uni.showToast({
+								title: '删除成功'
+							})
+						}, 800)
+						this.$refs.manger.refreshData();
+						this.$refs.delate.close();
+						this.requestUser();
+					})
+					.catch(err => {
+						console.log(err)
+					})
+			},
+			// 选择不同分享按钮
+			selectShareItem(msg, done) {
+				console.log('msg_', msg);
+				done();
+				console.log(msg, 'lala')
+				if (msg.index == 0) {
+					uni.share({
+						provider: "weixin",
+						scene: "WXSceneSession",
+						type: 0,
+						href: this.$store.state.app.shareUrl,
+						title: "防火码",
+						success: function(res) {
+							console.log("success:" + JSON.stringify(res));
+						},
+						fail: function(err) {
+							console.log("fail:" + JSON.stringify(err));
+						}
+					});
+				} else if (msg.index == 1) {
+					uni.share({
+						provider: "qq",
+						// scene: "WXSceneSession",
+						type: 1,
+						summary: "防火码",
+						title: '防火码',
+						href: this.$store.state.app.shareUrl,
+						success: function(res) {
+							console.log("success:" + JSON.stringify(res));
+						},
+						fail: function(err) {
+							console.log("fail:" + JSON.stringify(err));
+						}
+					});
+				} else if (msg.index == 2) {
+					uni.setClipboardData({
+						data: this.$store.state.app.shareUrl,
+						success: function(res) {
+							console.log("success:" + JSON.stringify(res));
+						},
+						fail: function(err) {
+							console.log("fail:" + JSON.stringify(err));
+						}
+					})
+				}
+
+			},
+		}
+	}
+</script>
+
+<style>
+	.manag_name {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #333333;
+		padding-left: 24rpx;
+		padding-right: 24rpx;
+	}
+
+	.manag_type {
+		line-height: 22rpx;
+		font-size: 22rpx;
+		font-weight: 400;
+		color: #F07A4E;
+	}
+
+	.border-manag {
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #F07A4E;
+	}
+
+	.defaultHead {
+		justify-content: center;
+		align-items: center;
+		width: 112rpx;
+		height: 112rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+
+	.headName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+</style>

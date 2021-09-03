@@ -1,0 +1,249 @@
+<template>
+	<view class="flex flex-1 flex-column w-100" style="background-color: #FFFFFF;">
+		<uni-nav-bar left-icon="back" title="扫码认证" :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-column w-100 flex-1 w-100">
+			<cell class="p-3 w-100 pb-0">
+				<view class="flex flex-row align-center">
+					<image src="../../../static/work/jinshanzheng.png" style="width: 50rpx;height: 39rpx;"></image>
+					<text class="pl-1 font-1" style="font-size: 50rpx;">{{unappointList.park_name}}</text>
+				</view>
+				
+				<view class="py-3 rounded-2" >
+					<view style="border-radius: 16rpx;">
+						<view class="p-3" style="background-color: #F4F5FB;">
+							<text class="violation_top">使用时效</text>
+							<text class="violation_bottom">{{unappointList.use_duration}}</text>
+						</view>
+						<view class="p-3" style="background-color: #F4F5FB;">
+							<text class="violation_top">使用对象</text>
+							<text class="violation_bottom">{{unappointList.use_type | formatUseType}}</text>
+						</view>
+						<view class="p-3" style="background-color: #F4F5FB;">
+							<text class="violation_top">持证人</text>
+							<text class="violation_bottom">{{unappointList.name}}</text>
+						</view>
+						<view class="p-3" style="background-color: #F4F5FB;">
+							<text class="violation_top">手机号</text>
+							<view class="flex flex-row">
+								<text class="violation_bottom">{{unappointList.phone}}</text>
+							</view>
+						</view>
+						<view class="p-3" style="background-color: #F4F5FB;">
+							<text class="violation_top">身份证号</text>
+							<text class="violation_bottom">{{unappointList.identity_number | formatIdNumber}}</text>
+						</view>
+						<view class="p-3" style="background-color: #F4F5FB;" v-if="unappointList.use_type==2">
+							<text class="violation_top">单位名称</text>
+							<text class="violation_bottom">飞山野狐旅游局</text>
+						</view>
+						<view class="p-3" style="background-color: #F4F5FB;" v-if="unappointList.use_type==2">
+							<text class="violation_top">单位人数</text>
+							<text class="violation_bottom">20人</text>
+						</view>
+						
+						<view class="p-3" style="background-color: #F4F5FB;">
+							<text class="violation_top">进山日期</text>
+							<text class="violation_bottom">{{unappointList.in_date || '' }}</text>
+						</view>
+						<view class="p-3" style="background-color: #F4F5FB;">
+							<text class="violation_top">进山原因</text>
+							<text class="violation_bottom">{{unappointList.in_type}}</text>
+						</view>
+						<view class="p-3 flex flex-row justify-between" style="background-color: #F4F5FB;">
+							<view class="flex flex-column">
+								<text class="violation_top">进山车辆</text>
+								<text class="violation_bottom">{{unappointList.has_car}}</text>
+							</view>
+							<view class="flex flex-row align-center" v-if="unappointList.has_car == '有车辆' ? true : false">
+								<text class="violation_bottom3" @click="gocar">查看车辆信息</text>
+								<image src="../../../static/work/goIn.png" style="width: 20rpx;height: 20rpx;"></image>
+							</view>
+						</view>
+						
+						<view class="p-3 flex flex-row justify-between" style="background-color: #F4F5FB;" v-if="unappointList.use_type==0 || unappointList.use_type==1">
+							<view class="flex flex-column">
+								<text class="violation_top">同行人员</text>
+								<text class="violation_bottom">{{unappointList.peer_count}}人</text>
+							</view>
+							<view class="flex flex-row align-center" v-if="unappointList.peer_count > 0 ? true : false">
+								<text class="violation_bottom3" @click="gopeople">查看同行人员</text>
+								<image src="../../../static/work/goIn.png" style="width: 20rpx;height: 20rpx;"></image>
+							</view>
+						</view>
+					</view>
+				</view>
+			</cell>
+		</list>
+		<view class="w-100 flex justify-center align-center border-top" style="height: 128rpx;background: #FFFFFF;" v-if="unappointList.id">
+			<view class="flex justify-center align-center" hover-class="hover-8" style="width: 333rpx;height: 88rpx;background-color: #487CF1;border-radius: 44rpx;" @click="scanConfirm">
+				<text class="font-2" style="color: #FFFFFF;">确认</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				unappointList: {
+					"id": 0,
+					"user_id": 0,
+					"park_id": 0,
+					"use_type": 0,
+					"use_duration": "",
+					"name": "",
+					"phone": "",
+					"identity_number": "",
+					"unit_name": null,
+					"unit_number": null,
+					"in_date": "",
+					"in_hour": 0,
+					"in_type": "",
+					"in_reason": null,
+					"in_fire": "",
+					"has_car": "",
+					"car_type": null,
+					"car_num": null,
+					"approve_status": "",
+					"approve_date": "",
+					"approve_reason": null,
+					"active_date": null,
+					"cert_number": "",
+					"code_url": "",
+					"created_at": "",
+					"updated_at": "",
+					"identity": [],
+					"car_affix": [],
+					"fire_affix": [],
+					"park_name": "",
+					"peer_count": 0,
+					"risk": ""
+				},
+				option: {},
+				identity: [],
+				headUrl: 'https://fhm-oss.limefamily.cn/fhm/',
+				identity_number: ''
+			}
+		},
+		filters:{
+			formatUseType(use_type){
+				let _t = '';
+				use_type == 0 ? (_t = '个人') :'';
+				use_type == 1 ? (_t = '他人') :'';
+				use_type == 2 ? (_t = '团体') :'';
+				return _t;
+			},
+			formatIdNumber(identity_number){
+				return identity_number ? (identity_number.slice(0,6) + '********' + identity_number.slice(14,18)) : '';
+			}
+		},
+		onLoad(event) {
+			this.option = JSON.parse(decodeURIComponent(event.query));
+			
+			if(this.option.hasOwnProperty('id')){
+				this.getCerInfo();
+			}
+			
+		},
+		methods: {
+			scanConfirm(){
+				uni.navigateTo({
+					url: './scanConfirm?query=' + encodeURIComponent(JSON.stringify(this.option))
+				});
+			},
+			getCerInfo(){
+				uni.$api.appointment.getview(this.option)
+				.then(res=>{
+					console.log('appointment.getview(this.option)_', res);
+					this.unappointList = res.data.data;
+					this.option.park_name = this.unappointList.park_name;
+				})
+				.catch(err=>{
+					console.log('getview_ERR', err);
+				})
+			},
+			gopeople() {
+				uni.navigateTo({
+					url:'../appointment/upeople?id=' + this.option.id + '&identity_number=' + this.unappointList.identity_number
+				})
+			},
+			gocar(){
+				console.log(this.option.id,'啦啦啦啦啦')
+				uni.navigateTo({
+					url:'./peerCar/perCar?id=' + this.option.id + '&identity_number=' + this.unappointList.identity_number
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.border-appoint {
+		border-width: 1rpx;
+		border-color: #E9E9E9;
+		border-style: solid;
+	}
+
+	.reason_name {
+
+		font-size: 28rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #949599;
+		line-height: 32rpx;
+	}
+
+	.reason_content {
+		width: 563rpx;
+		font-size: 24rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #606266;
+		line-height: 36rpx;
+	}
+
+	.violation_top {
+
+		font-size: 32rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #606266;
+		padding-bottom: 28rpx;
+	}
+
+	.violation_bottom {
+		font-size: 28rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+	
+	.violation_bottom2 {
+		font-size: 28rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #F75252;
+	}
+	
+	.violation_bottom3 {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #487CF1;
+		line-height: 28rpx;
+	}
+
+	.border-bottom {
+		border-bottom-width: 1rpx;
+		border-bottom-style: solid;
+		border-bottom-color: #00BCAB;
+	}
+
+	.reason_type {
+
+		font-size: 32rpx;
+		font-family: PingFangSC-Medium, PingFang SC;
+		font-weight: 500;
+		color: #F75252;
+	}
+</style>

@@ -1,0 +1,49 @@
+<template>
+	<view class="flex flex-1 w-100 flex-column bg-white">
+		<uni-status-bar></uni-status-bar>
+		<view class="w-100" style="height: 44px;"></view>
+		<view class="w-100 flex flex-1 flex-column justify-between align-center" style="padding-top: 150rpx;padding-bottom: 320rpx;">
+			<image src="../../static/applogo.png" style="width: 310rpx;height: 312rpx;"></image>
+			<view class="flex flex-column justify-center align-center">
+				<image src="../../static/img/lunchPage/lunch_title.png" style="width: 234rpx;height: 79rpx;"></image>
+				<!-- <view class="flex flex-row justify-center align-center" style="padding-top: 26rpx;">
+					<view style="width: 48rpx;height: 2rpx;background-image: linear-gradient(90deg, #FFFFFF, #F75252);"></view>
+					<text style="font-size: 30rpx;font-weight: 500;color: #F75252;" class="px-3">你好 欢迎您</text>
+					<view style="width: 48rpx;height: 2rpx;background-image: linear-gradient(90deg, #FFFFFF, #F75252);transform: rotate(180deg);"></view>
+				</view> -->
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		onLoad() {
+			console.log('lunch page onload');
+			//#ifdef APP-PLUS
+			plus.navigator.closeSplashscreen();
+			//#endif
+			setTimeout(()=>{
+				this.gotoIndex();
+			}, 2000)
+		},
+		methods: {
+			gotoIndex(){	// 检查登录状态,是否跳转到首页
+				let token = uni.getStorageSync('token') || false;
+				if(token){
+					uni.switchTab({
+						url:'/pages/tabbar/tabbar-1/tabbar-1'
+					})
+				}else{
+					uni.redirectTo({
+						url:'../login/index'
+					})
+				}
+			}
+			
+		}
+	}
+</script>
+<style>
+	
+</style>

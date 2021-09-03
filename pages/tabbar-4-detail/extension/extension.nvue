@@ -1,0 +1,90 @@
+<template>
+	<view class="flex flex-1 flex-column w-100">
+		<uni-nav-bar left-icon="back" title="推广指标" :statusBar="true"></uni-nav-bar>
+		<view style="flex-direction: row;background-color: #FFFFFF;">
+			<view class="uni-tab-item flex justify-center align-center" v-for="(tab,index) in tabList" :ref="'tabitem'+index"
+			 :data-id="index" :data-current="index" @click="handerToggle(index)" :class="tabIndex==index ? ' border-title-active' : ''">
+				<text class="uni-tab-item-title" :class="tabIndex==index ? 'uni-tab-item-title-active' : ''">{{tab.name}}</text>
+			</view>
+		</view>
+		<list class="flex flex-1 flex-column w-100">
+			<cell>
+				<area v-if="tabIndex == 0"></area>
+				<scene v-if="tabIndex == 1"></scene>
+				<entrance v-if="tabIndex == 2"></entrance>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	import area from './area.nvue'
+	import scene from './scene.nvue'
+	import entrance from './entrance.nvue'
+	export default {
+		data() {
+			return {
+				tabList: [{
+						name: '地域覆盖率',
+					},
+					{
+						name: '场景应用率'
+					},
+					{
+						name: '卡口启用率'
+					}
+				],
+				tabIndex: 0,
+			}
+		},
+		components:{
+			area,
+			scene,
+			entrance
+		},
+		methods: {
+			handerToggle(index) {
+				this.tabIndex = -1;
+				this.$nextTick(() => {
+					this.tabIndex = index;
+				})
+				console.log(index);
+			},
+		}
+	}
+</script>
+
+<style>
+	.uni-tab-item {
+		/* #ifndef APP-PLUS */
+		display: inline-block;
+		/* #endif */
+		flex-wrap: nowrap;
+		width: 250rpx;
+	}
+
+	.uni-tab-item-title {
+		color: #555;
+		font-size: 15px;
+		height: 40px;
+		line-height: 40px;
+		flex-wrap: nowrap;
+		/* #ifndef APP-PLUS */
+		white-space: nowrap;
+		/* #endif */
+	}
+
+	.uni-tab-item-title-active {
+		color: #007AFF;
+	}
+
+	.border-title-active {
+		border-bottom-width: 4rpx;
+		border-bottom-color: #487CF1;
+		border-style: solid;
+	}
+
+/* 	.box>view:nth-of-type(1){
+	    	background-color: #09BB07;
+	    } */
+</style>

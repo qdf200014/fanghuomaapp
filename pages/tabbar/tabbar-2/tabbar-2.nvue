@@ -1,0 +1,30 @@
+<template>
+	<view class="flex flex-1 w-100 flex-column bg-white">
+		<uni-nav-bar title="交流" :statusBar="true" :border="false"></uni-nav-bar>
+		<session-list :refreshNum="refreshNum"></session-list>
+	</view>
+</template>
+
+<script>
+import sessionList from '../../easy-chat/session-list.nvue';
+export default {
+	components: {
+		sessionList
+	},
+	data(){
+		return{
+			refreshNum:0
+		}
+	},
+	onShow() {
+		this.refreshSysMsg();
+	},
+	methods:{
+		refreshSysMsg(){
+			this.refreshNum ++;
+		}
+	}
+}
+</script>
+
+<style></style>

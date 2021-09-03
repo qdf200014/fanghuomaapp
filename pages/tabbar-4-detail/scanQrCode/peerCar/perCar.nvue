@@ -1,0 +1,62 @@
+<template>
+	<view class="flex flex-1 flex-column w-100" style="background-color: #FFF;">
+		<uni-nav-bar left-icon="back" title="查看同行车辆" :statusBar="true" :fixed="true"></uni-nav-bar>
+		<list class="flex flex-column w-100 flex-1 w-100">
+			<cell class="p-3 w-100 pb-0">
+				<view style="border-radius: 16rpx;">
+					<view class="p-3" style="background-color: #F4F5FB;">
+						<text class="perCar_top">车型</text>
+						<text class="perCar_bottom">{{car_msg.car_type}}</text>
+					</view>
+					<view class="p-3" style="background-color: #F4F5FB;">
+						<text class="perCar_top">车牌号</text>
+						<text class="perCar_bottom">{{car_msg.car_num}}</text>
+					</view>
+					<view class="p-3" style="background-color: #F4F5FB;">
+						<text class="perCar_top">车辆照片</text>
+						<view class="perCar_img flex flex-row" v-for="(item,index) of car_msg.car_affix" :key="item.id">
+							<image :src="headUrl+item.url" style="width: 300rpx; height: 200rpx; margin-right: 30rpx; margin-top: 28rpx; border-radius: 16rpx;"></image>
+						</view>
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	export default {
+		data(){
+			return {
+				car_msg: {},
+				headUrl: 'https://fhm-oss.limefamily.cn/fhm/',
+			}
+		},
+		onLoad(option) {
+			console.log(option,'_option')
+			uni.$api.appointment.getvehicle({'id': option.id}).then(res => {
+				if(res.data.statusCode == 200 || res.data.success == true){
+					console.log(res)
+					this.car_msg = res.data.data
+				}
+			}).catch(err => {
+				console.log(err)
+			})
+		},
+	}
+	
+</script>
+
+<style>
+.perCar_top{
+	font-size: 32rpx;
+	font-weight: 400;
+	color: #606266;
+}
+.perCar_bottom{
+	margin-top: 24rpx;
+	font-size: 28rpx;
+	font-weight: 400;
+	color: #00BCAB;
+}
+</style>

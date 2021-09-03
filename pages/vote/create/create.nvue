@@ -1,0 +1,507 @@
+<template>
+	<view class="flex flex-1 flex-column w-100 bg-white">
+		<view class="position-fixed top-0 left-0 w-100" v-if="voteType==2">
+			<uni-nav-bar left-icon="back" :title="voteConfig.headTitle" :border="false" :statusBar="true" backgroundColor="transparent"></uni-nav-bar>
+		</view>
+		<uni-nav-bar v-else left-icon="back" :title="voteConfig.headTitle" :statusBar="true"></uni-nav-bar>
+		
+		
+		<list class="flex flex-1 flex-column w-100">
+			<cell class="position-relative" v-if="voteType==2">
+				<image src="/static/img/vote/createHsjlBg.png" style="height: 356rpx;" class="w-100"></image>
+				<view class="position-absolute" style="left: 40rpx;bottom: 82rpx;">
+					<text class="font-1 pb-2">创建结论</text>
+					<text class="font-4">一个会商仅支持发起一个结论哦</text>
+				</view>
+			</cell>
+			<cell class="flex flex-column w-100">
+				<!-- 活动标题 -->
+				<view class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 flex flex-row w-100 align-center">
+						<image :src="voteConfig.titleIcon" class="vote-title-icon"></image>
+						<text class="theme-main-color font-2 pl-2">{{voteConfig.title}}</text>
+					</view>
+					<view class="position-relative pl98 flex flex-row w-100">
+						<input type="text" v-model="title" @confirm="confirm" :placeholder="'请输入'+voteConfig.title" class="flex-1 font-5" :maxlength="20" v-if="voteType == 1" style="color: #333333; margin-bottom: 20rpx;">
+						<text class="flex-1 font-5" style="color: #323234; font-weight: 400; font-size: 28rpx; margin-bottom: 32rpx;" v-else>{{title}}</text>
+						<!-- <view class="position-absolute top-0 right-0 bottom-0 flex justify-center align-center">
+							<text class="font-5 pr-2">{{title.length}}/20</text>
+						</view> -->
+					</view>
+				</view>
+				
+				<!-- 公开/私密 -->
+				<!-- <view v-if="voteType == 2" class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 flex flex-row w-100 align-center">
+						<image :src="voteConfig.privateIcon" class="vote-title-icon"></image>
+						<text class="theme-main-color font-2 px-2">{{voteConfig.privateText}}</text>
+						<text class="font-3">{{voteConfig.privateSub}}</text>
+					</view>
+					<view class="position-relative pl98 flex flex-row w-100">
+						<uni-data-checkbox v-model="isPrivate" :localdata="[{text:'公开',value:1},{text:'私密',value:0}]" />
+					</view>
+				</view> -->
+
+				<!-- 投票介绍 -->
+				<view v-if="voteType != 2" class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 flex flex-row w-100 align-center">
+						<image :src="voteConfig.introduceIcon" class="vote-title-icon"></image>
+						<text class="theme-main-color font-2 pl-2">{{voteConfig.introduce}}</text>
+					</view>
+					<view class="position-relative pl98 w-100 flex flex-row justify-start">
+						<input v-model="introduce" type="text" @confirm="confirm" :placeholder="`请输入${voteConfig.headTitle}介绍`" class="font-5" style="color: #333333; width: 600rpx; margin-bottom: 20rpx;">
+						<view class="position-absolute top-0 right-0 bottom-0 flex justify-center align-center" style="margin-bottom: 20rpx;">
+							<text class="font-5 pr-2">{{introduce.length}}</text>
+						</view>
+					</view>
+				</view>
+
+				<!-- 选项管理 -->
+				<view v-if="voteType != 2" class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 flex flex-row w-100 align-center">
+						<image src="/static/img/vote/guanli.png" class="vote-title-icon"></image>
+						<text class="theme-main-color font-2 pl-2">{{voteConfig.options}}</text>
+					</view>
+					<view class="position-relative pl98 w-100 flex flex-column justify-start">
+						<view v-for="(item,index) in option" :key="index" class="flex flex-row align-center justify-start py-1" :class="index?'':'pt-0'">
+							<view class="add-icon flex justify-center align-center" @click="reduceOption(index)">
+								<view class="add-icon-inner"></view>
+							</view>
+							<input type="text" v-model="item.opt" @confirm="confirm" placeholder="编辑选项内容" class="flex-1 font-5 pl-1" style="color: #333333;">
+						</view>
+						<view class="flex flex-row align-center justify-start py-1" @click="addOption">
+							<view class="add-icon-act flex justify-center align-center">
+								<view class="add-icon-act-inner1"></view>
+								<view class="add-icon-act-inner2"></view>
+							</view>
+							<input type="text" value="添加选项" @confirm="confirm" disabled="true" placeholder="添加选项" class="flex-1 font-5 pl-1" style="color: #333333;">
+						</view>
+					</view>
+				</view>
+
+				<!-- 投票开始时间 -->
+				<view class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 flex flex-row w-100 align-center">
+						<image :src="voteConfig.startTimeIcon" class="vote-title-icon"></image>
+						<text class="theme-main-color font-2 pl-2">{{voteConfig.startTime}}</text>
+						<view class="flex-1 flex-row align-center justify-end"  @click="pickDown">
+							<text style="font-size: 28rpx; color: #323234;" @click="openStartCalendar" v-if="start">{{start}}</text>
+							<text style="font-size: 28rpx; color: #949599;" @click="openStartCalendar" v-else>请选择开始时间</text>
+							<vote-picker ref="dateStart" @change="changeStartTime"></vote-picker>
+						</view>
+					</view>
+				</view>
+
+				<!-- 投票结束时间 -->
+				<view class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 flex flex-row w-100 align-center">
+						<image :src="voteConfig.endTimeIcon" class="vote-title-icon"></image>
+						<text class="theme-main-color font-2 pl-2">{{voteConfig.endTime}}</text>
+						<view class="flex-1 flex-row align-center justify-end" @click="pickDown">
+							<text style="font-size: 28rpx; color: #323234;" @click="openEndCalendar" v-if="end">{{end}}</text>
+							<text style="font-size: 28rpx; color: #949599;" @click="openEndCalendar" v-else>请选择结束时间</text>
+							<vote-picker ref="dateEnd" :startTime="endStart" @change="changeEndTime"></vote-picker>
+						</view>
+					</view>
+				</view>
+				
+				<!-- 结论详情 -->
+				<view v-if="voteType == 2" class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 flex flex-row w-100 align-center">
+						<image :src="voteConfig.introduceIcon" class="vote-title-icon"></image>
+						<text class="theme-main-color font-2 pl-2">{{voteConfig.introduce}}</text>
+					</view>
+					<view class="position-relative pl90 w-100 flex flex-row justify-start">
+						<textarea v-model="introduce" placeholder="请输入会商结论详情" class="font-5" style="color: #323234; font-size: 28rpx; width: 600rpx;border-width: 1px;border-color: transparent;"/>
+						<view class="position-absolute bottom-0 right-0 flex justify-center align-center">
+							<text class="font-5 pr-2">{{introduce.length}}</text>
+						</view>
+					</view>
+				</view>
+				
+
+				<!-- 是否可多选 -->
+				<view v-if="voteConfig.multiple" class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 flex flex-row w-100 align-center">
+						<image src="../../../static/img/vote/duoxuan.png" class="vote-title-icon"></image>
+						<text class="theme-main-color font-2 pl-2">{{voteConfig.multiple.title}}</text>
+						<text class="font-4 flex-1">{{voteConfig.multiple.sub}}</text>
+						<switch :checked="isMultiple" @change="choiceMultiple" color="#F75252" />
+					</view>
+				</view>
+
+				<!-- 最少选择项/最多选择项 -->
+				<view v-if="isMultiple" class="flex flex-column justify-between align-center w-100 border-bottom">
+					<view class="p-3 w-100 pl98">
+						<view class="flex flex-row justify-between align-center pb-1">
+							<text class="font-3">最少选择项</text>
+							<uni-number-box :min="2" :value="minMultiple" :max="maxMultiple" @change="minChange"></uni-number-box>
+						</view>
+						<view class="flex flex-row justify-between align-center pt-1">
+							<text class="font-3">最多选择项</text>
+							<uni-number-box :min="minMultiple" :value="maxMultiple" :max="option.length" @change="maxChange"></uni-number-box>
+						</view>
+					</view>
+				</view>
+
+			</cell>
+		</list>
+		<view class="bottom-btn-box flex justify-center align-center border-top">
+			<view class="bottom-btn flex justify-center align-center" :style="'background-color:'+voteConfig.createdBtnColor+';'" hover-class="hover-8" @click="createVote">
+				<text class="font-2 font-weight-bold" style="color: #FFFFFF;">{{voteConfig.createdBtn}}</text>
+			</view> 
+		</view>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	import teamAvatar from '@/components/easy-chat/team-avatar.vue'
+	import votePicker from './vote-picker.nvue';
+	import voteConfigs from '../voteConfigs.js';
+	import deepClone from '@/utils/js-deep-clone';
+	export default {
+		components:{
+			votePicker
+		},
+		data() {
+			return {
+				userInfo: {},
+				voteType:0,	// 投票类型 [ 0投票 | 1表决 | 2结论 ]
+				isPrivate:0,
+				title:'',
+				introduce:'',
+				option:[{
+					opt:''
+				},{
+					opt:''
+				}],
+				start:'',
+				end:'',
+				endStart:new Date(),
+				isMultiple:false,
+				minMultiple:2,
+				maxMultiple:2,
+				visible:false,
+				creating:false,
+				ConsId:undefined, // 会商ID
+				perfectMsg: {},
+				voteId: ''
+			}
+		},
+		computed:{
+			voteConfig(){
+				let list = deepClone(voteConfigs);
+				return list[this.voteType];
+			},
+			// 当前会话的id
+			currentSessionId() {
+			   return this.$store.getters['initNim/currentSessionId']
+			},
+			teamObj() {
+				return this.$store.getters['initNim/teamObj']
+			},
+			to() {
+				return this.currentSessionId.split('-')[1]
+			},
+			scene() {
+				return this.currentSessionId.split('-')[0]
+			},
+			// 当前群的详细信息
+			teamInfo() {
+				
+				if (this.scene === 'team' && this.teamObj[this.to]) {
+					return this.teamObj[this.to]
+				}
+				return {}
+			}
+		},
+		onLoad(event) {
+			// console.log(this.teamObj[this.to].name)
+			this.userInfo = uni.getStorageSync('userInfo')
+			console.log(this.userInfo)
+			// console.log(JSON.parse(decodeURIComponent(event)))
+			// this.perfectMsg = JSON.parse(decodeURIComponent(event.perfectMsg))
+			console.log(event)
+			if(this.perfectMsg && event.voteType){
+				this.voteType = event.voteType;
+				console.log(this.voteType)
+				if(this.voteType == 2){
+					this.title = this.teamInfo.name
+				}
+			};
+			if(event && event.ConsId){
+				this.ConsId = event.ConsId;
+			}
+			if(event && event.voteId){
+				this.voteId = event.voteId;
+			}
+		},
+		methods: {
+			confirm(){
+				uni.hideKeyboard();
+			},
+			pickDown(){
+				uni.hideKeyboard()
+			},
+			choiceMultiple(e){
+				this.isMultiple = e.detail.value;
+			},
+			addOption(){
+				this.option.push({
+					opt:''
+				});
+			},
+			reduceOption(index){
+				if(this.option.length<=2){
+					uni.showToast({
+						title: '请最少保留两个选项',
+						icon: 'none'
+					});
+					return false;
+				}
+				this.option.splice(index, 1);
+			},
+			minChange(value){
+				this.minMultiple = value;
+			},
+			maxChange(value){
+				this.maxMultiple = value;
+			},
+			openStartCalendar(){
+				this.$refs.dateStart.open();
+			},
+			changeStartTime(date){
+				let _d = dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+				if(this.diffTime(_d, this.end)){
+					this.start = _d;
+					this.endStart = new Date(dayjs(_d));
+				}
+			},
+			openEndCalendar(){
+				this.$refs.dateEnd.open();
+			},
+			changeEndTime(date){
+				let _d = dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+				if(this.diffTime(this.start, _d)){
+					this.end = _d;
+				}
+			},
+			diffTime(_start, _end){
+				if(!dayjs(_start).isValid() || !dayjs(_end).isValid()){return true;}
+				
+				let _diff = dayjs(_end).diff(dayjs(_start), 'minute');
+				if(_diff<=1){
+					uni.showToast({
+						title: '请选择有效时间',
+						icon: 'none'
+					});
+					_diff = false
+				}
+				return _diff
+			},
+			createVote(){
+				if(this.creating)return;
+				if(this.title.length<=0) return uni.showToast({
+						title: '请输入'+this.voteConfig.title,
+						icon: 'none'
+					});
+				
+				if(this.introduce.length<=0) return uni.showToast({
+						title: '请输入'+this.voteConfig.introduce,
+						icon: 'none'
+					});
+					
+				if(!dayjs(this.start).valueOf()) return uni.showToast({
+						title: '请选择'+this.voteConfig.startTime,
+						icon: 'none'
+					});
+				
+				if(!dayjs(this.end).valueOf()) return uni.showToast({
+						title: '请选择'+this.voteConfig.endTime,
+						icon: 'none'
+					});
+					
+				if(this.voteType==2){	// 结论默认为两项
+				this.title = this.teamInfo.name
+					this.option = [{
+						opt:'同意'
+					},{
+						opt:'不同意'
+					}]
+				}
+				
+				if(this.option.filter(item=>'' == item.opt).length>0) return uni.showToast({
+						title: '请完善选项内容',
+						icon: 'none'
+					});
+				this.creating = true;
+				console.log(this.ConsId)
+				console.log(this.voteType == 0 ? undefined : this.ConsId);
+				
+				let voteOpt = {
+					Title:this.title,
+					Introduce: this.introduce,
+					StartTime: this.start,
+					EndTime: this.end,
+					Type: this.isMultiple,
+					MostVote: this.maxMultiple,
+					LeastVote: this.minMultiple,
+					OptionsArr: this.option.map(item=>item.opt),
+					isPublic: this.voteType == 2 ? this.isPrivate : undefined,
+					voteType: Number(this.voteType),	//  投票类型
+					ConsId: this.voteType == 0 ? undefined : this.ConsId,// 会商id 
+					VoteUrl: this.teamInfo.avatar
+				}
+				uni.$api.vote.createvote(voteOpt)
+				.then(res=>{
+					console.log('createvote_RES', res);
+					this.voteId = res.data.data
+					if(res.data.statusCode == 200){
+						uni.showToast({
+							title: `创建${this.voteConfig.name}成功`,
+							icon: 'none'
+						})
+						if(this.voteType == 2){
+							console.log(this.voteId,this.voteType)
+							uni.$api.discussion.getvotebyconid({
+								where: this.ConsId, 
+								types: 2
+							}).then(res => {
+								// 发送一个结论消息
+								let confirmConclusion_content = {
+								  type: 'confirmConclusion',
+								  data: {
+									// 跳转的地址
+									url: '/pages/vote/vote?voteId='+this.voteId+ '&voteType=' + 2,
+									// 标题
+									title: '# ' + this.userInfo.name + '发起会商结论',
+									// 详细内容
+									detail: this.title,
+									// 封面
+									cover: '/static/easy-chat/other/jielun@2x.png'
+								  }
+								};
+								this.$store.dispatch('initNim/nimSendCustomMsg', {
+								  scene: this.currentSessionId.split('-')[0],
+								  to: this.currentSessionId.split('-')[1],
+								  content: JSON.stringify(confirmConclusion_content)
+								});
+							}).catch(err =>{
+								console.log(err)
+							})
+							
+						}
+						if(this.voteType == 1){
+							uni.$api.discussion.getvotebyconid({
+								where: this.ConsId, 
+								types: 1
+							}).then(res => {
+								// 发送一个表决消息
+								let joinBiaoJue_content = {
+								  type: 'joinBiaoJue',
+								  data: {
+									// 跳转的地址
+									url: '/pages/vote/vote?voteId='+this.voteId+ '&voteType=' + 1 + '&ConsId='+this.ConsId,
+									// 标题
+									title: '# ' + this.userInfo.name + '发起的表决',
+									// 详细内容
+									detail: this.title,
+									// 封面
+									cover: '/static/easy-chat/other/biaojue@2x.png'
+								  }
+								};
+								this.$store.dispatch('initNim/nimSendCustomMsg', {
+								  scene: this.currentSessionId.split('-')[0],
+								  to: this.currentSessionId.split('-')[1],
+								  content: JSON.stringify(joinBiaoJue_content)
+								});
+							}).catch(err => {
+								
+							})
+							
+						}
+						
+						uni.setStorageSync('hasNewVote', true);
+						uni.navigateBack();
+					} else {
+						this.creating = true;
+						res.data.message ? uni.showToast({
+							title: res.data.message,
+							icon: 'none'
+						}):'';
+					}
+				})
+				.catch(err=>{
+					this.creating = false;
+					console.log('createvote_ERR', err);
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.vote-title-icon {
+		width: 44rpx;
+		height: 44rpx;
+	}
+
+	.pl98 {
+		padding-left: 98rpx;
+	}
+	.pl90{
+		padding-left: 90rpx;
+	}
+	.add-icon{
+		width: 34rpx;
+		height: 34rpx;
+		border-width: 2rpx;
+		border-color: #949599;
+		border-radius: 17rpx;
+		padding: 0;
+		margin: 0;
+	}
+	.add-icon-inner{
+		width: 14rpx;
+		height: 2rpx;
+		background-color: #949599;
+		border-radius: 1rpx;
+	}
+	.add-icon-act{
+		position: relative;
+		width: 34rpx;
+		height: 34rpx;
+		border-width: 2rpx;
+		border-color: #F75252;
+		border-radius: 17rpx;
+	}
+	.add-icon-act-inner1{
+		width: 14rpx;
+		height: 2rpx;
+		background-color: #F75252;
+		border-radius: 1rpx;
+	}
+	.add-icon-act-inner2{
+		width: 2rpx;
+		height: 14rpx;
+		background-color: #F75252;
+		border-radius: 1rpx;
+		position: absolute;
+	}
+	.bottom-btn-box{
+		width: 750rpx;
+		height: 128rpx;
+		background-color: #FFFFFF;
+		box-shadow: 0px -8px 14px 0px rgba(169, 169, 169, 0.07), 0px 1px 0px 0px #E5E5E5;
+	}
+	.bottom-btn{
+		width: 686rpx;
+		height: 88rpx;
+		background-color: #F75252;
+		border-radius: 44rpx;
+	}
+	.font-2{
+		font-size: 32rpx;
+	}
+</style>

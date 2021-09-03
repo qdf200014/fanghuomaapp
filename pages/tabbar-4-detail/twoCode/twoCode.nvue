@@ -1,0 +1,105 @@
+<template>
+	<view class="flex flex-1 flex-column w-100">
+		<uni-nav-bar left-icon="back" title="二维码下载" :statusBar="true"></uni-nav-bar>
+		<view style="background-color: #FFFFFF;">
+			<view class="flex justify-center align-center flex-row" style="width: 250rpx;height: 96rpx;"  @click="open">
+				<text style="font-size: 30rpx;font-weight: 400;color: #303233;padding-left: 40rpx;text-align: right;"
+				 class="line-1 flex flex-1 px-1">{{this.title}}</text>
+				 <image src="../../../static/work/drop.png" style="width: 44rpx;height: 44rpx;margin-right: 27rpx;"></image>
+			</view>
+		</view>
+		<list class="flex flex-1 w-100 flex-column">
+			<cell class="w-100 p-3">
+				<uni-grid :column="3" :show-border="false"  :square="false">
+				    <uni-grid-item v-for="(item,index) in twocode" :key="index" class="flex flex-column justify-center align-center">
+						<view class="flex flex-column justify-center align-center" style="width: 220rpx;">
+							<wt-media style="width: 220rpx;height: 220rpx;" :media="imgurl+item.qr_code" ></wt-media>
+							<view class="flex justify-center" style="width: 220rpx;padding-top: 16rpx;padding-bottom: 16rpx;">
+								<text class="codename">{{item.park_name}}{{item.name}}</text>
+							</view>
+						</view>
+				    </uni-grid-item>
+				</uni-grid>
+			</cell>
+		</list>
+		<!-- <no-data v-if="twocode.length<=0"></no-data> -->
+		<wt-area ref="areaSelect" @confirm="confirm"></wt-area>
+	</view>
+</template>
+
+<script>
+	import wtArea from '@/components/wt-area/wt-area.nvue';
+	import noData from '@/components/nodata.nvue'
+	export default {
+		data() {
+			return {
+				arealist:[],
+				title:'区域选择',
+				cid:undefined,
+				twocode:[],//二维码下载列表
+				imgurl:'https://openfhm-dev.limefamily.cn/images/qr-code/'
+			}
+		},
+		components:{
+			wtArea,
+			noData
+		},
+		onLoad() {
+			this.getCodeList();
+		},
+		methods: {
+			// 拉取二维码列表
+			getCodeList(){
+				getApp().api.twocode.gettwocode({
+						organization_id:this.cid
+					})
+					.then(res => {
+						console.log('gettwocode_RES', res);
+						this.twocode = res.data.data;
+					})
+					.catch(err => {
+						console.log('gettwocode_ERR', err);
+					})
+			},
+			// 预览图片
+			previewimage(image, index){
+				uni.previewImage({
+				    urls: [image],
+				    indicator:'none'
+				});
+			},
+			
+			open(){
+				this.$refs.areaSelect.open();
+			},
+			// 地区保存
+			confirm(arealist){
+				this.arealist = arealist;
+				if(arealist.length<=0){
+					this.cid = undefined;
+					this.title = '区域选择';
+				}else{
+					this.cid = this.arealist[ this.arealist.length-1].id
+					this.title =this.arealist[ this.arealist.length-1].name;
+				}
+				this.getCodeList();
+			},
+			// 地区取消
+			clearArea(){
+				this.$refs.areaSelect.clear();
+			},
+		}
+	}
+</script>
+
+<style>
+.codename{
+	width: 196rpx;
+	height: 72rpx;
+	font-size: 24rpx;
+	font-weight: 400;
+	color: #323234;
+	line-height: 36rpx;
+	text-align: center;
+}
+</style>

@@ -1,0 +1,33 @@
+{
+	"name": "悬浮窗口插件",  
+	"id": "Float-Window",  
+	"version": "1.0",  
+	"description": "悬浮窗口插件",  
+	"_dp_type":"nativeplugin",  
+	"_dp_nativeplugin":{ 
+		"android": {
+			"plugins": [  
+				{
+					"type": "module",  
+					"name": "Float-Window",  
+					"class": "com.zhimi.floatwindow.FloatWindowModule"  
+				}
+			],  
+			"hooksClass": "com.zhimi.floatwindow.FloatWindowAppProxy",  
+			"integrateType": "aar",
+			"minSdkVersion": "19"
+		},
+		"ios": {
+			"plugins": [
+				{
+					"type": "module",
+					"name": "Float-Window",
+					"class": "FloatWindowModule"
+				}
+			],
+			"hooksClass": "FloatWindowAppProxy",
+			"integrateType": "library",
+			"deploymentTarget": "9.0"
+		}
+	}
+}

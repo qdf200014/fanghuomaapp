@@ -1,0 +1,162 @@
+<template>
+	<div class="im-flex-column im-bg-grey-1 im-flex-1">
+		<list class="im-flex-1">
+			<!-- IM错误提示 -->
+			<cell v-if="IMSTATE === 'NetError'">
+				<view class="im-bg-blue-1 im-w-100 im-flex im-flex-wrap im-align-center im-justify-center im-py-2 im-px-2">
+					<text class="im-font-30 im-font-white im-flex im-text-center im-flex-1">连接中···</text>
+				</view>
+			</cell>
+			
+			<cell>
+				<nim-search-input v-model="searchKey" @confirm="confirm"></nim-search-input>
+			</cell>
+			
+			<cell class="im-bg-white">
+				<navigator url="/pages/easy-chat/advanced-list">
+					<view class="im-flex im-align-center im-justify-between im-py-3 im-px-2 im-border-bottom im-border-top">
+						<text class="im-font-32 im-font-black-2 im-weight-bold">会商</text>
+						
+						<view class="im-flex im-align-center">
+							<view v-if="sessionUnreadObj.advancedTeam" class="im-bg-red-2 im-round-full im-flex im-justify-center im-align-center im-mr-2" style="width: 35rpx;height: 35rpx;">
+								<text class="im-font-23 im-font-white">{{ sessionUnreadObj.advancedTeam }}</text>
+							</view>
+							
+							<image src="/static/fireIndex/next_step.png" mode="aspectFill" style="width: 25rpx;height: 25rpx;"></image>
+						</view>
+					</view>
+				</navigator>
+			</cell>
+			
+			<cell class="im-bg-white" v-for="item in advancedArr" :key="item.id">
+				<session-item :session="item" :searchKey="searchKey"></session-item>
+			</cell>
+			
+			<cell>
+				<view class="im-flex im-align-center im-justify-between im-py-3 im-px-2 im-border-bottom im-bg-white im-mt-2">
+					<text class="im-font-32 im-font-black-2 im-weight-bold">信息</text>
+					
+					<view class="im-position-relative">
+						<nim-click-add-popup ref="nimClickAddPopup" :position="addPopupPos" @onClick="addPopupClick"></nim-click-add-popup>
+					</view>
+				</view>
+			</cell>
+			
+			<cell class="im-bg-white">
+				<session-sys ref="sysMsg"></session-sys>
+			</cell>
+			
+			<cell class="im-bg-white">
+				<session-forum ref="sysMsg"></session-forum>
+			</cell>
+			
+			<cell class="im-bg-white" v-for="item in sessionArr" :key="item.id">
+				<session-item :session="item" :searchKey="searchKey" :sessionArr="sessionArr"></session-item>
+			</cell>
+			
+			
+		</list>
+	</div>
+</template>
+
+<script>
+import sessionItem from '@/components/easy-chat/session-item.vue'
+import sessionSys from '@/components/easy-chat/session-sys.vue'
+import sessionForum from '@/components/easy-chat/session-forum.vue'
+import nimSearchInput from '@/components/easy-chat/nim-search-input.vue'
+import nimClickAddPopup from '@/components/easy-chat/nim-click-add-popup.vue'
+
+// #ifdef APP-NVUE
+const dom = weex.requireModule('dom');
+// #endif
+
+export default {
+	data() {
+		return {
+			searchKey: '',
+			addPopupPos: {}
+		}
+	},
+	props:{
+		/**
+		 * 触发数据刷新
+		 */
+		refreshNum:{
+			type:Number,
+			default:0
+		}
+	},
+	components: {
+		sessionItem,
+		sessionSys,
+		nimSearchInput,
+		nimClickAddPopup,
+		sessionForum
+	},
+	watch:{
+		refreshNum(){
+			this.refreshSysMsg();
+		}
+	},
+	computed: {
+		IMSTATE() {
+			return this.$store.getters['initNim/IMSTATE']
+		},
+		sessionUnreadObj() {
+			return this.$store.getters['initNim/sessionUnreadObj']
+		},
+		teamObj() {
+			return this.$store.getters['initNim/teamObj']
+		},
+		sessionArr() {
+			let arr = []
+			let topArr = []
+			this.$store.getters['initNim/sessionArr'].map(item => {
+				if (item.scene === 'team' && this.teamObj[item.to] && this.teamObj[item.to].type === 'advanced') {
+					return ;
+				}
+				
+				if (item.isTop) {
+					topArr.push(item)
+				} else {
+					arr.push(item)
+				}
+			})
+			return topArr.concat(arr)
+		},
+		// 高级群聊天数组 高级群单独展示 只展示前三个
+		advancedArr() {
+			let arr = []
+			let topArr = []
+			this.$store.getters['initNim/sessionArr'].map(item => {
+				if (item.scene === 'team' && this.teamObj[item.to] && this.teamObj[item.to].type === 'advanced') {
+					if (item.isTop) {
+						topArr.push(item)
+					} else {
+						arr.push(item)
+					}
+				}
+			})
+			return topArr.concat(arr).slice(0, 3)
+		}
+		
+	},
+	methods: {
+		addPopupClick() {
+			const result = dom.getComponentRect(this.$refs.nimClickAddPopup, option => {
+				console.log('getComponentRect:', option);
+				this.addPopupPos = Object.assign({}, option.size)
+			});
+		},
+		refreshSysMsg(){
+			this.$refs.sysMsg.refreshSysMsg();
+		},
+		confirm(e) {
+			console.log(e);
+			console.log(this.searchKey);
+		}
+	}
+}
+</script>
+
+<style></style>

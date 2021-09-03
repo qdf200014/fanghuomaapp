@@ -1,0 +1,229 @@
+<template>
+	<view class="flex flex-1 flex-column w-100" style="background-color: #FFFFFF">
+		<uni-nav-bar left-icon="back" title="审批详情" :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-column w-100 flex-1 w-100">
+			<cell class="p-3 w-100">
+				<view style="width: 690rpx;border-radius: 16rpx;box-shadow: 0px 2px 25px 0px rgba(0, 0, 0, 0.09);border-width: 1rpx;border-style: solid;border-color: #E9E9E9;background-color: #FFFFFF;" class="p-4">
+					<view>
+						<image src="../../../static/work/result.png" mode="" style="width: 140rpx;height: 32rpx;"></image>
+					</view>
+					<view class="flex flex-row" style="padding-top: 24rpx;">
+						<view style="height: 32rpx;">
+							<text class="reason_type">{{unappointList.approve_status}}</text>
+						</view>
+						<view style="height: 32rpx;padding-left: 56rpx;" v-if="unappointList.approve_status=='未通过'">
+							<text class="reason_name">驳回原因</text>
+						</view>
+					</view>
+					<view v-if="unappointList.approve_status=='未通过'" class="pt-5 position-relative">
+						<view style="width: 30rpx;height: 30rpx;transform: rotate(45deg);position: absolute;top: 40rpx;left: 198rpx;background-color: #F4F5FB;"></view>
+						<view class="p-2" style="width: 610rpx;background-color: #F4F5FB;">
+							<text class="reason_content">{{unappointList.approve_reason}}</text>
+						</view>
+					</view>
+				</view>
+				<view style="margin-top: 30rpx;margin-bottom: 66rpx;border-radius: 16rpx;background-color: #F4F5FB;">
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3 pt-3">
+						<text class="violation_top">姓名</text>
+						<text class="violation_bottom">{{unappointList.name}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3">
+						<text class="violation_top">手机号</text>
+						<view class="flex flex-row">
+							<text class="violation_bottom">{{unappointList.phone}}</text>
+							<text style="color: #E1E4ED;padding-left: 24rpx;padding-right:24rpx ;height: 28rpx;">|</text>
+							<text class="violation_bottom2">{{unappointList.risk}}</text>
+						</view>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3">
+						<text class="violation_top">身份证号</text>
+						<text class="violation_bottom">{{unappointList.identity_number}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3" v-if="unappointList.use_type==2">
+						<text class="violation_top">单位名称</text>
+						<text class="violation_bottom">{{unappointList.unit_name}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3" v-if="unappointList.use_type==2">
+						<text class="violation_top">进山人数</text>
+						<text class="violation_bottom">{{unappointList.unit_number}}人</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3">
+						<text class="violation_top">申请地点</text>
+						<text class="violation_bottom">{{unappointList.park_name}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3">
+						<text class="violation_top">使用时效</text>
+						<text class="violation_bottom">{{unappointList.use_duration}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3">
+						<text class="violation_top">申请日期</text>
+						<text class="violation_bottom">{{dateTran(unappointList.created_at)}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3" v-if="unappointList.use_type==2">
+						<text class="violation_top">进山日期</text>
+						<text class="violation_bottom">{{dateTran(unappointList.in_date)}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3">
+						<text class="violation_top">进山原因</text>
+						<text class="violation_bottom" v-if="unappointList.in_type=='其他'">{{unappointList.in_reason}}</text>
+						<text class="violation_bottom" v-else>{{unappointList.in_type}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3">
+						<text class="violation_top">进山车辆</text>
+						<text class="violation_bottom">{{unappointList.has_car}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3" v-if="unappointList.has_car!='无车辆'">
+						<text class="violation_top">车型</text>
+						<text class="violation_bottom">{{unappointList.car_type}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3" v-if="unappointList.has_car!='无车辆'">
+						<text class="violation_top">车牌号</text>
+						<text class="violation_bottom">{{unappointList.car_num}}</text>
+					</view>
+					<view style="padding-bottom: 56rpx;" class="pl-3 pr-3" v-if="unappointList.has_car!='无车辆'">
+						<text style="font-size: 32rpx;font-weight: 400;color: #606266;">车辆图片</text>
+						<view class="flex flex-row justify-between flex-wrap">
+							<view v-for="(item,index) in carList" :key="index" style="padding-top: 28rpx;">
+								<wt-media :media="headUrl+item.url" style="width: 300rpx;height: 197rpx;border-radius: 15rpx;"></wt-media>
+							</view>
+						</view>
+					</view>
+					<view class="pl-3 flex flex-row justify-between pr-3" v-if="unappointList.use_type==0" style="padding-bottom: 56rpx;">
+						<view>
+							<text class="violation_top">同行人员</text>
+							<text class="violation_bottom">{{unappointList.peer_count}}人</text>
+						</view>
+						<view class="flex justify-center align-center flex-row" v-if="unappointList.peer_count!=0">
+							<text class="violation_more" @click="gopeople">查看同行人员</text>
+							<image src="../../../static/work/into.png" mode="" style="width: 20rpx;height: 20rpx;"></image>
+						</view> 
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				unappointList: '',
+				id: '',
+				identity: [],
+				headUrl: 'https://fhm-oss.limefamily.cn/fhm/',
+				identity_number: ''
+			}
+		},
+		onLoad(e) {
+			console.log(e);
+			this.id = e.id;
+			this.getviewed();
+			this.getvehicleList();
+		},
+		methods: {
+			getviewed() {
+				uni.$api.appointment.getview({
+						id: this.id
+					})
+					.then(res => {
+						console.log(res, '已审批详情');
+						this.unappointList = res.data.data;
+						this.identity = res.data.data.identity;
+						this.identity_number = res.data.data.identity_number
+					})
+					.catch(err => {
+						console.log(err)
+					})
+			},
+			// 点击预览身份证照片
+			preview(index){
+				let arr = [];
+				arr.push(this.headUrl+this.identity[index].url);
+				console.log(arr,'照片数组');
+				uni.previewImage({
+					urls:arr,
+				})
+			},
+			getvehicleList() {
+				uni.$api.appointment.getvehicle({
+						id: this.id
+					})
+					.then(res => {
+						console.log(res, 'getvehicle_RES');
+						this.carList = res.data.data.car_affix;
+					})
+					.catch(err => {
+						console.log(err, 'getvehicle_ERR')
+					})
+			},
+			gopeople() {
+				uni.navigateTo({
+					url: './upeople?id=' + this.id + '&identity_number=' + this.identity_number
+				})
+			},
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+		}
+	}
+</script>
+
+<style>
+	.border-appoint {
+		border-width: 1rpx;
+		border-color: #E9E9E9;
+		border-style: solid;
+	}
+
+	.reason_name {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #949599;
+		line-height: 32rpx;
+	}
+
+	.reason_content {
+		width: 563rpx;
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #606266;
+		line-height: 36rpx;
+	}
+
+	.violation_top {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #606266;
+		padding-bottom: 14rpx;
+	}
+
+	.violation_bottom {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+
+	.violation_bottom2 {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #F75252;
+	}
+
+     .violation_more{
+		 
+		 font-size: 28rpx;
+		 font-weight: 400;
+		 color: #487CF1;
+	 }
+
+	.reason_type {
+
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #F75252;
+	}
+</style>

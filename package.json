@@ -1,0 +1,21 @@
+{
+  "name": "fireapp",
+  "version": "1.0.0",
+  "description": "防火码2.0App端",
+  "main": "main.js",
+  "dependencies": {
+    "dayjs": "^1.10.4",
+    "js-md5": "^0.7.3",
+    "md5": "^2.3.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://mzyang@112.126.99.131:8094/r/FireApp.git"
+  },
+  "author": "",
+  "license": "ISC"
+}

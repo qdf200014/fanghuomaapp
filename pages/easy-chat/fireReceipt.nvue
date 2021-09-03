@@ -1,0 +1,162 @@
+<template>
+	<view class="flex flex-1 flex-column w-100 border-box" style="background-color: #FFFFFF;">
+		<!-- 导航栏 -->
+		<!-- #ifdef APP-PLUS -->
+		<uni-nav-bar left-icon="back" title="系统通知" :statusBar="true" @clickLeft="navigateBack" :fixed="true">
+<!-- 			<view class="flex flex-1 justify-end" slot="right">
+				<image src="../../../static/fireIndex/start.png" style="width: 36rpx;height: 36rpx;" @click="collect" v-if="showImg == true"></image>
+				<image src="../../../static/fireIndex/collected.png" style="width: 36rpx;height: 36rpx;" @click="nocollect" v-if="showImg == false"></image>
+				<image src="../../../static/fireIndex/share.png" style="width: 36rpx;height: 36rpx;margin-left: 36rpx;" @click="shareFire"></image>
+			</view> -->       
+		</uni-nav-bar>
+		<!-- #endif -->
+		<!-- #ifndef APP-PLUS -->
+		<uni-nav-bar title="系统通知" :statusBar="true"></uni-nav-bar>
+		<!-- #endif -->
+
+		<list class="flex flex-column justify-center w-100">
+			<cell class="pl-3 pr-3 pt-3">
+				<view>
+					<text class="fire_detail" style="line-height: 70rpx;">{{fireDetail.title}}</text>
+				</view>
+				<view class="flex flex-row" style="margin-top: 8rpx;">
+					<text class="detail_name">来源：{{fireDetail.author}}</text>
+					<text class="detail_time">{{dateTran(fireDetail.sendTime)}}</text>
+				</view>
+				<view style="margin-top: 16rpx;margin-bottom: 48rpx; line-height: 56rpx;">
+					<mp-html :content="fireDetail.content" />
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	import mpHtml from '@/components/mp-html/mp-html';
+	import dayjs from 'dayjs';
+	import uniCell from '@/components/uni-cell.vue';
+	export default {
+		components: {
+			mpHtml,
+			uniCell,
+		},
+		data() {
+			return {
+				fireDetail:[]
+			}
+		},
+		onLoad(e) {
+			console.log(e,'新功能上线传来的数据');
+			uni.$api.notice.getsysnoticedetail({
+				id:e.id
+			})
+			.then(res=>{
+				console.log(res);
+				this.fireDetail = res.data.data
+			})
+			.catch(err=>{
+				console.log(err)
+			})
+		},
+		methods: {
+			dateTran(time) {
+				return dayjs(time).format('YYYY.MM.DD HH:mm');
+			},
+		}
+	}
+</script>
+
+<style>
+	/* #ifndef APP-PLUS */
+	page {
+		flex: 1;
+		display: flex;
+		width: 750rpx;
+		flex-direction: column;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+
+	/* #endif */
+	.fire_detail {
+		font-size: 46rpx;
+		font-weight: 600;
+		color: #323234;
+	}
+
+	.detail_name {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.detail_time {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+		margin-left: 54rpx;
+	}
+
+
+	.business_title {
+		/* 		width: 76rpx; */
+		/* height: 38rpx; */
+		font-size: 38rpx;
+		font-weight: 600;
+		color: #323234;
+		/* line-height: 38rpx; */
+	}
+
+	.business_boss {
+		/* width: 128px; */
+		/* height: 32rpx; */
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		line-height: 32rpx;
+	}
+
+	.business_name {
+		/* width: 84px; */
+		/* 		height: 28rpx; */
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+		/* line-height: 28rpx; */
+	}
+
+	.business_time {
+		/* width: 201rpx; */
+		/* height: 26rpx; */
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+		/* line-height: 26rpx; */
+	}
+
+	.business_end {
+		height: 28rpx;
+		font-size: 28rpx;
+		font-weight: 500;
+		color: #00BCAB;
+		line-height: 28rpx;
+	}
+
+	.busendbox {
+		width: 180rpx;
+		height: 56rpx;
+		border-radius: 29rpx;
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #00BCAB;
+	}
+
+	.border-box {
+		box-shadow: 0px 0px 16px 0px rgba(102, 102, 102, 0.15);
+		background-color: #FFFFFF;
+		border-radius: 16rpx;
+	}
+</style>

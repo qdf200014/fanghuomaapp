@@ -1,0 +1,968 @@
+<template>
+    <view class="flex bg-dark flex-1">
+ 
+                <view class="flex flex-wrap justify-center _video-list-wrapper ">
+                    
+                    <view v-if="sigData.isCreator || isAccept" class="flex-1 flex-wrap justify-center flex position-absolute left-0 top-0 right-0 bottom-0">
+                        <view :style="`width:${videoWidth}rpx;height:${videoHeight}rpx;`">
+                            <TX-PlayView
+                                :class="'_video-mini-wrapper'"
+                                :style="`width:${videoWidth}rpx;height:${videoHeight}rpx;`"
+                                ref="maxTxPlayView"
+                                :appId="appId"
+                                :appKey="appKey"
+                                :roomId="roomId"
+                                :userId="userName"
+                                enableLocalPreview="true"
+                                enableLocalAudio="true"
+                                @statechange="onPush"
+                            ></TX-PlayView>
+                        </view>
+                        
+                        
+                        <view :style="`width:${videoWidth}rpx;height:${videoHeight}rpx;`" v-for="(item, index) in players" :key="index">
+                            <TX-PlayView
+                                :class="isAccept || sigData.isCreator ? '_video-mini-wrapper' : '_custom-opacity' "
+                                :style="`width:${videoWidth}rpx;height:${videoHeight}rpx;`"
+                                :ref="'remoteUser' + item.userId"
+                                :remoteUserId="item.userId"
+                                :remoteSubStreamUserId="item.remoteSubStreamUserId"
+                                remoteSubStreamModel="1"
+                            ></TX-PlayView>
+                        </view>
+                        
+                        <view v-for="(item,index) in nowJoinUser" :key="item.userId" class="position-relative flex-column justify-center align-center _live-avatar " :style="`width:${videoWidth}rpx;height:${videoHeight}rpx;`">
+                            <image v-if="userInfos[item.userId] && userUID != item.userId && item.status == 0" :src="userInfos[item.userId].avatar" mode="aspectFill" :style="`width:${videoWidth}rpx;height:${videoHeight}rpx;`"></image>
+ 
+                            <view class="position-absolute flex-1 top-0 left-0 bottom-0 right-0 align-center justify-center" style="background-color: rgba(0,0,0,0.6);" :style="`width:${videoWidth}rpx;height:${videoHeight}rpx;`">
+                                <text class="text-white font-28">等待接通···</text>
+                            </view>
+                        </view>
+                        
+                    </view>
+                    
+                    
+                    
+                    
+                </view>
+            
+        
+        
+        <!-- 第三层：来电界面，等待用户选择接受还是拒绝 -->
+        <view v-if="!sigData.isCreator && !isAccept" class="flex-1 left-0 top-0 right-0 bottom-0  position-absolute flex-column align-center justify-center">
+            <view class="flex-column justify-center align-center">
+                <image :src="userInfos[sigData.from].avatar" mode="aspectFill" style="width: 200rpx;height: 200rpx;border-radius:20rpx;"></image>
+                <text class="_call-user-name mt-5">{{ userInfos[sigData.from].nick }}</text>
+                <text class="text-white font-30 mt-3">邀请你进行视频聊天...</text>
+            </view>
+            <text class="_call-tip-text mt-3">{{ `还有${nowJoinUser.length}人参与聊天` }}</text>
+            <view class="flex align-center justify-center ">
+                <view v-for="(item,index) in nowJoinUser" :key="item.userId" class="ml-2 mt-2">
+                    <image :src="userInfos[item.userId].avatar" mode="aspectFill" style="width: 100rpx;height: 100rpx;"></image>
+                </view>
+            </view>
+        </view>
+ 
+        <!-- 第四层：界面上的提示元素，在最顶层不会被覆盖 -->
+        <!-- 没有接通，并且是创建者 -->
+        <view v-if="!isAccept && sigData.isCreator" class="position-absolute left-0 right-0 flex justify-center align-center" style="top: 120rpx;">
+            <text class="text-white font-weight-normal-2 font-lg">等待用户接受群视频邀请</text>
+        </view>
+ 
+        <view v-if="isAccept" class="position-absolute left-0 right-0 flex justify-center align-center" style="top: 120rpx;">
+            <text class="text-white font-weight-normal-2 font-lg">视频通话</text>
+        </view>
+ 
+        <view v-if="isAccept" class="position-fixed left-0 right-0 flex justify-center align-center" style="top: 190rpx">
+            <text class="text-white font-weight-normal-2 font-md">{{ videoTimeText }}</text>
+        </view>
+        
+        
+        <!-- 底部按钮 -->
+        <view class="position-absolute left-0 right-0 flex align-center justify-around w-100" style="bottom: 80rpx;">
+            <view v-if="isAccept" class="flex-column align-center">
+                <image @tap="muteLocalAudio" :src="isNoVoice ? '/static/call/jingyin-active@2x.png' : '/static/call/jingyin@2x.png'" mode="aspectFill" style="width: 135rpx;height: 135rpx;"></image>
+                <text class="font-26 text-white mt-2">静音</text>
+            </view>
+            
+            <view class="flex-column align-center">
+                <image @click="back" style="width: 136rpx;height: 136rpx;" src="/static/call/guaduan@2x.png" :class="!sigData.isCreator && !isAccept ? 'mr-5' : '' "></image>
+                <text v-if="isAccept" class="font-26 text-white mt-2">取消</text>
+            </view>
+            
+            <image v-if="!sigData.isCreator && !isAccept" @click="acceptCall" style="width: 136rpx;height: 136rpx;" src="/static/call/jietong@2x.png" class="ml-5"></image>
+            
+            <view v-if="isAccept" class="flex-column align-center">
+                <image @tap="setAudioRoute" :src="isNoOutVoice ? '/static/call/mianti-active@2x.png' : '/static/call/mianti@2x.png'" mode="aspectFill" style="width: 135rpx;height: 135rpx;"></image>
+                <text class="font-26 text-white mt-2">免提</text>
+            </view>
+            
+        </view>
+        
+    </view>
+</template>
+ 
+<script>
+import { appId, appKey } from '@/common/rtc/app.js';
+import { mapState, mapMutations } from 'vuex';
+const trtcCloud = uni.requireNativePlugin('TX-TRTCCloud');
+const innerAudioContext = uni.createInnerAudioContext();
+innerAudioContext.autoplay = true;
+innerAudioContext.loop = true;
+import { beginSetIntervalLoginOut, stopSetIntervalLoginOut , createVibrateLong, clearVibrate} from '@/common/function/cronJob.js'
+// import { GetChatUserList, RefuseChat, Pushsendsms } from '@/common/request/api/index.js';
+// 尝试获取通话列表的用户信息次数，3次之后不再获取
+let tryGetUserInfoNum = 0
+// 设置超过当前时间不再等待被呼叫的用户(s)
+let outPageTime = 0
+// outPageTimeInterval
+let outPageTimeInterval = null
+// GetChatUserList
+let GetChatUserListInterval = null
+let sendNoticCodeTimeOut = null;
+ 
+import useDayjs from '@/common/NIM/useDayjs.js';
+ 
+import ScreenLock from '@/utils/keepScreenOn.js';
+let videoTimeInterval = null
+ 
+export default {
+    data() {
+        return {
+            windowHeight: 0,
+            mainVideo: 456,
+            localTool: false,
+            roomId: 0,
+            userName: '',
+            players: [],
+            appId: appId,
+            appKey: appKey,
+            audioRoute: 0,
+            localVideo: false,
+            farVideo: false,
+            farAllVideo: false,
+            farAuido: false,
+            allAuido: false,
+            role: 20,
+ 
+            // 通话时长计时器
+            videoTime: 0,
+            // 当前的主会话视图
+            mainViewIndex: -1,
+            scene: 'team',
+            sigData: null,
+            // 信令中的自定义字段
+            attachExt: null,
+            // 是否静音
+            isNoVoice:false,
+            // 是否免提
+            isNoOutVoice:false,
+            // 新建当前加入通话的用户
+            nowJoinUser: [],
+            // 能否发送短信
+            isSendNoticeCode: false
+        };
+    },
+    computed: {
+        ...mapState({
+            isAccept: state => {
+                if (state.call.isAccept) {
+                    innerAudioContext.stop(() => {
+                        console.log('停止播放');
+                    });
+                    clearVibrate()
+                }
+                return state.call.isAccept;
+            }
+        }),
+        showVideoStyle() {
+            if (this.sigData.isCreator) {
+                return ''
+            }else {
+                return '_custom-opacity'
+            }
+        },
+        userInfos() {
+            return this.$store.getters['initNim/userObj']
+        },
+        videoTimeText() {
+            return useDayjs.foramtCallTime(this.videoTime)
+        },
+        videoWidth() {
+            let peopleNum = this.players.length + this.nowJoinUser.length
+            if (peopleNum >= 3 && peopleNum <= 5) {
+                let length = Math.ceil((peopleNum + 1) / 2)  
+                console.log('peopleNum length', peopleNum , 750/length );
+                return 750/length
+            } else if (peopleNum >= 6) {
+                let length = Math.ceil((peopleNum + 1) / 3)
+                return 750/length
+            } else {
+                return 360
+            }
+            
+        },
+        videoHeight() {
+            let peopleNum = this.players.length + this.nowJoinUser.length
+            if (peopleNum >= 2 && peopleNum <= 5) {
+                let length = Math.ceil((peopleNum + 1) / 2)  
+                return 750/length
+            } else if (peopleNum >= 6) {
+                let length = Math.ceil((peopleNum + 1) / 3)
+                return 750/length
+            } else {
+                return 360
+            }
+        },
+        nimUserInfo() {
+            return this.$store.getters['initNim/nimUserInfo']
+        },
+        userUID() {
+            return this.$store.getters['initNim/userUID']
+        }
+    },
+    watch: {
+        isAccept(n) {
+            console.log('hello');
+            if (n) {
+                console.log(n);
+                setTimeout(()=>{
+                    this.join();
+                    videoTimeInterval = setInterval(() => {
+                        // console.log('时间累加', this.videoTime);
+                        this.videoTime++;
+                    }, 1000);
+                }, 1000);
+            }
+        },
+        players(newArr) {
+            let Accounts = newArr.map(item => {
+                let arr = this.nowJoinUser.filter(nowJoinUserItem => {
+                    if (nowJoinUserItem.userId == item.userId) {
+                        return false
+                    } else {
+                        return true
+                    }
+                })
+                console.log('监测到refuseCallList改变了', arr);
+                this.nowJoinUser = [...arr]
+                return item.userId
+            })
+            console.log("数据发送改变了", Accounts);
+            if(Accounts != '') {
+                // this.$store.dispatch('searchUsers', {
+                //     accounts: Accounts
+                // });
+            }
+        },
+    },
+    onLoad(event) {
+        getApp().globalData.signalingEventType = ''
+        stopSetIntervalLoginOut()
+        this.sigData = JSON.parse(decodeURIComponent(event.sigData));
+        
+        console.log('页面接受的参数', this.sigData);
+        
+        this.sigData.isCreator = event.isCreator == 1 ? true : false
+        getApp().globalData.isCall = true;
+        ScreenLock.keepOn();
+        
+        this.roomId = Number(this.sigData.roomId);
+        this.userName = this.nimUserInfo.account;
+        
+        // 搜索用户
+        this.$store.dispatch('initNim/nimGetUsers', this.sigData.teamAccounts)
+        
+        this.windowHeight = 667;
+ 
+        if (!this.isAccept) {
+            innerAudioContext.src = '/static/MP3/shipin.mp3';
+            innerAudioContext.play();
+            if (!this.sigData.isCreator) {
+                // 建立震动
+                createVibrateLong()
+            }
+        }
+        
+        this.api_GetChatUserList()
+        this.createGetChatUserList()
+        this.createOutPageTime()
+        
+        if (this.sigData.isCreator) {
+            sendNoticCodeTimeOut = setTimeout(() => {
+                this.isSendNoticeCode = true
+            }, 30000)
+        }
+        
+    },
+ 
+    onReady() {
+        // setTimeout(()=>{
+        //     // this.exitRoom();
+        //     this.join();
+        // }, 1000);
+        uni.hideKeyboard();
+        // this.videoTime = setInterval(() => {
+        //     this.videoTime++;
+        // }, 1000);
+        
+        let tipMsg = {
+            type: 'sendCallteam',
+            data: {
+                callType: 'video'
+            }
+        }
+        
+        this.sendTipsMsg(JSON.stringify(tipMsg), this.sigData.teamId)
+        
+    },
+    beforeDestroy() {
+        this.stopLocalAudio()
+        this.stopAllRemoteView()
+        this.$refs.maxTxPlayView.leaveRoom();
+    },
+    onUnload() {
+        getApp().globalData.isCall = false;
+        ScreenLock.keepOff();
+        clearInterval(videoTimeInterval);
+        this.callbreak()
+        this.updateAccept({ flag: false });
+        innerAudioContext.destroy();
+        getApp().globalData.isCall = false;
+        beginSetIntervalLoginOut()
+        clearVibrate()
+        clearInterval(outPageTimeInterval)
+        clearInterval(GetChatUserListInterval)
+        clearTimeout(sendNoticCodeTimeOut)
+        
+        if (!this.isAccept) {
+            return ;
+        }
+        // 发送结束通话的提醒
+        let tipMsg = {
+            type: 'endCallteam',
+            data: {
+                time: this.videoTimeText,
+                callType: 'video'
+            }
+        }
+        this.sendTipsMsg(JSON.stringify(tipMsg), this.sigData.teamId)
+        
+    },
+    onResize() {
+        // #ifdef APP-PLUS-NVUE
+        this.resizeWinHeight();
+        // #endif
+    },
+ 
+    onNavigationBarButtonTap() {
+        uni.navigateBack({
+            delta: 1,
+            animationType: 'pop-out',
+            animationDuration: 200
+        });
+    },
+ 
+    onBackPress() {
+        this.stopLocalAudio()
+        this.stopAllRemoteView()
+        this.$refs.maxTxPlayView.leaveRoom();
+    },
+ 
+    methods: {
+        ...mapMutations({
+            'updateAccept':'call/updateAccept'
+        }),
+        // 创建轮询的接口
+        createGetChatUserList() {
+            GetChatUserListInterval = setInterval(() => {
+                if (this.nowJoinUser.length == 0) {
+                    console.log('停止轮询');
+                    clearInterval(GetChatUserListInterval)
+                    return ;
+                }
+                this.api_GetChatUserList()
+            }, 5000)
+        },
+        createOutPageTime() {
+            outPageTimeInterval = setInterval(() => {
+                outPageTime++
+                if (outPageTime > 60) {
+                    clearInterval(outPageTimeInterval)
+                    clearInterval(GetChatUserListInterval)
+                    console.log('停止outPageTimeInterval');
+                    console.log('判断players', this.players.length);
+                    if (this.players.length > 0) {
+                        let arr = new Array()
+                        setTimeout(() => {
+                            this.nowJoinUser = arr
+                        }, 5000)
+                        return ;
+                    } else if (!this.isAccept || (this.isAccept && this.players.length == 0)) {
+                        uni.showToast({
+                            title: '当前电话无人接听，请稍后再试！',
+                            icon: 'none'
+                        })
+                        setTimeout(() => {
+                            uni.navigateBack({
+                                delta: 1
+                            }) 
+                        }, 1500)
+                    }
+                }
+            }, 1000)
+        },
+        api_RefuseChat() {
+            uni.$api.rtc.RefuseChat({
+                RoomId: this.roomId,
+                isLast: 0
+            }).then(res => {
+                console.log(res);
+            }).catch(err => {
+                console.log(err);
+            })
+        },
+        api_GetChatUserList() {
+            uni.$api.rtc.GetChatUserList({
+                roomId: this.roomId
+            }).then(res => {
+                console.log('api_GetChatUserList', res);
+                if (res.data.code == 0) {
+                    this.nowJoinUser = res.data.data.filter(item => {
+                        if (item.userId != this.userUID && item.status == 0) {
+                            if (JSON.stringify(this.players).indexOf(item.userId) > -1) {
+                                return false
+                            } else {
+                                return true
+                            }
+                            
+                        }
+                    })
+                    
+                    // 判断当前人是否全部拒绝
+                    if (this.nowJoinUser.length == 0 && this.players.length == 0) {
+                        uni.showToast({
+                            title: '当前通话结束',
+                            icon: 'none'
+                        })
+                        setTimeout(() => {
+                            uni.navigateBack({
+                                delta: 1
+                            })
+                        }, 1000)
+                    }
+                    
+                    let Accounts = this.nowJoinUser.map(item => {
+                        if (item.userId != this.userUID) {
+                            return item.userId
+                        }
+                    })
+                    
+                    if (this.isSendNoticeCode) {
+                        this.api_Pushsendsms(Accounts.join())
+                        this.isSendNoticeCode = false
+                        console.log('发送了短信提醒');
+                    }
+                    
+                } else {
+                    if (tryGetUserInfoNum <= 3) {
+                        tryGetUserInfoNum++
+                        this.api_GetChatUserList()
+                    }
+                }
+            }).catch(err => {
+                console.log(err);
+            })
+        },
+        api_Pushsendsms(accounts) {
+            // Pushsendsms({
+            //     type : 3,
+            //     ids: accounts
+            // }).then(res => {
+            //     console.log(res);
+            // }).catch(err => {
+            //     console.log(err);
+            // })
+        },
+        back() {
+            uni.navigateBack()
+        },
+        acceptCall() {
+            if (this.scene == 'team') {
+                // 接收人加入视频群聊的信令
+                let option = {
+                    channelId: this.sigData.channelId,
+                    uid: this.$store.state.user.info.userId
+                };
+                this.$store.state.initNim.nim.signalingJoin(option).then(res => {
+                    console.log(res);
+                    this.updateAccept({ flag: true });
+                });
+            } else {
+                // 接收人加入视频单聊的信令
+                let option = {
+                    channelId: this.sigData.channelId,
+                    account: this.sigData.from,
+                    requestId: this.roomId,
+                    autoJoin: true
+                };
+                this.$store.state.initNim.nim.signalingAccept(option).then(res => {
+                    console.log(res);
+                    this.updateAccept({ flag: true });
+                });
+            }
+        },
+        selectUser(index) {
+            if (index == this.mainViewIndex) {
+                this.mainViewIndex = -2;
+                return;
+            }
+            console.log('选择用户', index);
+            this.mainViewIndex = index;
+        },
+        sendTipsMsg(tip, to, isHandleCreator = true) {
+            
+            if (isHandleCreator && !this.sigData.isCreator) {
+                return ; 
+            }
+            
+            this.$store.dispatch('initNim/nimSendTipMsg', {
+                scene: 'team',
+                to: to,
+                tip: tip
+            }).then(res => {
+                // console.log('aaaaaaaaaaaaaaaaaaaaa', res);
+            })
+        },
+        callbreak() {
+            this.api_RefuseChat()
+            if (this.scene == 'team') {
+                // 已经连接通话的情况下取消，将离开频道
+                if (this.isAccept) {
+                    var param = {
+                        channelId: this.sigData.channelId,
+                        offlineEnabled: 1
+                    };
+                    
+                    // 通话 剩余1个人，并且没有邀请人了
+                    if (this.players.length <= 1) {
+                        // 关闭频道
+                        this.$store.state.initNim.nim.signalingClose(param).then(res => {
+                            console.log(res);
+                        });
+                    } else {
+                        // 离开频道
+                        this.$store.state.initNim.nim.signalingLeave(param).then(res => {
+                            console.log(res);
+                        });
+                    }
+ 
+                    // uni.navigateBack();
+ 
+                    // console.log('通知结束会话事件');
+                    return;
+                }
+ 
+                // 创建者，发送取消邀请
+                if (this.sigData.isCreator) {
+                    
+                    let arr = this.sigData.teamAccounts
+                    arr.map((item,index) => {
+                        let option = {
+                            channelId: this.sigData.channelId,
+                            account:item,
+                            requestId: this.roomId
+                        };
+                        this.$store.state.initNim.nim.signalingCancel(option).then(res => {
+                            console.log(res);
+                        });
+                    })
+                    
+                    this.$store.state.initNim.nim.signalingClose({
+                        channelId: this.sigData.channelId,
+                        offlineEnabled: 1
+                    }).then(res => {
+                        console.log(res);
+                    });
+                    
+                    // this.$store.dispatch('sendMsg', {
+                    //     type: 'text',
+                    //     scene: this.scene,
+                    //     to: this.sigData.teamId,
+                    //     text: '取消了视频通话',
+                    //     // 只有设置了业务已读，才会触发已读回执通知
+                    //     needMsgReceipt: true,
+                    //     // cc: false
+                    // });
+                    
+                    let tipMsg = {
+                        type: 'cancelCallteam',
+                        data: {
+                            callType: 'video'
+                        }
+                    }
+                    
+                    this.sendTipsMsg(JSON.stringify(tipMsg), this.sigData.teamId)
+ 
+                    // uni.navigateBack();
+ 
+                    return;
+                }
+ 
+                // 接收人，直接离开页面
+                let option = {
+                    channelId: this.sigData.channelId,
+                    account: this.sigData.from,
+                    requestId: this.roomId,
+                    attachExt: JSON.stringify({
+                        isIgnore: true
+                    })
+                };
+                this.$store.state.initNim.nim.signalingReject(option).then(res => {
+                    console.log(res);
+                });
+            }
+            // uni.navigateBack();
+        },
+        join() {
+            //主要步骤如下：
+            //1. 开启本地视频的预览画面，并开启声音
+            this.$refs.maxTxPlayView.startLocalPreview();
+            this.$refs.maxTxPlayView.joinRoom();
+            setTimeout(() => {
+                this.startLocalAudio(); //话筒
+                this.setAudioRoute(1); //听筒
+            }, 500)
+            // console.log('this.$refs.maxTxPlayView.', this.$refs.maxTxPlayView);
+        },
+        exit() {
+            this.$refs.maxTxPlayView.leaveRoom();
+            this.$refs.maxTxPlayView.stopLocalPreview();
+            uni.navigateBack();
+        },
+        addSelf() {
+            this.players.push({
+                userId: this.userName
+            });
+        },
+        removeSelf() {
+            let index = -1;
+            for (let i = 0; i < this.players.length; i++) {
+                this.players[i].userId == this.userName ? index == i : '';
+            }
+            console.log('index', this.players[0].userId, this.userName, this.players[i].userId == this.userName);
+            index == -1 ? '' : this.players.splice(index, 1);
+        },
+        onPush(e) {
+            let result = e.detail;
+            console.log('onPush-result:', result);
+            switch (result.type) {
+                case 'onFirstVideoFrame':
+                    console.log('onFirstVideoFrame');
+                    break;
+ 
+                case 'onUserVideoAvailable':
+                    break;
+ 
+                case 'onUserEnter':
+                    if (result.userId) this.addPlayer(result.userId);
+                    break;
+                case 'onUserSubStreamAvailable':
+                    if (result.userId) this.addSubStreamPlayer(result.userId);
+ 
+                case 'onUserExit':
+                    if (result.userId) this.removePlayer(result.userId);
+                    break;
+            }
+        },
+ 
+        addPlayer(userId) {
+            this.players.push({
+                userId: userId
+            });
+        },
+ 
+        addSubStreamPlayer(userId) {
+            this.players.push({
+                remoteSubStreamUserId: userId
+            });
+        },
+ 
+        removePlayer(userId) {
+            for (let i = 0; i < this.players.length; i++) {
+                let d = this.players[i];
+                if (d.userId === userId) {
+                    this.players.splice(i, 1);
+                    break;
+                }
+            }
+        },
+ 
+        resizeWinHeight() {
+            uni.getSystemInfo({
+                success: res => {
+                    this.windowHeight = res.windowHeight;
+                }
+            });
+        },
+        openPopup(tool) {
+            this.localTool = !this.localTool;
+            this.$refs[tool].open();
+        },
+        switchMainVideo(id) {
+            this.mainVideo = id;
+        },
+ 
+        // 推流组件TX-PlayView start
+ 
+        startLocalPreview() {
+            // 开启本地视频的预览画面
+            this.$refs.maxTxPlayView.startLocalPreview();
+        },
+        stopPublishing() {
+            // 关闭本地预览
+            this.$refs.maxTxPlayView.stopPublishing();
+        },
+        startRemoteViewSelf() {
+            // 开始显示远端视频画面
+            /**
+             * 在收到 SDK 的 onUserVideoAvailable(userId, true) 通知时，可以获知该远程用户开启了视频，
+             * 此后调用 startRemoteView(userId) 接口加载该用户的远程画面时，可以用 loading 动画优化加载过程中的等待体验。
+             * 待该用户的首帧画面开始显示时，您会收到 onFirstVideoFrame(userId) 事件回调。
+             * */
+            this.$refs.maxTxPlayView.startRemoteView(this.userName);
+        },
+        stopRemoteView() {
+            // 停止显示远端视频画面
+            // 调用此接口后，SDK 会停止接收该用户的远程视频流，同时会清理相关的视频显示资源。
+            this.$refs.maxTxPlayView.stopRemoteView(this.userName);
+        },
+        leaveRoom() {
+            // 离开房间
+            this.$refs.maxTxPlayView.leaveRoom();
+            this.players = [];
+        },
+        exitRoom() {
+            // 离开房间
+            trtcCloud.exitRoom();
+            this.players = [];
+        },
+        // 推流组件TX-PlayView end
+ 
+        // 推流组件TX-TXTRTCCloud end
+        enterRoom() {
+            this.join();
+        },
+        muteLocalVideo() {
+            // 是否屏蔽自己的视频画面
+            // 当屏蔽本地视频后，房间里的其它成员将会收到 onUserVideoAvailable 回调通知
+            this.localVideo = !this.localVideo;
+            console.log('this.localVideo', this.localVideo);
+            trtcCloud.muteLocalVideo(this.localVideo);
+        },
+        stopAllRemoteView() {
+            // 停止显示所有远端视频画面
+            // 停止显示所有远端视频画面，同时不再拉取该远端用户的视频数据流
+            trtcCloud.stopAllRemoteView();
+        },
+        startRemoteView() {
+            // 开始显示远端指定用户
+            trtcCloud.startRemoteView(this.players[0].userId || 0);
+        },
+        muteRemoteVideoStream() {
+            // 暂停接收指定的远端视频流
+            // 该接口仅停止接收远程用户的视频流，但并不释放显示资源，所以视频画面会冻屏在 mute 前的最后一帧
+            this.farVideo = !this.farVideo;
+            console.log('muteRemoteVideoStream', this.farVideo, this.players[0].userId);
+            trtcCloud.muteRemoteVideoStream(this.players[0].userId || 0, this.farVideo);
+        },
+        muteAllRemoteVideoStreams() {
+            // 停止接收所有远端视频流
+            this.farAllVideo = !this.farAllVideo;
+            trtcCloud.muteAllRemoteVideoStreams(this.farAllVideo);
+        },
+        startLocalAudio() {
+            // 开启本地音频的采集和上行(默认不开启)
+            trtcCloud.startLocalAudio();
+            trtcCloud.muteLocalAudio(false);
+        },
+        stopLocalAudio() {
+            // 关闭本地音频的采集和上行
+            trtcCloud.stopLocalAudio();
+        },
+        muteLocalAudio() {
+            this.isNoVoice = !this.isNoVoice
+            if( this.isNoVoice ){
+                // this.stopLocalAudio()
+                trtcCloud.muteLocalAudio(true);
+                return ;
+            } else {
+                // this.startLocalAudio()
+                trtcCloud.muteLocalAudio(false);
+                return ;
+            }
+            // 静音
+            // 当静音本地音频后，房间里的其它成员会收到 onUserAudioAvailable(false) 回调通知。 与 stopLocalAudio 不同之处在于，muteLocalAudio 并不会停止发送音视频数据，而是会继续发送码率极低的静音包。 在对录制质量要求很高的场景中，选择 muteLocalAudio 是更好的选择，能录制出兼容性更好的 MP4 文件。 这是由于 MP4 等视频文件格式，对于音频的连续性是要求很高的，简单粗暴地 stopLocalAudio 会导致录制出的 MP4 不易播放。
+            trtcCloud.muteLocalAudio();
+        },
+        muteRemoteAudio() {
+            // 静音掉某一个用户的声音，同时不再拉取该远端用户的音频数据流
+            this.farAuido = !this.farAuido;
+            trtcCloud.muteRemoteAudio(this.players[0].userId || 0, this.farAuido);
+        },
+        muteAllRemoteAudio() {
+            // 静音掉所有用户的声音，同时不再拉取该远端用户的音频数据流
+            this.allAuido = !this.allAuido;
+            trtcCloud.muteAllRemoteAudio(this.allAuido);
+        },
+        destroySharedIntance() {
+            // 销毁 trtcCloud 释放 TRTCCloud 对象并清理资源
+            trtcCloud.destroySharedIntance();
+        },
+        switchRole() {
+            // 转换角色
+            /**
+             * 20,主播，可以上行视频和音频，一个房间里最多支持50个主播同时上行音视频。
+             * 21,观众，只能观看，不能上行视频和音频，一个房间里的观众人数没有上限。
+             *
+             * 另，50是服务器限制，手机极限约15路，实际使用中7路以上路的手机已经耗电+发烫到不能再碰
+             * */
+            this.role = this.role == 20 ? 21 : 20;
+            trtcCloud.switchRole(this.role);
+        },
+        switchCamera() {
+            //切换摄像头
+            trtcCloud.switchCamera();
+        },
+        setAudioRoute(type) {
+            this.isNoOutVoice = this.audioRoute ? true : false
+            //切换音频路由
+            this.audioRoute = this.audioRoute ? 0 : 1;
+            // this.audioRoute = type == 1 ? 1 : this.audioRoute;
+            trtcCloud.setAudioRoute(this.audioRoute);
+        },
+        // 推流组件TX-TXTRTCCloud end
+ 
+        roomCallback(event) {
+            console.log('roomCallback-----', event);
+        }
+    }
+};
+</script>
+ 
+<style lang="scss">
+.page {
+    flex: 1;
+    width: 750rpx;
+    background-color: #271506;
+}
+.page-title {
+    width: 750rpx;
+    height: 80rpx;
+    line-height: 80rpx;
+    color: #fff;
+    font-size: 28rpx;
+    text-align: center;
+}
+ 
+.liveroom {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 750rpx;
+}
+$cel-width: 0.5 * 750rpx;
+.liveroom-cel {
+    width: $cel-width;
+    height: 1.382 * $cel-width + 40rpx;
+    padding: 20rpx;
+}
+.liveroom-trtc {
+    width: $cel-width - 40rpx;
+    height: 1.382 * $cel-width - 40rpx;
+    background-color: #444;
+}
+.main-trtc {
+    width: 750rpx;
+    height: 750rpx;
+}
+ 
+.liveroom-cel-name {
+    width: $cel-width - 40rpx;
+    height: 40rpx;
+    line-height: 40rpx;
+    text-align: center;
+    color: #999;
+    font-size: 24rpx;
+}
+.tools-box {
+    width: 750rpx;
+    height: 750rpx;
+    background-color: rgba(255, 255, 255, 0.3);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 30rpx;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+}
+.tools-item {
+    width: 100rpx;
+    height: 100rpx;
+    border-radius: 50rpx;
+    background-color: #ffffff;
+    justify-content: center;
+    margin-top: 20rpx;
+}
+.tools-item-text {
+    font-size: 20rpx;
+    text-align: center;
+}
+ 
+._custom-main-view {
+    // position: absolute;
+    width: 750rpx;
+    height: 700rpx;
+    z-index: 10;
+}
+._custom-mini-view {
+    width: 120rpx;
+    height: 120rpx;
+    z-index: 9999;
+    // margin-top: -150px;
+}
+ 
+._call-user-name {
+    color: #ffffff;
+    font-size: 50rpx;
+    font-weight: 500;
+}
+._call-tip-text {
+    color: #a4a4a4;
+    font-size: 30rpx;
+    font-weight: 500;
+}
+._video-mini-wrapper {
+    // top: 600rpx;
+    width: 375rpx;
+    height: 375rpx;
+    // flex: 1;
+}
+._video-main-wrapper {
+    position: fixed;
+    width: 750rpx;
+    height: 600rpx;
+}
+._video-list-wrapper {
+    position: relative;
+    top: 240rpx;
+    flex: 1;
+    width: 750rpx;
+    height: 750rpx;
+}
+._custom-opacity{
+    width: 0;
+    height: 0;
+}
+</style>

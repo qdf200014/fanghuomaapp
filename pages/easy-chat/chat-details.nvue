@@ -1,0 +1,476 @@
+<template>
+	<view class="im-flex-column im-bg-grey-1 im-flex-1">
+		<!-- 顶部导航栏 -->
+		<nim-chat-navigation>
+			<view class="im-flex-column im-align-center">
+				<view class="im-flex im-flex-nowrap im-align-center">
+					<text class="im-font-38 im-font-black-2">{{ textTeamTip }}详情</text>
+				</view>
+			</view>
+		</nim-chat-navigation>
+		
+		<list :show-scrollbar="false">
+			<cell>
+				<!-- 单聊展示框 -->
+				<template v-if="scene === 'p2p'">
+					<view class="im-flex im-align-center im-bg-white im-py-4 im-px-3">
+						<view class="im-flex-column im-align-center">
+							<nim-avatar :account="to" style="height: 72rpx;width: 72rpx;"></nim-avatar>
+							<text class="im-font-28 im-font-light im-mt-2">{{ detailInfo.nick }}</text>
+						</view>
+						<view class="im-flex-column im-align-center im-ml-3" @tap="createTeam">
+							<image src="/static/easy-chat/details/create-team@2x.png" mode="aspectFill" style="width: 72rpx;height: 72rpx;"></image>
+							<text class="im-font-28 im-font-light im-mt-2">创建群聊</text>
+						</view>
+					</view>
+				</template>
+			</cell>
+			
+			<cell>
+				<!-- 群聊展示框 -->
+				<template v-if="scene === 'team'">
+					<view class="im-flex-column im-bg-white im-align-center im-justify-center im-pt-2 im-pb-4">
+						<team-avatar :teamId="to" class="im-round-2" style="width: 144rpx;height: 144rpx;" @onClick="teamAvatarClick"></team-avatar>
+						<text class="im-text-ellipsis im-font-32 im-font-black im-mt-3 im-pb-3 im-text-center" style="width: 500rpx;">{{ detailInfo.name }}</text>
+					</view>
+					
+					<nim-team-member :detailInfo="detailInfo" :textTeamTip="textTeamTip" :isOwner="isOwner" @removeMember="removeMember" @addMember="addMember" @seeAll="seeAll"></nim-team-member>
+					
+				</template>
+			</cell>
+			
+			
+			<cell>
+				<!-- 查找聊天内容 -->
+				<nim-search-history :textTeamTip="textTeamTip"></nim-search-history>
+			</cell>
+			
+			<cell>
+				<!-- 设置扩展项 -->
+				<view class="im-flex-column im-bg-white im-mt-3 im-px-3">
+					<view class="im-flex im-align-center im-justify-between im-border-bottom im-py-3" @tap="changeName">
+						<text class="im-font-32 im-font-black">{{ textTeamTip }}名称</text>
+						<text class="im-font-28 im-font-light im-text-right im-flex-1 im-text-ellipsis" style="width: 580rpx; color: #949599;">{{ detailInfo.nick || detailInfo.name }}</text>
+					</view>
+					
+					<view class="im-flex im-align-center im-justify-between im-border-bottom im-py-3">
+						<text class="im-font-32 im-font-black">置顶{{ textTeamTip }}</text>
+						<switch :checked="nimSession.isTop" color="#00BCAB" @change="isTopChange" />
+					</view>
+					
+					<view v-if="isOwner && detailInfo.type === 'advanced'" class="im-flex im-align-center im-justify-between im-border-bottom im-py-3">
+						<text class="im-font-32 im-font-black">全员禁言</text>
+						<switch :checked="detailInfo.mute" color="#00BCAB" @change="isMuteChange" />
+					</view>
+					
+					<view v-if="isOwner && detailInfo.type === 'advanced'" class="im-flex im-align-center im-justify-between im-py-3" @tap="changeOwner">
+						<text class="im-font-32 im-font-black">转让主持人身份</text>
+						<image src="../../static/fireIndex/morehui.png" style="width: 22rpx; height: 22rpx;"></image>
+					</view>
+					
+				</view>
+			</cell>
+			
+			<cell v-if="scene === 'team' && detailInfo.type === 'advanced'">
+				<view v-if="consultationdetail && consultationdetail.articleName" @click="toDetail" class="im-flex im-mt-3 im-bg-white im-align-center im-justify-between im-px-3 im-py-3">
+					<text class="im-font-32 im-font-black">关联事件</text>
+					<text class="im-font-25 im-font-light im-text-right im-flex-1 im-text-ellipsis" style="width: 580rpx;">{{ consultationdetail.articleName }}</text>
+					<image src="../../static/easy-chat/chat/arrow-right.png" style="width: 22rpx; height: 22rpx;"></image>
+				</view>
+				<view class="im-flex im-mt-3 im-bg-white im-align-center im-justify-between im-px-3 im-py-3">
+					<text class="im-font-32 im-font-black">会商时间:</text>
+					<view class="im-flex im-flex-row">
+						<text class="im-font-25 im-font-light im-text-right im-flex-1 im-text-ellipsis" style="margin-right: 10rpx;" v-if="consultationdetail && consultationdetail.makeTime">预约会商</text>
+						<text class="im-font-25 im-font-light im-text-right im-flex-1 im-text-ellipsis"  style="margin-right: 10rpx;" v-else>即时会商</text>
+						<text class="im-font-25 im-font-light im-text-right im-flex-1 im-text-ellipsis">{{mounth}}{{day}} {{date}}</text>
+					</view>
+				</view>
+				<view v-if="consultationdetail && consultationdetail.agenda" class="im-flex-column im-bg-white im-mt-3 im-py-3 im-px-3">
+					<text class="im-font-32 im-font-black">会议议程</text>
+					<text class="im-font-28 im-font-black-2 im-mt-1">{{ consultationdetail.agenda || '无' }}</text>
+				</view>
+			</cell>
+			
+			
+			<cell v-if="scene === 'team'">
+				<!-- 退群 解散群 按钮 -->
+				<view  class="im-flex-column im-bg-white im-mt-3" hover-class="im-bg-grey-3" v-if="isOwner ? true : false">
+					<view class="im-flex im-align-center im-justify-center im-py-3" @tap="clickTeamQuit">
+						<text class="im-font-30 im-font-red-2">解散{{textTeamTip}}</text>
+					</view>
+				</view>
+				
+			</cell>
+			
+			<cell class="im-list-bottom"></cell>
+			
+		</list>
+		
+		<nim-popup-bottom v-model="teamQuitPopup.show" :explainText="teamQuitPopup.explainText">
+			<view class="im-bg-white im-flex im-justify-center im-align-center im-py-2" hover-class="im-bg-grey-3" @tap="teamQuit">
+				<text class="im-font-32 im-font-red-2">{{ isOwner ? '解散' : '退出' }}</text>
+			</view>
+		</nim-popup-bottom>
+		
+	</view>
+</template>
+
+<script>
+	import nimAvatar from '@/components/easy-chat/nim-avatar.vue'
+	import teamAvatar from '@/components/easy-chat/team-avatar.vue'
+	import nimSearchHistory from '@/components/easy-chat/nim-search-history.vue'
+	import nimTeamMember from '@/components/easy-chat/nim-team-member.vue'
+	import nimPopupBottom from '@/components/easy-chat/nim-popup-bottom.vue'
+	import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+	
+	export default {
+		data() {
+			return {
+				scene: '',
+				to: '',
+				teamQuitPopup: {
+					show: false,
+					explainText: ''
+				},
+				consultationdetail: {},
+				makeTime: [],
+				year: null,
+				mounth: null,
+				day: null,
+				date: null
+			}
+		},
+		components: {
+			nimAvatar,
+			teamAvatar,
+			nimSearchHistory,
+			nimTeamMember,
+			nimPopupBottom,
+			nimChatNavigation
+		},
+		computed: {
+			// 会商 or 群聊 or 聊天
+			textTeamTip() {
+				if (this.scene === 'p2p') {
+					return '聊天'
+				} else {
+					if (this.detailInfo.type === 'advanced') {
+						return '会商'
+					} else {
+						return '群聊'
+					}
+				}
+			},
+			sessionObj() {
+				return this.$store.getters['initNim/sessionObj']
+			},
+			userUID() {
+				return this.$store.getters['initNim/userUID']
+			},
+			// 当前会话的id
+			currentSessionId() {
+				return this.$store.getters['initNim/currentSessionId']
+			},
+			// 用户对象数据结构
+			userObj() {
+				return this.$store.getters['initNim/userObj'] || {}
+			},
+			teamObj() {
+				return this.$store.getters['initNim/teamObj'] || {}
+			},
+			// 当前用户或者群的详细信息
+			detailInfo() {
+				if (this.scene === 'p2p' && this.userObj[this.to]) {
+					return this.userObj[this.to]
+				} else if (this.scene === 'team' && this.teamObj[this.to]) {
+					return this.teamObj[this.to]
+				}
+			},
+			// 判断自己是否是群主
+			isOwner() {
+				console.log(this.userUID);
+				if (this.detailInfo.owner === this.userUID) {
+					return true
+				}
+				return false
+			},
+			nimSession() {
+				return this.sessionObj[this.currentSessionId] || {}
+			}
+		},
+		onLoad() {
+			if (this.currentSessionId) {
+				this.scene = this.currentSessionId.split('-')[0];
+				this.to = this.currentSessionId.split('-')[1];
+			}
+			this.setListenerAddMember()
+			
+			if (this.scene === 'p2p') {
+				this.setListenerCreateNormalTeam()
+			}
+			
+			this.api_getappconsultationdetail()
+			
+		},
+		onUnload() {
+			uni.$off('im-selectAddmember')
+			uni.$off('im-createNormalTeam')
+		},
+		methods: {
+			api_updconsultationsusers(where) {
+				uni.$api.consultation.updconsultationsusers({
+					guid: this.to,
+					// 1加人 -1删人
+					types: 1,
+					// 人员id
+					where: where
+				}).then(res => {
+					console.log('接口调用成功', res);
+				})
+			},
+			api_getappconsultationdetail() {
+				uni.$api.discussion.getappconsultationdetail({
+					guid: this.to
+				}).then(res => {
+					console.log(res);
+					this.consultationdetail = res.data.data
+					if(this.consultationdetail.makeTime == '0001-01-01 00:00:00'){
+						this.consultationdetail.makeTime = null
+					}else{
+						this.makeTime = this.consultationdetail.makeTime.split(' ')
+						this.date = this.makeTime[1]
+						let time = this.makeTime[0].split('-')
+						console.log('asasa',time)
+						this.mounth = time[1] + '月'
+						this.day = time[2] + '日'
+					}
+				})
+			},
+			changeOwner() {
+				uni.navigateTo({
+					url: '/pages/easy-chat/team-member-list?model=changeOwner'
+				})
+			},
+			//去关联事件详情
+			toDetail(){
+				console.log(this.consultationdetail)
+				uni.navigateTo({
+					url: '/pages/tabbar-1-detail/fireDetail/fireDetail?articleId=' + this.consultationdetail.articleId + '&coverType=' + '3'
+				})
+			},
+			isMuteChange(e) {
+				console.log(e);
+				console.log('群组禁言', this.detailInfo);
+				this.$store.dispatch('initNim/nimMuteTeamAll', {
+					teamId: this.to,
+					mute: e.detail.value
+				})
+			},
+			teamAvatarClick() {
+				console.log(this.to)
+				if (!this.isOwner) {
+					return ;
+				}
+				let _self = this;
+				
+				uni.chooseImage({
+					count: 1, //默认9
+					sizeType: ['compressed'], //可以指定是原图还是压缩图，默认二者都有
+					success: function (res) {
+						// console.log(res);
+						_self.$store.dispatch('initNim/nimPreviewFile', {
+							type: 'image',
+							filePath: res.tempFilePaths[0]
+						}).then(res => {
+							// console.log(res);
+							
+							_self.$store.dispatch('initNim/nimUpdateTeam', {
+								teamId: _self.to,
+								avatar: res.url
+							}).then(res => {
+								uni.showToast({
+									title: '保存成功!',
+									icon: 'success'
+								})
+							})
+						})
+					}
+				});
+			},
+			seeAll() {
+				uni.navigateTo({
+					url: '/pages/easy-chat/team-member-list?model=seeAll'
+				})
+			},
+			changeName() {
+				console.log(this.to)
+				if (this.scene === 'p2p' || this.detailInfo.type === 'advanced') {
+					return;
+				}
+				
+				uni.navigateTo({
+					url: `/pages/easy-chat/change-team-name?teamId=${this.to}`
+				})
+			},
+			// 创建普通群聊监听
+			setListenerCreateNormalTeam() {
+				uni.$off('im-createNormalTeam')
+				
+				uni.$on('im-createNormalTeam', data => {
+					let idArr = []
+					let nameArr = []
+					data.map(item => {
+						idArr.push(item.userId)
+						nameArr.push(item.name)
+					})
+					
+					
+					this.$store.dispatch('initNim/nimCreateNormalTeam', {
+						name: nameArr.join('丶'),
+						accounts: idArr
+					}).then(res => {  
+						uni.showToast({
+							title: '创建群聊成功!',
+							icon: 'success'
+						})
+					})
+					
+					console.log(idArr);
+					
+				})
+			},
+			setListenerAddMember() {
+				uni.$off('im-selectAddmember')
+				
+				uni.$on('im-selectAddmember', data => {
+					let idArr = []
+					data.map(item => {
+						idArr.push(item.userId)
+					})
+					
+					this.$store.dispatch('initNim/nimAddTeamMembers', {
+						teamId: this.to,
+						accounts: idArr
+					}).then(res => {
+						
+						if (this.detailInfo.type === 'advanced') {
+							this.api_updconsultationsusers(idArr.join(','))
+						}
+						
+						uni.showToast({
+							title: '添加群成员成功'
+						})
+					})
+					
+				})
+			},
+			addMember() {
+				uni.navigateTo({
+					url: '/pages/addrBook/index?sourceType=addMember'
+				})
+			},
+			removeMember() {
+				uni.navigateTo({
+					url: '/pages/easy-chat/team-member-list?model=remove'
+				})
+			},
+			createTeam() {
+				console.log('创建群聊');
+				let _self = this;
+				
+				this.$store.dispatch('user/clearSelected')
+				
+				uni.$api.user.getuserinfo({
+					userId: this.to
+				}).then(res => {
+					console.log('resasdasdasdasdas', res);
+					if (res.data.statusCode === 200) {
+						let res_data = res.data.data
+						setTimeout(() => {
+							_self.$store.dispatch('user/selectUser', [res_data])
+						}, 1000)
+						uni.navigateTo({
+							url: '/pages/addrBook/index?sourceType=createNormalTeam'
+						})
+					}
+					
+				}).catch(err => {
+					console.log(err)
+				})
+				
+			},
+			teamQuit() {
+				console.log('退出');
+				if (this.isOwner) {
+					// 解散群
+					if (this.detailInfo.type === 'advanced') {
+						
+						uni.$api.consultation.isconsultation({
+							guid: this.detailInfo.teamId
+						}).then(res => {
+							console.log(res);
+							if (res.data.data) {
+								this.$store.dispatch('initNim/nimDismissTeam', {
+									teamId: this.detailInfo.teamId
+								}).then(res => {
+									
+									uni.$api.consultation.updconsultation({
+										guid: this.detailInfo.teamId
+									})
+									
+									uni.navigateBack()
+									uni.showToast({
+										title: '解散成功!'
+									})
+								})
+							}
+						})
+						
+					} else {
+						this.$store.dispatch('initNim/nimDismissTeam', {
+							teamId: this.detailInfo.teamId
+						}).then(res => {
+							uni.navigateBack()
+							uni.showToast({
+								title: '解散成功!'
+							})
+						})
+					}
+					
+				} else {
+					// 退出群
+					this.$store.dispatch('initNim/nimLeaveTeam', {
+						teamId: this.detailInfo.teamId
+					}).then(res => {
+						uni.navigateBack()
+						uni.showToast({
+							title: '退出成功!'
+						})
+					})
+				}
+				
+				this.teamQuitPopup.show = false
+			},
+			isTopChange(e) {
+				// console.log(e);
+				this.isTop = e.detail.value
+				this.isTop ? this.$store.dispatch('initNim/nimAddStickTopSession', {
+					id: this.currentSessionId,
+					// 会话置顶的扩展字段
+					topCustom: ''
+				}) : this.$store.dispatch('initNim/nimDeleteStickTopSession', {
+					id: this.currentSessionId
+				})
+			},
+			clickTeamQuit() {
+				this.teamQuitPopup.show = true
+				this.teamQuitPopup.explainText = this.isOwner ? '您将解散会商，解散会商后会商成员将自动退出' : '您将退出群聊, 退出群聊后将不再接受此群的消息'
+			},
+			
+		}
+	}
+</script>
+
+<style>
+
+</style>

@@ -1,0 +1,171 @@
+<template>
+	<!-- 	<view class="im-flex-column im-flex-1 im-bg-grey-1">
+		<list>
+			<template v-if="formatSysMsgArr.length === 0">
+				<cell>
+					<view class="im-align-center im-flex im-justify-center im-my-4">
+						<text class="im-font-30 im-font-light">暂无系统消息</text>
+					</view>
+				</cell>
+			</template>
+			
+			<template v-else>
+				<cell v-for="item in formatSysMsgArr" :key="item.idServer">
+					<template v-if="item.type === 'custom'"> -->
+	<!-- 系统提示消息 -->
+	<!-- 						<sys-item-tipsysmsg v-if="item.content.type === 'tipSysMsg'" :sysmsg="item"></sys-item-tipsysmsg>
+					</template>
+					<template v-else>
+						<sys-item-team-invite v-if="item.type === 'teamInvite'" :sysmsg="item"></sys-item-team-invite>
+					</template>
+				</cell>
+			</template>
+			
+			<cell>
+				<view style="height: 150rpx;"></view>
+			</cell>
+		</list>
+	</view> -->
+	<view style="background-color: #F4F5FB;" class="flex flex-column flex-1 w-100">
+		<uni-nav-bar left-icon="back" title="系统消息" :statusBar="true" right-text="清空" @clickRight="empty"></uni-nav-bar>
+		<view class="flex flex-1 w-100">
+			<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+			<wt-list api="sysMsg.getSysMsgList" ref='sysMsgList' :isGetMore="false">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="ctx">
+					<!-- 循环处理数据 -->
+					<cell v-for="(item,index) in ctx.dataList" class="flex flex-row w-100 p-3" >
+						<!-- <view v-if="item.type == 999" class="flex-row justify-center align-center" style="width: 690rpx;">
+							<text class="font-5">{{item.title}}</text>
+						</view> -->
+						<view v-if="item.type == 5">
+							<image src="../../static/chat/audio/system.png" mode="" style="width: 80rpx;height: 80rpx;"></image>
+						</view>
+						<view v-if="item.type == 10 || item.type == 11">
+							<image src="../../static/chat/audio/approvalone.png" mode="" style="width: 80rpx;height: 80rpx;"></image>
+						</view>
+						<view style="margin-left: 10rpx;">
+							<text class="system_title" style="margin-bottom: 8rpx;">{{item.title}}</text>
+							<view class="system_box pt-3" style="padding-left: 24rpx;padding-right: 24rpx;">
+								<text class="system_name">{{item.title}}</text>
+								<text class="system_content border-bottom" style="padding-top: 15rpx;padding-bottom: 24rpx;">{{item.data.body}}</text>
+								<view style="width: 472rpx;height: 88rpx;" class="flex flex-column justify-center align-center">
+									<text class="look" @click="godetail(item)">查看详情</text>
+								</view>
+							</view>
+						</view>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+	</view>
+</template>
+
+<script>
+	import sysItemTipsysmsg from '@/components/easy-chat/sys-item-tipSysMsg.vue'
+	import sysItemTeamInvite from '@/components/easy-chat/sys-item-teamInvite.vue'
+	export default {
+		data() {
+			return {
+				pageSize: 0,
+			}
+		},
+		components: {
+			sysItemTipsysmsg,
+			sysItemTeamInvite,
+		},
+		onLoad() {
+			// 一进入页面已读消息
+			uni.$api.sysMsg.readSysMsg()
+				.then(res => {
+					console.log(res, '消息已读')
+				})
+				.catch(err => {
+					console.log(err, '消息已读失败')
+				})
+
+		},
+		computed: {
+			systemMsgArr() {
+				// 在此页面 检测到数据更新 不用记录未读数
+				uni.setStorageSync('systemUnreadNum', 0)
+				return this.$store.getters['initNim/systemMsgArr']
+			},
+			formatSysMsgArr() {
+				let arr = this.systemMsgArr.slice(0, this.pageSize)
+				return arr
+			}
+		},
+		methods: {
+			godetail(item) {
+				console.log(item,'id的值 ')
+				// 通过item.type判断
+				if (item.type == 5) {
+					uni.navigateTo({
+						url: './fireReceipt?id=' + item.id
+					})
+				} else if (item.type == 10) {
+					uni.navigateTo({
+						url: '../tabbar-4-detail/approval/approval'
+					})
+				} else if (item.type == 11) {
+					uni.navigateTo({
+						url: './reminder?roomId='+item.roomId
+					})
+				}
+			},
+			// 清空系统消息
+			empty() {
+				uni.$api.sysMsg.clearSysMsg()
+					.then(res => {
+						console.log(res, '清空系统消息成功');
+						this.$refs.sysMsgList.refreshData();
+					})
+					.catch(err => {
+						console.log(err, '清空系统消息失败')
+					})
+			}
+		}
+	}
+</script>
+
+<style>
+	.system_box {
+		width: 520rpx;
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		border-bottom-width: 1rpx;
+		border-style: solid;
+		border-bottom-color: #E1E4ED;
+		background-color: #FFFFFF;
+	}
+
+	.system_title {
+
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.system_name {
+
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #323234;
+	}
+
+	.system_content {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.look {
+
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+</style>

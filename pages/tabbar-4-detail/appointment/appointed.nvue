@@ -1,0 +1,83 @@
+<template>
+	<view style="padding-left: 30rpx;padding-right: 30rpx;padding-top: 24rpx;">
+		<view style="position: relative;background-color: #FFFFFF;width: 690rpx;border-radius: 16rpx;">
+			<view style="position: absolute;right: 26rpx;top: 49rpx;">
+				<image src="../../../static/work/appoly.png" mode="" style="width:240rpx;height:240rpx;"></image>
+			</view>
+			<view @click="goappointDetail(item)">
+				<view class="flex flex-row" style="width: 690rpx;">
+					<text class="violation_title" style="width: 300rpx;padding-top: 32rpx;">姓名：</text>
+					<text class="violation_detail" style="width: 390rpx;padding-top: 36rpx;">{{item.name}}</text>
+				</view>
+				<view class="flex flex-row" style="width: 690rpx;">
+					<text class="violation_title" style="width: 300rpx;padding-top: 32rpx;">申请卡口名称：</text>
+					<text class="violation_detail" style="width: 390rpx;padding-top: 36rpx;">{{item.park_name}}</text>
+				</view>
+				<view class="flex flex-row" style="width: 690rpx;padding-bottom: 40rpx;">
+					<text class="violation_title" style="width: 300rpx;padding-top: 32rpx;">申请时间：</text>
+					<text class="violation_detail" style="width: 390rpx;padding-top: 36rpx;">{{dateTran(item.created_at)}}</text>
+				</view>
+				<view class="border-top flex justify-center align-center" style="width: 690rpx;height:88rpx;">
+					<text class="look_detail" v-if="item.approve_status=='已通过'">已同意</text>
+					<text class="look_detail" v-if="item.approve_status=='未通过'">已拒绝</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		props:{
+			item:{
+				type:[Object],
+				default:()=>{}
+			},
+		},
+		data(){
+			return{
+				
+			}
+		},
+		methods:{
+			goappointDetail(item){
+				uni.navigateTo({
+					url:'./appointedetail?id='+item.id
+				})
+			},
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+		}
+	}
+</script>
+
+<style>
+    .violation_title {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		padding-left: 24rpx;
+	}
+
+	.violation_detail {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.look_detail {
+
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+		padding-top: 26rpx;
+		padding-bottom: 26rpx;
+	}
+
+	.border-top {
+		border-top-width: 1rpx;
+		border-top-style: solid;
+		border-top-color: #EEEFF3;
+	}
+</style>

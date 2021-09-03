@@ -1,0 +1,1689 @@
+<template>
+	<view class="w-100 flex flex-column align-center justify-center flex-1">
+		<!-- #ifdef APP-PLUS -->
+		<!-- <uni-nav-bar left-icon="back" :title="sourceType == 0? '注册' : title" :statusBar="true" :border="false" :fixed="true">
+			
+		</uni-nav-bar> -->
+		<!-- #endif -->
+		<!-- #ifndef APP-PLUS -->
+		<!-- <uni-nav-bar :title="title" :statusBar="true" :border="false" :fixed="true"></uni-nav-bar> -->
+		<!-- #endif -->
+		<image src="../../static/user/perfect@2x.png" style="width: 750rpx; height: 56rpx;" v-if="perfectShow"></image>
+		<list class="flex flex-1 flex-column w-100 justify-between align-center" style="background-color: #FFF;">
+			<cell>
+				<view>
+					<view class="titleTop">
+						<text class="unitTitle py-2">请选择单位所属层级：</text>
+						<view class="hierarchyList" style="width: 670rpx;">
+							<view class="hierarchys" v-model="registerForm.LevelId" v-for="(item,index) of hierarchy" 
+							:key="item.levelId" @click="leftChange(item.levelId)" 
+							:class="{active:registerForm.LevelId == item.levelId ? true : false}">
+								<text class="textHie" :class="{active:registerForm.LevelId == item.levelId}" >{{item.name}}</text>
+							</view>
+							<view class="area uni-form-item uni-column addrWrap " v-if="showCountry">
+								<text style="font-size: 28rpx;width: 230rpx; height: 112rpx; display: flex; align-items: center; line-height: 112rpx;">选择单位所在位置 </text>
+								<text style="font-size: 28rpx;">国家级：</text>
+								<text class="siteCountry" v-model="registerForm.Country" style="font-size: 28rpx; lines: 1; " >防火司</text>
+							</view>
+						</view>
+					</view>
+				</view>
+				<!-- 地址选择 -->
+				<view class="area">
+					<view class="uni-form-item uni-column addrWrap " v-if="showProvince">
+						<text style="font-size: 28rpx;width: 230rpx; height: 112rpx; display: flex; align-items: center; line-height: 112rpx;">选择单位所在位置 </text>
+						<text style="font-size: 28rpx;">省：</text>
+						<picker @change="bindPickerProvince($event)" class="city site" :value="provinceIndex" :range="provinces"  v-model="registerForm.Province">
+							<text class="uni-input" style="font-size: 28rpx; lines: 1; " >{{provinces[provinceIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+					<view class="uni-form-item uni-column addrWrap flex align-center" v-if="showCity">
+						<text style="font-size: 28rpx;">市：</text>
+						<picker class="city site" @change="bindPickerCity"  :value="cityIndex" :range="citys">
+							<text class="uni-input" style="font-size: 28rpx;">{{citys[cityIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+					<view class="uni-form-item uni-column addrWrap flex align-center" v-if="showCounty">
+						<text style="font-size: 28rpx;">县/区：</text>
+						<picker class="city site"  @change="bindPickerCounty" :value="countyIndex" :range="countys">
+							<text class="uni-input" style="font-size: 28rpx;">{{countys[countyIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+					<view class="uni-form-item uni-column addrWrap flex align-center" v-if="showStreet">
+						<text style="font-size: 28rpx;">乡/镇/街道：</text>
+						<picker class="city site" @change="bindPickerStreet" :value="streetIndex" :range="streets">
+							<text class="uni-input" style="font-size: 28rpx;">{{streets[streetIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+					<view class="uni-form-item uni-column addrWrap" v-if="showVillage">
+						<text style="font-size: 28rpx; line-height: 112rpx;">村：</text>
+						<picker class="city site" @change="bindPickerVillage" :value="villageIndex" :range="villages">
+							<text class="uni-input" style="font-size: 28rpx;">{{villages[villageIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+				</view>
+				
+				<view class="treeFarm" v-if="showTreeFarm">
+					<text class="unitTitle py-2">是否有所属林场/保护地/公园/林区：</text>
+					<view class="hierarchyList" style="width: 670rpx;">
+						<view class="hierarchys" v-for="(item,index) of haveTreeFarm"
+						:key="index" @click="haveChange(index)" 
+						:class="{active:registerForm.hasPark == index}" v-model="registerForm.hasPark">
+							<text class="textHie" :class="{active:registerForm.hasPark == index}" >{{item}}</text>
+						</view>
+					</view>
+				</view>
+				<view class="treeFarmForm"  v-if="showTreeFarm">
+					<!-- level1 -->
+					<view class="uni-form-item uni-column addrWrap justify-between" v-if="treeFarmShow">
+						<text style="font-size: 28rpx;width: 210rpx; height: 112rpx; line-height: 112rpx; padding-left: 20rpx;">选择所属区域： </text>
+						<picker @change="bindPickerTreeFarm" :value="treeFarmIndex" :range="treeFarms" mode="selector" style="width: 400rpx;" class="city site" >
+							<text class="uni-input" style="font-size: 28rpx; lines: 1; " >{{treeFarms[treeFarmIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+					<!-- level2 -->
+					<view class="uni-form-item uni-column addrWrap" v-if="treeSecFarmsShow">
+						<picker @change="bindPickerLevelSec" :value="treeSecIndex" :range="treeSecFarms" style="width: 400rpx;" mode="selector" class="city site" >
+							<text class="uni-input" style="font-size: 28rpx; lines: 1; " >{{treeSecFarms[treeSecIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+					<!-- level3 -->
+					<view class="uni-form-item uni-column addrWrap" v-if="treeThirFarmsShow">
+						<picker @change="bindPickerLevelThir" :value="treeThirIndex" :range="treeThirFarms" style="width: 400rpx;" mode="selector" class="city site" >
+							<text class="uni-input" style="font-size: 28rpx; lines: 1; " >{{treeThirFarms[treeThirIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+					<!-- level4 -->
+					<view class="uni-form-item uni-column addrWrap" v-if="treeFourFarmsShow">
+						<picker @change="bindPickerLevelFour" :value="treeFourIndex" :range="treeFourFarms" style="width: 400rpx;" mode="selector" class="city site" >
+							<text class="uni-input" style="font-size: 28rpx; lines: 1; " >{{treeFourFarms[treeFourIndex] || '请选择'}}</text>
+						</picker>
+					</view>
+				</view>
+				<!-- form表单 -->
+				<form>
+					<view class="uni-form-item uni-column companyWrap justify-around">
+						<text class="companyName titleName" style="padding-left: 10rpx;">所属单位名称</text>
+						<input class="company inputFrame uni-input" cursor-spacing="0" v-model="registerForm.UnitName"
+						@confirm="hideKeyboard"
+						placeholder="请输入所属单位名称"/>
+					</view>
+					<view class="uni-form-item uni-column flex flex-row justify-start">
+						<!-- #ifdef H5 -->
+						<text class="managerial pl-1">管理角色 </text>
+						<!-- #endif -->
+						<!-- #ifdef APP-PLUS -->
+						<text class="managerial">管理角色 </text>
+						<!-- #endif -->
+						<picker @change="bindPickerManagerial" :value="managerialIndex" :range="managerialRoles" style="margin-left: 10rpx;"  v-model="registerForm.Province">
+							<!-- #ifdef APP-PLUS -->
+							<text class="uni-input inputFrame" style="font-size: 28rpx; lines: 1; margin-left: 30rpx;" >{{managerialRoles[managerialIndex] || '请选择'}}</text>
+							<!-- #endif -->
+							<!-- <input type="text" disabled :value="managerialRoles[managerialIndex]" class="company inputFrame"  placeholder="请选择管理角色" /> -->
+							<!-- #ifdef H5 -->
+							<view class="position-relative ml-2">
+								<input type="text" disabled adjust-position :value="managerialRoles[managerialIndex]" class="company inputFrame"  placeholder="请选择管理角色" />
+								<view class="position-absolute top-0 left-0 right-0 bottom-0"></view>
+							</view>
+							<!-- #endif -->
+						</picker>
+					</view>
+					<view class="other" v-if="showOther">
+						<input class="company inputFrame uni-input" cursor-spacing="0" v-model="registerForm.JobName"
+						@confirm="hideKeyboard"
+						placeholder="请填写您的管理角色 如: 村长 科员" style="margin-left: 30rpx; border: none; width: 640rpx;"/>
+					</view>
+					<view class="uni-form-item uni-column companyWrap justify-around" v-if="sourceType == 0? 'true' : display">
+						<text class="companyName titleName" style="padding-left: 10rpx;">姓名</text>
+						<input class="company inputFrame uni-input" cursor-spacing="0" v-model="registerForm.Name"
+						@confirm="hideKeyboard"
+						placeholder="请输入姓名"/>
+					</view>
+					<view class="uni-form-item uni-column companyWrap justify-around" v-if="sourceType == 0? 'true' : display">
+						<text class="companyName titleName" style="padding-left: 10rpx;">手机号</text>
+						<input class="company inputFrame uni-input" cursor-spacing="0" v-model="registerForm.Phone"
+						@confirm="hideKeyboard"
+						placeholder="请输入手机号" type="number"/>
+					</view>
+					<view class="uni-form-item uni-column companyWrap justify-around" v-if="sourceType == 0? 'true' : display">
+						<text class="companyName titleName" style="padding-left: 10rpx;">验证码</text>
+						<input class="company inputFrame uni-input" cursor-spacing="0" v-model="registerForm.Code"
+						@confirm="hideKeyboard"
+						placeholder="请输入验证码" type="number" maxlength="6"/>
+						<view class="getCode" v-if="verifyShow" @click="getCode">
+							<text class="getCodeTi" style="text-align: center;
+							font-size: 26rpx;
+							font-weight: 400;
+							color: #FFFFFF;
+							line-height: 63rpx;">获取验证码</text>
+						</view>
+						<view class="getCodeTime" v-else>
+							<text style="font-size: 26rpx;
+							font-weight: 400;
+							color: #FFFFFF;">{{'剩余'+verifyTip+'秒'}}</text>
+						</view>
+						
+					</view>
+					<view class="uni-form-item uni-column companyWrap codeWrap justify-around" v-if="sourceType == 0? 'true' : reveal">
+						<text class="companyName titleName justify-center" style="padding-left: 10rpx;">设置密码</text>
+						<input class="company inputFrame uni-input" cursor-spacing="0" type="password" v-model="registerForm.PassWord"
+						@confirm="hideKeyboard"
+						placeholder="请输入设置密码"/>
+						<text class="hint" style="height: 50rpx;">密码长度8-32位，须包含数字、字母、符号至少两种以上元素</text>
+					</view>
+					<view class="uni-form-item uni-column companyWrap justify-around" style="margin-top: 20rpx;" v-if="sourceType == 0? 'true' : reveal">
+						<text class="companyName titleName" style="padding-left: 10rpx;">再次输入密码</text>
+						<input class="company inputFrame uni-input" cursor-spacing="100" :adjust-position="true" type="password" v-model="registerForm.affirmPwd"
+						@confirm="hideKeyboard"
+						placeholder="请再次输入密码"/>
+					</view>
+					<checkbox-group name="checkbox" class="agreement flex flex-row" @change="agreeCheck($event)" v-if="sourceType == 0? 'true' : reveal">
+						<label>
+							<checkbox color="#F75252" :checked="false"/>
+						</label>
+						<text class="agree">我已同意并阅读</text>
+						<text class="agree privacy" @click="toPrivacy">隐私协议</text>
+						<text class="agree">和</text>
+						<text class="agree serve" @click="toService">服务协议</text>
+					</checkbox-group>
+				</form>
+			</cell>
+			<cell class="w-100 align-center" v-if="sourceType == 0? 'true' : reveal">
+				<view class="py-3" style="display: flex; align-items: center;" @click="regCommit">
+					<text class="perform">完成</text>
+				</view>
+			</cell>
+			<cell class="w-100 align-center" v-if="sourceType == 1? 'true' : false">
+				<view class="py-3" @click="submitData">
+					<text class="apply">提交资料</text>
+				</view>
+			</cell>
+			<cell class="w-100 align-center" v-if="sourceType == 2? 'true' : false">
+				<view class="py-3" @click="apply">
+					<text class="apply">提交申请</text>
+				</view>
+			</cell>
+		</list>
+		<uni-popup ref="popupWtDialog" type="center">
+			<wt-dialog :btns="[{
+				text:'确认',
+			}]" :btnMode="2" title="提示"  @confirm="wtDialogConfirm" @close="wtDialogCancel">
+				<text style="width: 300px;
+				font-size: 26rpx;
+				font-weight: 400;
+				color: #030303;
+				text-align: center;
+				margin-bottom: 32rpx;">{{errMsg}}信息不完整，请核验</text>
+			</wt-dialog>
+		</uni-popup>
+		<uni-popup ref="popupPhoneWtDialog" type="center">
+			<wt-dialog :btns="[{
+				text:'确认',
+			}]" :btnMode="2" title="提示"  @confirm="wtPhoneDialogConfirm" @close="wtDialogCancel">
+				<text style="width: 300px;
+				font-size: 26rpx;
+				font-weight: 400;
+				color: #030303;
+				text-align: center;
+				margin-bottom: 32rpx;">请填写正确的手机号</text>
+			</wt-dialog>
+		</uni-popup>
+		<uni-popup ref="popupCodeWtDialog" type="center">
+			<wt-dialog :btns="[{
+				text:'确认',
+			}]" :btnMode="2" title="提示"  @confirm="wtCodeDialogConfirm" @close="wtDialogCancel">
+				<text style="width: 300px;
+				font-size: 26rpx;
+				font-weight: 400;
+				color: #030303;
+				text-align: center;
+				margin-bottom: 32rpx;">请填写正确的验证码</text>
+			</wt-dialog>
+		</uni-popup>
+		<uni-popup ref="popupPwdWtDialog" type="center">
+			<wt-dialog :btns="[{
+				text:'确认',
+			}]" :btnMode="2" title="提示"  @confirm="wtPwdDialogConfirm" @close="wtDialogCancel">
+				<text style="width: 300px;
+				font-size: 26rpx;
+				font-weight: 400;
+				color: #030303;
+				text-align: center;
+				margin-bottom: 32rpx;">请设置正确的密码</text>
+			</wt-dialog>
+		</uni-popup>
+		<uni-popup ref="popupAreaWtDialog" type="center">
+			<wt-dialog :btns="[{
+				text:'确认',
+			}]" :btnMode="2" title="提示"  @confirm="wtAreaDialogConfirm" @close="wtDialogCancel">
+				<text style="width: 300px;
+				font-size: 26rpx;
+				font-weight: 400;
+				color: #030303;
+				text-align: center;
+				margin-bottom: 32rpx;">两次输入的密码不一致，请重新输入</text>
+			</wt-dialog>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	import { mapActions } from 'vuex';
+	import { throttle } from "@/common/common.js";
+	export default {
+	  data () {
+	    return {
+			perfect:{},
+			perfectMsg:{},
+			perfectShow: false,
+			type: '',
+			display: true,
+			reveal: true,
+			sourceType: 0,
+			title:'',
+			errMsg: '',
+			haveTreeFarm:['是','否'],
+			showTreeFarm: true,
+			treeFarmShow: true,
+			treeSecFarmsShow: false,
+			treeThirFarmsShow: false,
+			treeFourFarmsShow: false,
+			showOther: false,
+			managerialRoles:['林长','专业扑火队员','非专业扑火队员','护林员','瞭望员','其他管理者'],
+			showCountry: true,
+			showProvince: false,
+			showCity: false,
+			showCounty: false,
+			showStreet: false,
+			showVillage: false,
+			proInfo:[],
+			countInfo:[],
+			cityInfo: [],
+			provinces: [],
+			citys: [],
+			countys:[],
+			streets:[],
+			villages: [],
+			hierarchy:[],
+			echoProvinces:'',
+			echoCitys:'',
+			echoCuntys:'',
+			echoStreets:'',
+			echoVillages:'',
+			echoHierarchy:'',
+			verifyShow: true,
+			verifyTip: 60,
+			provinceIndex: 0,
+			cityIndex: 0,
+			countyIndex: 0,
+			streetIndex: 0,
+			villageIndex: 0,
+			managerialIndex: -1,
+			disabled:true,
+			passData:{},
+			commitData:{},
+			applyData:{},
+			applyMsg:{},
+			registerForm:{
+				Country:'',
+				hasPark: 1,
+				Province:'',
+				LevelId: 0,
+				UnitName:'',
+				JobName:'',
+				Name:'',
+				Phone: null,
+				Code:'',
+				PassWord:'',
+				affirmPwd:''
+			},
+			where: '',
+			checkbox1: '',
+			//林场
+			treeLists:[],
+			treeFarmIndex: 0,
+			treeFarms: [],
+			treeFarmInfo: [],
+			treeSecIndex: 0,
+			treeSecFarms:[],
+			treeSecInfo: [],
+			treeThirIndex: 0,
+			treeThirFarms:[],
+			treeThirInfo: [],
+			treeThirIndex: 0,
+			treeThirFarms:[],
+			treeThirInfo: [],
+			treeFourIndex:0,
+			treeFourFarms:[],
+			treeFourInfo:[]
+	    }
+	  },
+	  // components:{
+		 //  dialog
+	  // },
+	  onLoad(option) {
+		  this.perfect = uni.getStorageSync('userInfo')
+		  console.log(this.perfect)
+			this.perfectMsg = JSON.parse(decodeURIComponent(option.perfectMsg))
+			console.log(this.perfectMsg.sourceType)
+			if(this.perfectMsg.sourceType == 1){
+				this.sourceType = this.perfectMsg.sourceType
+				this.perfectShow = true
+				uni.setNavigationBarTitle({
+					title:'待完善信息'
+				})
+				this.reveal = false
+				this.display = false
+				console.log(this.perfect.levelId)
+				if(this.perfect.levelId == 0){
+					this.showCount();
+					this.registerForm.UnitName = this.perfect.unitName
+					// this.registerForm.LevelId = 0
+				}
+				if(this.perfect.levelId == 1){
+					this.provinceShow();
+					this.echoProvinces = this.perfect.provinceName
+					this.registerForm.UnitName = this.perfect.unitName
+					// this.registerForm.LevelId = 1
+				}
+				if(this.perfect.levelId == 2){
+					this.cityShow();
+					this.echoProvinces = this.perfect.provinceName,
+					this.echoCitys = this.perfect.cityName
+					this.registerForm.UnitName = this.perfect.unitName
+				}
+				if(this.perfect.levelId == 3){
+					this.countyShow();
+					this.echoProvinces = this.perfect.provinceName,
+					this.echoCitys = this.perfect.cityName,
+					this.echoCuntys = this.perfect.areaName
+					this.registerForm.UnitName = this.perfect.unitName
+				}
+				if(this.perfect.levelId == 4){
+					this.streetShow();
+					this.echoProvinces = this.perfect.provinceName,
+					this.echoCitys = this.perfect.cityName,
+					this.echoCuntys = this.perfect.areaName,
+					this.echoStreets = this.perfect.countyName
+					this.registerForm.UnitName = this.perfect.unitName
+				}
+				if(this.perfect.levelId == 5){
+					this.villageShow();
+					this.echoProvinces = this.perfect.provinceName,
+					this.echoCitys = this.perfect.cityName,
+					this.echoCuntys = this.perfect.areaName,
+					this.echoStreets = this.perfect.countyName,
+					this.echoHierarchy = this.perfect.villageName
+					this.registerForm.UnitName = this.perfect.unitName
+				}
+				this.managerialIndex = this.perfect.managementRole - 1
+			}else if(this.perfectMsg.sourceType == 2){
+				this.sourceType = this.perfectMsg.sourceType
+				this.perfectShow = false
+				uni.setNavigationBarTitle({
+					title:'申请信息'
+				})
+				this.reveal = false
+				this.display = true
+				this.registerForm.Name = this.perfect.name
+				this.registerForm.Phone = this.perfect.phone
+				this.managerialRoles[this.managerialIndex] = this.perfect.jobName
+				this.managerialIndex = this.perfect.managementRole - 1
+			}else {}
+	  },
+	  onShow(){
+		  this.getpark();
+		  this.applyMsg = uni.getStorageSync('userInfo')
+		  uni.$api.user.getunitlevel().then(res => {
+			  this.hierarchy = res.data.data
+			  console.log(res)
+		  })
+		  .catch(err => {
+		  })
+		  if(this.registerForm.hasPark == 1){
+			  this.treeFarmShow = false,
+			  this.treeSecFarmsShow = false,
+			  this.treeThirFarmsShow = false,
+			  this.treeFourFarmsShow = false
+		  }
+	  },
+	  onHide() {
+		  this.hideKeyboard();
+	  },
+	  methods: {
+		  ...mapActions({
+		    setRoleTree:'roleTree/setRoleTree',
+		    setUserInfo:'user/resetInfo'
+		  }),
+		  wtDialogCancel(done){
+			 done()
+		  },
+		  //打开弹框
+		  openWtDialog(){
+				this.$refs.popupWtDialog.open();
+		  },
+		  openPhoneWtDialog(){
+				this.$refs.popupPhoneWtDialog.open();
+		  },
+		  openCodeWtDialog(){
+				this.$refs.popupCodeWtDialog.open();
+		  },
+		  openAreaWtDialog(){
+				this.$refs.popupAreaWtDialog.open();
+		  },
+		  openPwdWtDialog(){
+				this.$refs.popupPwdWtDialog.open();
+		  },
+		  //获取场景组织
+		  getpark(){
+			  if(this.registerForm.LevelId == 0){
+			  	  this.where = 1
+			  }
+			  if(this.registerForm.LevelId == 1){
+			  	  this.where = this.proInfo[this.provinceIndex].code
+			  }
+			  if(this.registerForm.LevelId == 2){
+			  	  this.where = this.cityInfo[this.cityIndex].code
+			  }
+			  if(this.registerForm.LevelId == 3){
+			  	  this.where = this.countInfo[this.countyIndex].code
+			  }
+			  if(this.registerForm.LevelId == 4){
+			  	  this.where = this.streesInfo[this.streetIndex].code
+			  }
+			  if(this.registerForm.LevelId == 5){
+			  	  this.where = this.villagesInfo[this.villageIndex].code
+			  }
+			  uni.$api.user.getparkarealist({
+				  "Area": this.where
+			  }).then(res => {
+				  console.log(res)
+				  if(res.data.statusCode == 200){
+					  this.treeFarmIndex = -1;
+					  this.treeFarmInfo = res.data.data
+					  this.treeFarms = this.treeFarmInfo.map(item => item.name);
+					  console.log(this.treeFarms)
+					  if(this.registerForm.hasPark == 1){
+						  this.treeFarmShow = false,
+						  this.treeSecFarmsShow = false,
+						  this.treeThirFarmsShow = false,
+						  this.treeFourFarmsShow = false
+					  }
+				  }
+			  }).catch(err =>{
+				  console.log(err)
+			  })
+		  },
+		  agreeCheck(e){
+			this.checkbox1 = e.detail.value;
+			this.hideKeyboard();
+		  },
+		  haveChange(index){
+			  this.registerForm.hasPark = index
+			  if(this.registerForm.hasPark == 1){
+				  this.treeFarmShow = false,
+				  this.treeSecFarmsShow = false,
+				  this.treeThirFarmsShow = false,
+				  this.treeFourFarmsShow = false,
+				  this.getpark();
+				  this.treeFarms = [],
+				  this.treeSecFarms = [],
+				  this.treeThirFarms = [],
+				  this.treeFourFarms = []
+			  }else {
+				  this.getpark();
+				  this.treeFarmShow = true,
+				  this.treeSecFarmsShow = false,
+				  this.treeThirFarmsShow = false,
+				  this.treeFourFarmsShow = false
+				  if(this.treeFarmInfo.length <1){
+					  uni.showToast({
+							title:'没有相关管理区哦~',
+							icon:'none'
+					  }),
+					  this.registerForm.hasPark = 1,
+					  this.treeFarmShow = false
+				  }
+			  }
+		  },
+		  hideKeyboard(){
+			  uni.hideKeyboard();
+		  },
+		  //注册完成
+		  regCommit: throttle(function(e){
+			  console.log(this.managerialIndex+1,)
+			  let strTemp = /^1[3|4|5|6|7|8|9][0-9]{9}$/;
+			  let regex = /(?!.*\s)(?!^[\u4e00-\u9fa5]+$)(?!^[0-9]+$)(?!^[A-z]+$)(?!^[^A-z0-9]+$)^.{8,16}$/;
+			  this.hideKeyboard();
+			  if (!this.registerForm.UnitName){
+			  		this.openWtDialog()
+			  		this.errMsg = '单位名称'
+			  }else 
+			  if(this.registerForm.LevelId == 1 && !this.proInfo[this.provinceIndex]){
+				  this.openWtDialog()
+				  this.errMsg = '省'
+			  }else if(this.registerForm.LevelId == 2 && !this.cityInfo[this.cityIndex]){
+				  this.openWtDialog()
+				  this.errMsg = '市'
+			  }else if(this.registerForm.LevelId == 2 && this.citys == '市辖区'){
+				  uni.showToast({
+				  	title:'不能选择市辖区哦~',
+				  	icon:'none'
+				  })
+			  }else if(this.registerForm.LevelId == 3 && !this.countInfo[this.countyIndex]){
+				  this.openWtDialog()
+				  this.errMsg = '区/县'
+			  }else if(this.registerForm.LevelId == 4 && !this.countInfo[this.countyIndex]){
+				  this.openWtDialog()
+				  this.errMsg = '乡/街道'
+			  }else if(this.registerForm.LevelId == 5 && !this.villagesInfo[this.villageIndex]){
+				  this.openWtDialog()
+				  this.errMsg = '村'
+			  }else if(!this.registerForm.Name){
+				  this.openWtDialog()
+				  this.errMsg = '姓名'
+			  }else if(!this.registerForm.Phone){
+				  this.openWtDialog()
+				  this.errMsg = '手机号'
+			  }else if(!strTemp.test(this.registerForm.Phone)){
+				  this.openPhoneWtDialog()
+			  }else if(!this.registerForm.Code){
+				  this.openCodeWtDialog()
+			  }else if(!this.registerForm.PassWord){
+				  this.openPwdWtDialog()
+			  }else if(!regex.test(this.registerForm.PassWord)){
+				  this.openPwdWtDialog()
+			  }else if(this.managerialIndex > 5 || this.managerialIndex < 0){
+					this.openWtDialog()
+					this.errMsg = '管理角色'
+			  }else if(this.managerialIndex == 5 && !this.registerForm.JobName){
+				  this.openWtDialog()
+				  this.errMsg = '管理角色'
+			  }else if(this.registerForm.PassWord !== this.registerForm.affirmPwd){
+				  this.openAreaWtDialog()
+			  }else if(!this.checkbox1.length){
+				  uni.showToast({
+				  	title:'请先同意隐私及服务协议',
+				  	icon: 'none'
+				  })
+			  }else{
+				  if(this.registerForm.LevelId == 0){
+					  this.passData = {
+						  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+						  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+						  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+						  HasPark: this.registerForm.hasPark == 0? true : false,
+						  UnitName: this.registerForm.UnitName,
+						  JobName: this.registerForm.JobName,
+						  LevelId: this.registerForm.LevelId,
+						  ManagementRole: this.managerialIndex+1,
+						  Name: this.registerForm.Name,
+						  Phone: this.registerForm.Phone,
+						  Code: this.registerForm.Code,
+						  PassWord: this.registerForm.PassWord
+					  }
+				  }
+				  if(this.registerForm.LevelId == 1){
+					  this.passData = {
+						  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+						  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+						  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+						  HasPark: this.registerForm.hasPark == 0? true : false,
+						  UnitName: this.registerForm.UnitName,
+						  JobName: this.registerForm.JobName,
+						  Province: this.proInfo[this.provinceIndex].code,
+						  LevelId: this.registerForm.LevelId,
+						  ManagementRole: this.managerialIndex+1,
+						  Name: this.registerForm.Name,
+						  Phone: this.registerForm.Phone,
+						  Code: this.registerForm.Code,
+						  PassWord: this.registerForm.PassWord
+					  }
+				  }
+				  if(this.registerForm.LevelId == 2){
+					  this.passData = {
+						  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+						  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+						  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+						  HasPark: this.registerForm.hasPark == 0? true : false,
+						  UnitName: this.registerForm.UnitName,
+						  JobName: this.registerForm.JobName,
+						  Province: this.proInfo[this.provinceIndex].code,
+						  City: this.cityInfo[this.cityIndex].code,
+						  LevelId: this.registerForm.LevelId,
+						  ManagementRole: this.managerialIndex+1,
+						  Name: this.registerForm.Name,
+						  Phone: this.registerForm.Phone,
+						  Code: this.registerForm.Code,
+						  PassWord: this.registerForm.PassWord
+					  }
+				  }
+				  if(this.registerForm.LevelId == 3){
+				  	 this.passData = {
+						 parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+						 parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+						 parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+						 HasPark: this.registerForm.hasPark == 0? true : false,
+						 UnitName: this.registerForm.UnitName,
+						 JobName: this.registerForm.JobName,
+						 Province: this.proInfo[this.provinceIndex].code,
+						 City: this.cityInfo[this.cityIndex].code,
+						 Area: this.countInfo[this.countyIndex].code,
+						 LevelId: this.registerForm.LevelId,
+						 ManagementRole: this.managerialIndex+1,
+						 Name: this.registerForm.Name,
+						 Phone: this.registerForm.Phone,
+						 Code: this.registerForm.Code,
+						 PassWord: this.registerForm.PassWord
+					 }
+				  }
+				  if(this.registerForm.LevelId == 4){
+				  		this.passData = {
+							parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+							parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+							parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+							HasPark: this.registerForm.hasPark == 0? true : false,
+							UnitName: this.registerForm.UnitName,
+							JobName: this.registerForm.JobName,
+							Province: this.proInfo[this.provinceIndex].code,
+							City: this.cityInfo[this.cityIndex].code,
+							Area: this.countInfo[this.countyIndex].code,
+							County: this.streesInfo[this.streetIndex].code,
+							LevelId: this.registerForm.LevelId,
+							ManagementRole: this.managerialIndex+1,
+							Name: this.registerForm.Name,
+							Phone: this.registerForm.Phone,
+							Code: this.registerForm.Code,
+							PassWord: this.registerForm.PassWord
+						}
+				  }
+				  if(this.registerForm.LevelId == 5){
+				  		this.passData = {
+							parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+							parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+							parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+							HasPark: this.registerForm.hasPark == 0? true : false,
+							UnitName: this.registerForm.UnitName,
+							JobName: this.registerForm.JobName,
+							Province: this.proInfo[this.provinceIndex].code,
+							City: this.cityInfo[this.cityIndex].code,
+							Area: this.countInfo[this.countyIndex].code,
+							County: this.streesInfo[this.streetIndex].code,
+							Village: this.villagesInfo[this.villageIndex].code,
+							LevelId: this.registerForm.LevelId,
+							ManagementRole: this.managerialIndex+1,
+							Name: this.registerForm.Name,
+							Phone: this.registerForm.Phone,
+							Code: this.registerForm.Code,
+							PassWord: this.registerForm.PassWord
+						}
+				  }
+				  uni.$api.user.register(this.passData)
+				  .then(res => {
+					  console.log(res)
+					  if(res.data.statusCode == 200){
+						  
+						  //#ifdef H5
+						  uni.navigateTo({
+							url: './registerSuccess'
+						  })
+						  //#endif
+						  //#ifdef APP-PLUS
+						  uni.showToast({
+						  	title:"注册成功"
+						  })
+						 uni.showLoading()
+						 uni.$api.user.login({
+						 	Phone: this.registerForm.Phone,
+						 	PassWord: this.registerForm.PassWord
+						 })
+						 .then(res => {
+							 uni.hideLoading();
+						 	if(res.data.statusCode == 200){
+						 		uni.setStorageSync('userInfo',res.data.data);
+						 		uni.setStorageSync('token', res.data.data.token);
+						 		let userInfo =  uni.getStorageSync('userInfo');
+						 		this.setUserInfo();
+						 		this.setRoleTree();
+								uni.hideToast();
+						 		uni.switchTab({
+						 			url: '/pages/tabbar/tabbar-1/tabbar-1'
+						 		})
+						 	}else{
+						 		uni.showToast({
+						 			title: res.data.message,
+						 			icon: 'none'
+						 		})
+						 	}
+						 })
+						 .catch(err => {
+						 	uni.hideLoading();
+						 	console.log('login_ERR', err);
+						 })
+						   //#endif
+					  }else{
+						  uni.showToast({
+							title: res.data.message,
+							icon: 'none'
+						  })
+					  }
+					 
+				  })
+				  .catch(err => {
+				  		console.log(err)
+				  })
+			  }
+		  },1000),
+		  
+		  //提交申请
+		  apply: throttle(function(e){
+			  // console.log(this.userInfo.managementRole)
+			  console.log(this.treeSecInfo[this.treeSecIndex])
+			  console.log(this.treeSecInfo[this.treeSecIndex])
+			  if(this.registerForm.LevelId == 0){
+				  this.applyData = {
+					  Gender: this.applyMsg.gender,
+					  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+					  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+					  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+					  HasPark: this.registerForm.hasPark == 0? true : false,
+					  UnitName: this.registerForm.UnitName,
+					  JobName: this.registerForm.JobName,
+					  LevelId: this.registerForm.LevelId,
+					  ManagementRole: this.managerialIndex+1,
+					  BirthDay:this.applyMsg.birthDay,
+					  Name: this.registerForm.Name,
+					  Phone: this.registerForm.Phone,
+					  Code: this.registerForm.Code
+				  }
+			  }
+			  if(this.registerForm.LevelId == 1){
+				  this.applyData = {
+					  Gender: this.applyMsg.gender,
+					  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+					  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+					  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+					  HasPark: this.registerForm.hasPark == 0? true : false,
+					  UnitName: this.registerForm.UnitName,
+					  JobName: this.registerForm.JobName,
+					  Province: this.proInfo[this.provinceIndex].code,
+					  LevelId: this.registerForm.LevelId,
+					  ManagementRole: this.managerialIndex+1,
+					  BirthDay:this.applyMsg.birthDay,
+					  Name: this.registerForm.Name,
+					  Phone: this.registerForm.Phone,
+					  Code: this.registerForm.Code
+				  }
+			  }
+			  if(this.registerForm.LevelId == 2){
+				  this.applyData = {
+					  Gender: this.applyMsg.gender,
+					  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+					  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+					  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+					  HasPark: this.registerForm.hasPark == 0? true : false,
+					  UnitName: this.registerForm.UnitName,
+					  JobName: this.registerForm.JobName,
+					  Province: this.proInfo[this.provinceIndex].code,
+					  City: this.cityInfo[this.cityIndex].code,
+					  LevelId: this.registerForm.LevelId,
+					  ManagementRole: this.managerialIndex+1,
+					  BirthDay:this.applyMsg.birthDay,
+					  Name: this.registerForm.Name,
+					  Phone: this.registerForm.Phone,
+					  Code: this.registerForm.Code
+				  }
+			  }
+			  if(this.registerForm.LevelId == 3){
+			  	 this.applyData = {
+					 Gender: this.applyMsg.gender,
+					 parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+					 parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+					 parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+					 HasPark: this.registerForm.hasPark == 0? true : false,
+					 UnitName: this.registerForm.UnitName,
+					 JobName: this.registerForm.JobName,
+					 Province: this.proInfo[this.provinceIndex].code,
+					 City: this.cityInfo[this.cityIndex].code,
+					 Area: this.countInfo[this.countyIndex].code,
+					 LevelId: this.registerForm.LevelId,
+					 ManagementRole: this.managerialIndex+1,
+					 BirthDay:this.applyMsg.birthDay,
+					 Name: this.registerForm.Name,
+					 Phone: this.registerForm.Phone,
+					 Code: this.registerForm.Code
+				 }
+			  }
+			  if(this.registerForm.LevelId == 4){
+			  		this.applyData = {
+						Gender: this.applyMsg.gender,
+						parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+						parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+						parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+						HasPark: this.registerForm.hasPark == 0? true : false,
+						UnitName: this.registerForm.UnitName,
+						JobName: this.registerForm.JobName,
+						Province: this.proInfo[this.provinceIndex].code,
+						City: this.cityInfo[this.cityIndex].code,
+						Area: this.countInfo[this.countyIndex].code,
+						County: this.streesInfo[this.streetIndex].code,
+						LevelId: this.registerForm.LevelId,
+						ManagementRole: this.managerialIndex+1,
+						BirthDay:this.applyMsg.birthDay,
+						Name: this.registerForm.Name,
+						Phone: this.registerForm.Phone,
+						Code: this.registerForm.Code
+					}
+			  }
+			  if(this.registerForm.LevelId == 5){
+			  		this.applyData = {
+							Gender: this.applyMsg.gender,
+							parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+							parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+							parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+							HasPark: this.registerForm.hasPark == 0? true : false,
+							UnitName: this.registerForm.UnitName,
+							JobName: this.registerForm.JobName,
+							Province: this.proInfo[this.provinceIndex].code,
+							City: this.cityInfo[this.cityIndex].code,
+							Area: this.countInfo[this.countyIndex].code,
+							County: this.streesInfo[this.streetIndex].code,
+							Village: this.villagesInfo[this.villageIndex].code,
+							LevelId: this.registerForm.LevelId,
+							ManagementRole: this.managerialIndex+1,
+							BirthDay:this.applyMsg.birthDay,
+							Name: this.registerForm.Name,
+							Phone: this.registerForm.Phone,
+							Code: this.registerForm.Code
+						}
+					}
+					console.log(this.applyData)
+			  uni.$api.user.upduserinfo(this.applyData).then(res =>{
+				  console.log(res)
+				  if(res.data.statusCode == 200){
+					  uni.navigateBack(1)
+				  }
+			  }).catch(err =>{
+				  console.log(err)
+			  })
+		  },1000),
+		  
+		  //提交资料
+		  submitData: throttle(function(e){
+			  if(this.registerForm.LevelId == 0){
+				  this.commitData = {
+					  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+					  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+					  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+					  HasPark: this.registerForm.hasPark == 0? true : false,
+					  UnitName: this.registerForm.UnitName,
+					  JobName: this.registerForm.JobName,
+					  LevelId: this.registerForm.LevelId,
+					  ManagementRole: this.managerialIndex+1
+				  }
+			  }
+			  if(this.registerForm.LevelId == 1){
+				  this.commitData = {
+					  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+					  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+					  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+					  HasPark: this.registerForm.hasPark == 0? true : false,
+					  UnitName: this.registerForm.UnitName,
+					  JobName: this.registerForm.JobName,
+					  Province: this.proInfo[this.provinceIndex].code,
+					  LevelId: this.registerForm.LevelId,
+					  ManagementRole: this.managerialIndex+1
+				  }
+			  }
+			  if(this.registerForm.LevelId == 2){
+				  this.commitData = {
+					  parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+					  parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+					  parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+					  HasPark: this.registerForm.hasPark == 0? true : false,
+					  UnitName: this.registerForm.UnitName,
+					  JobName: this.registerForm.JobName,
+					  Province: this.proInfo[this.provinceIndex].code,
+					  City: this.cityInfo[this.cityIndex].code,
+					  LevelId: this.registerForm.LevelId,
+					  ManagementRole: this.managerialIndex+1
+				  }
+			  }
+			  if(this.registerForm.LevelId == 3){
+			  	 this.commitData = {
+					parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+					parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+					parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+					HasPark: this.registerForm.hasPark == 0? true : false,
+					UnitName: this.registerForm.UnitName,
+					JobName: this.registerForm.JobName,
+					Province: this.proInfo[this.provinceIndex].code,
+					City: this.cityInfo[this.cityIndex].code,
+					Area: this.countInfo[this.countyIndex].code,
+					LevelId: this.registerForm.LevelId,
+					ManagementRole: this.managerialIndex+1
+				 }
+			  }
+			  if(this.registerForm.LevelId == 4){
+			  		this.commitData = {
+						parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+						parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+						parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+						HasPark: this.registerForm.hasPark == 0? true : false,
+						UnitName: this.registerForm.UnitName,
+						JobName: this.registerForm.JobName,
+						Province: this.proInfo[this.provinceIndex].code,
+						City: this.cityInfo[this.cityIndex].code,
+						Area: this.countInfo[this.countyIndex].code,
+						County: this.streesInfo[this.streetIndex].code,
+						LevelId: this.registerForm.LevelId,
+						ManagementRole: this.managerialIndex+1
+					}
+			  }
+			  if(this.registerForm.LevelId == 5){
+			  		this.commitData = {
+						parkOne: this.treeFarmInfo[this.treeFarmIndex] == undefined ? 0 : this.treeFarmInfo[this.treeFarmIndex].id,
+						parkTwo: this.treeSecInfo[this.treeSecIndex] == undefined ? 0 : this.treeSecInfo[this.treeSecIndex].id,
+						parkThree: this.treeThirInfo[this.treeThirIndex] == undefined ? 0 : this.treeThirInfo[this.treeThirIndex].id,
+						HasPark: this.registerForm.hasPark == 0? true : false,
+						UnitName: this.registerForm.UnitName,
+						JobName: this.registerForm.JobName,
+						Province: this.proInfo[this.provinceIndex].code,
+						City: this.cityInfo[this.cityIndex].code,
+						Area: this.countInfo[this.countyIndex].code,
+						County: this.streesInfo[this.streetIndex].code,
+						Village: this.villagesInfo[this.villageIndex].code,
+						LevelId: this.registerForm.LevelId,
+						ManagementRole: this.managerialIndex+1
+					}
+			  }
+			  uni.$api.user.confirmuserinfo(this.commitData).then(res => {
+				  console.log(res)
+				  if(res.data.statusCode == 200){
+					  uni.navigateBack(1)
+				  }
+			  }).catch(err => {
+				  console.log(err)
+			  })
+		  },1000),
+		  
+		  
+		  //获取省的信息
+		  getProvince(){
+			  getApp().api.user.getareacodelist({
+				  attr: 1,
+				  Area: '0'
+			  })
+			  .then(res => {
+				  console.log('getareacodelist_', res);
+				  this.provinces = [];
+				  this.provinceIndex = -1;
+				  this.proInfo = res.data.data
+				  this.provinces = res.data.data.map(item => item.name);
+				  this.citys = [],
+				  this.countys = [],
+				  this.streets = [],
+				  this.villages = [],
+				  this.treeFarms = [],
+				  this.treeSecFarms = [],
+				  this.treeThirFarms = [],
+				  this.treeFourFarms = []
+				  if(this.registerForm.hasPark == 1){
+					  this.treeFarmShow = false,
+					  this.treeSecFarmsShow = false,
+					  this.treeThirFarmsShow = false,
+					  this.treeFourFarmsShow = false
+				  }
+				  
+			  })
+			  .catch(err => {
+				  console.log(err)
+			  })
+		  },
+		  bindPickerProvince: function(e) {
+			  console.log(e)
+			  this.provinceIndex = e.detail.value;
+			  this.registerForm.hasPark = 1
+			  this.getCity();
+			  this.getpark();
+		  },
+		  //获取市的信息
+		  getCity(){
+			  console.log(this.proInfo[this.provinceIndex])
+			  getApp().api.user.getareacodelist({
+				  attr: 2,
+				  Area: this.proInfo[this.provinceIndex].code
+			  })
+			  .then(res => {
+				  console.log('getareacodelist_', res);
+				  this.citys = [];
+				  this.cityInfo = res.data.data,
+				  this.cityIndex = -1
+				  this.countys = [],
+				  this.streets = [],
+				  this.villages = [],
+				  this.citys = res.data.data.map(item=>item.name);
+				  this.treeFarms = [],
+				  this.treeSecFarms = [],
+				  this.treeThirFarms = [],
+				  this.treeFourFarms = []
+			  })
+			  .catch(err => {
+				  
+			  })
+		  },
+		  bindPickerCity: function(e) {
+			  this.cityIndex = e.detail.value
+			  this.registerForm.hasPark = 1
+			  this.getCounty()
+			  this.getpark()
+		  },
+		  //获取县的信息
+		  getCounty(){
+			  getApp().api.user.getareacodelist({
+				  attr: 3,
+				  Area: this.cityInfo[this.cityIndex].code
+			  })
+			  .then(res => {
+				  this.countys = [];
+				  this.countInfo = res.data.data
+				  this.countyIndex = -1
+				  this.countys = res.data.data.map(item=>item.name);
+				  this.streets = [],
+				  this.villages = [],
+				  this.treeFarms = [],
+				  this.treeSecFarms = [],
+				  this.treeThirFarms = [],
+				  this.treeFourFarms = []
+			  })
+			  .catch(err => {
+			  				  
+			  })
+		  },
+		  bindPickerCounty: function(e) {
+			  this.countyIndex = e.detail.value
+			  this.registerForm.hasPark = 1
+			  this.getStreet();
+			  this.getpark();
+		  },
+		  //获取街道的信息
+		  getStreet(){
+			  // console.log('this.countInfo[this.countyIndex]', this.countInfo[this.countyIndex]);
+				getApp().api.user.getareacodelist({
+					attr: 4,
+					Area: this.countInfo[this.countyIndex].code
+				})
+				.then(res => {
+					this.streets = []
+					this.streesInfo = res.data.data
+					this.streetIndex = -1
+					this.streets = res.data.data.map(item=>item.name);
+					this.villages = [],
+					this.treeFarms = [],
+					this.treeSecFarms = [],
+					this.treeThirFarms = [],
+					this.treeFourFarms = []
+				})
+				.catch(err => {
+					
+				})
+		  },
+		  bindPickerStreet: function(e) {
+			  this.streetIndex = e.detail.value
+			  this.registerForm.hasPark = 1
+			  this.getVillage();
+			  this.getpark();
+		  },
+		  bindPickerManagerial:function(e) {
+			  this.managerialIndex = e.detail.value
+			  if(this.managerialIndex == 5){
+				  this.showOther = true
+			  }else{
+				  this.showOther = false
+			  }
+		  },
+		  //获取村的信息
+		  getVillage(){
+				getApp().api.user.getareacodelist({
+					attr: 5,
+					Area: this.streesInfo[this.streetIndex].code
+				})
+				.then(res => {
+					this.villages = []
+					this.villagesInfo = res.data.data
+					this.villageIndex = -1
+					this.treeFarms = [],
+					this.treeSecFarms = [],
+					this.treeThirFarms = [],
+					this.treeFourFarms = [],
+					this.villages = res.data.data.map(item=>item.name);
+				})
+				.catch(err => {
+					
+				})
+		  },
+		  bindPickerVillage: function(e) {
+				this.villageIndex = e.detail.value
+				this.registerForm.hasPark = 1
+				this.getpark();
+		  },
+		  
+		  //获取林场信息
+		  bindPickerTreeFarm: function(e){
+			  this.treeSecFarms = [],
+			  this.treeThirFarms = [],
+			  this.treeFarmIndex = e.detail.value
+				uni.$api.user.getparkarealist({
+					'attr': this.treeFarmInfo[this.treeFarmIndex].id
+				}).then(res => {
+					console.log(res)
+					if(res.data.statusCode == 200){
+						if(res.data.data.length > 0){
+							this.treeSecFarmsShow = true,
+							this.treeSecFarms = [],
+							this.treeSecIndex = -1;
+							this.treeSecInfo = res.data.data
+							this.treeSecFarms = this.treeSecInfo.map(item => item.name);
+						}
+						this.treeLists.push(this.treeFarmInfo[this.treeFarmIndex].code)
+					}
+				}).catch(err => {
+					console.log(err)
+				})
+			  
+		  },
+		  bindPickerLevelSec: function(e){
+			  this.treeThirFarms = [],
+			  this.treeSecIndex = e.detail.value
+			  uni.$api.user.getparkarealist({
+			  	'attr': this.treeSecInfo[this.treeSecIndex].id
+			  }).then(res => {
+			  	console.log(res)
+			  	if(res.data.statusCode == 200){
+			  		if(res.data.data.length > 0){
+						this.treeThirFarmsShow = true,
+						this.treeThirFarms = [],
+						this.treeThirIndex = -1;
+						this.treeThirInfo = res.data.data
+						this.treeThirFarms = this.treeThirInfo.map(item => item.name);
+			  		}
+			  		this.treeLists.push(this.treeSecInfo[this.treeSecIndex].code)
+			  	}
+			  }).catch(err => {
+			  	console.log(err)
+			  })
+		  },
+		  bindPickerLevelThir: function(e){
+			  this.treeThirIndex = e.detail.value
+			  uni.$api.user.getparkarealist({
+			  	'attr': this.treeThirInfo[this.treeThirIndex].id
+			  }).then(res => {
+			  	console.log(res)
+			  	if(res.data.statusCode == 200){
+			  		if(res.data.data.length > 0){
+						this.treeFourFarmsShow = true,
+						this.treeFourFarms = [],
+						this.treeFourIndex = -1;
+						this.treeFourInfo = res.data.data
+						this.treeFourFarms = this.treeFourInfo.map(item => item.name);
+			  		}
+			  		this.treeLists.push(this.treeThirInfo[this.treeThirIndex].code)
+			  	}
+			  }).catch(err => {
+			  	console.log(err)
+			  })
+		  },
+		  
+		  bindPickerLevelFour: function(e){
+			  this.treeFourIndex = e.detail.value
+			  // if(this.treeThirInfo[this.treeThirIndex].child == ''){
+				 //  this.treeFourFarmsShow = false
+			  // }else { 
+				 //  this.treeFourFarms = [],
+				 //  this.treeFourIndex = -1;
+				 //  this.treeFourInfo = this.treeThirInfo[this.treeThirIndex].child
+				 //  this.treeFourFarms = this.treeThirInfo[this.treeThirIndex].child.map(item => item.name);
+			  // }
+			  // this.treeLists.push(this.treeThirInfo[this.treeThirIndex])
+		  },
+		  
+		  //返回上一级
+		  goBack(){
+				uni.navigateBack(1)
+			},
+		  //获取验证码
+		  getCode(){
+			  if(this.sourceType == 0){
+				  this.type = 'register'
+			  }
+			  if(this.sourceType == 2){
+				  this.type = 'setphone'
+			  }
+			  let strTemp = /^1[3|4|5|6|7|8|9][0-9]{9}$/;
+			  if(!this.registerForm.Phone){
+				  uni.showToast({
+				  	title:'请先输入手机号再获取验证码',
+				  	icon:'none'
+				  })
+			  }else if(!strTemp.test(this.registerForm.Phone)){
+				  uni.showToast({
+				  	title:'手机号不正确',
+				  	icon:'none'
+				  })
+			  }else{
+				  uni.$api.user.sendcode({
+					  "phone": this.registerForm.Phone,
+					  "type": this.type
+				  })
+				  .then(res => {
+					  if(res.statusCode == 200){
+						  this.verifyShow = false
+						  this.timedown(this.verifyTip)
+					  }
+				  })
+				  .catch(err => {
+				  								  
+				  })
+				  this.verifyShow = false
+			  }
+			  
+		  },
+		  //验证码倒计时
+		  timedown(num){
+			  
+			 this.verifyShow = false
+			 let interval = setInterval(() => {
+				 let times = --this.verifyTip
+				 this.verifyTip = times<10?'0'+times:times //小于10秒补 0
+				 }, 1000)
+				 setTimeout(() => {
+					if(num >= 1){
+						this.verifyTip=60
+						this.verifyShow = true
+				   }
+				   
+					clearInterval(interval)
+				 }, 60000)  
+		  },
+		  //根据哪个层级来判断地区的显示与隐藏
+		            leftChange(index) {
+		                  this.registerForm.LevelId = index;
+		                  console.log(this.registerForm.LevelId)
+		                  if(index == 0){
+							  this.showCountry = true,
+		                      this.showProvince = false,
+		                      this.showCity = false,
+		                      this.showCounty = false,
+		                      this.showStreet = false,
+		                      this.showVillage = false,
+		                      this.provinces = [],
+		                      this.citys = [],
+		                      this.countys = [],
+		                      this.streets = [],
+		                      this.treeFarmShow = false,
+		                      this.treeSecFarmsShow = false,
+		                      this.treeThirFarmsShow = false,
+		                      this.treeFourFarmsShow = false,
+		                      this.registerForm.hasPark = 1
+		                      this.getpark()
+		                  }else if(index == 1){
+							  this.showCountry = false,
+		                      this.showProvince = true,
+		                      this.showCity = false,
+		                      this.showCounty = false,
+		                      this.showStreet = false,
+		                      this.showVillage = false,
+		                      this.citys = [],
+		                      this.countys = [],
+		                      this.streets = [],
+		                      this.villages = [],
+		                      this.treeFarmShow = false,
+		                      this.treeSecFarmsShow = false,
+		                      this.treeThirFarmsShow = false,
+		                      this.treeFourFarmsShow = false,
+		                      this.registerForm.hasPark = 1
+		                  }else if(index == 2){
+							  this.showCountry = false,
+		                      this.showProvince = true,
+		                      this.showCity = true,
+		                      this.showCounty = false,
+		                      this.showStreet = false,
+		                      this.showVillage = false,
+		                      this.countys = [],
+		                      this.streets = [],
+		                      this.villages = [],
+		                      this.treeFarmShow = false,
+		                      this.treeSecFarmsShow = false,
+		                      this.treeThirFarmsShow = false,
+		                      this.treeFourFarmsShow = false,
+		                      this.registerForm.hasPark = 1
+		                  }else if(index == 3){
+							  this.showCountry = false,
+		                      this.showProvince = true,
+		                      this.showCity = true,
+		                      this.showCounty = true,
+		                      this.showStreet = false,
+		                      this.showVillage = false,
+		                      this.streets = [],
+		                      this.villages = [],
+		                      this.treeFarmShow = false,
+		                      this.treeSecFarmsShow = false,
+		                      this.treeThirFarmsShow = false,
+		                      this.treeFourFarmsShow = false,
+		                      this.registerForm.hasPark = 1
+		                  }else if(index == 4){
+							  this.showCountry = false,
+		                      this.showProvince = true,
+		                      this.showCity = true,
+		                      this.showCounty = true,
+		                      this.showStreet = true,
+		                      this.showVillage = false,
+		                      this.villages = [],
+		                      this.treeFarmShow = false,
+		                      this.treeSecFarmsShow = false,
+		                      this.treeThirFarmsShow = false,
+		                      this.treeFourFarmsShow = false,
+		                      this.registerForm.hasPark = 1
+		                  }else if(index == 5){
+							  this.showCountry = false,
+		                      this.showProvince = true,
+		                      this.showCity = true,
+		                      this.showCounty = true,
+		                      this.showStreet = true,
+		                      this.showVillage = true,
+		                      this.treeFarmShow = false,
+		                      this.treeSecFarmsShow = false,
+		                      this.treeThirFarmsShow = false,
+		                      this.treeFourFarmsShow = false,
+		                      this.registerForm.hasPark = 1
+		                  }else{
+							  
+						  }
+		                  index && this.getProvince();
+		            },
+		  toPrivacy(){
+			  uni.navigateTo({
+			  	url:"../tabbar/tabbar-5/servicePirvacy/service"
+			  })
+		  },
+		  toService(){
+			  uni.navigateTo({
+				url:"../tabbar/tabbar-5/servicePirvacy/pirvacy"
+			  })
+		  }
+	  }
+	}
+</script>
+
+<style>
+	/* #ifdef H5 */
+	page{
+		overflow:hidden;
+		overflow-y:auto;
+	}
+	/* #endif */
+	
+	.unitTitle{
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #333333;
+	}
+	.hierarchyList{
+		flex-direction: row;
+		flex-wrap: wrap;
+		width: 690rpx;
+	}
+	.hierarchys{
+		margin-right: 20rpx;
+		margin-bottom: 23rpx;
+		width: 200rpx;
+		height: 60rpx;
+		background-color: #FFFFFF;
+		border-radius: 16rpx;
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #D3D3D3;
+		box-sizing: border-box;
+	}
+	.textHie{
+		color: #323234;
+		font-size: 30rpx;
+		font-weight: 400;
+		text-align: center;
+		line-height: 60rpx;
+	}
+	.addrWrap{
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-end;
+	}
+	.area{
+		width: 670rpx;
+		background-color: #F4F5FB;
+		border-radius: 16rpx;
+	}
+	.treeFarmForm{
+		width: 670rpx;
+		background-color: #F4F5FB;
+		border-radius: 16rpx;
+	}
+	.site{
+		align-items: center;
+		border: 0rpx;
+		border-bottom-width: 1rpx; 
+		border-style: solid; 
+		border-bottom-color: #BBB;  
+		width: 300rpx;
+		height: 112rpx;
+	}
+	.siteCountry{
+		border: 0rpx;
+		border-bottom-width: 1rpx; 
+		border-style: solid; 
+		border-bottom-color: #BBB;  
+		width: 300rpx;
+		height: 112rpx;
+		line-height: 112rpx;
+		text-align: center;
+	}
+	.managerial{
+		font-size: 32rpx;
+		width: 210rpx; 
+		height: 112rpx; 
+		line-height: 112rpx; 
+		margin-left: 6rpx;
+		color: #333; 
+		font-weight: 500;
+	}
+	/* .Managerial{
+		display: flex;
+		width: 416rpx;
+		height: 90rpx;
+		line-height: 38rpx;
+		color: rgba(4, 4, 4, 70);
+		font-size: 26rpx;
+		text-align: left;
+		border: 0rpx;
+		border-bottom-width: 2rpx;
+		border-style: solid;
+		border-bottom-color: #E1E4ED;
+	} */
+	.uni-input{
+		text-align: left;
+		font-size: 28rpx;
+		line-height: 112rpx;
+		lines: 1;
+		text-overflow: ellipsis;
+	}
+	.changeAddr{
+		height: 48rpx;
+		line-height: 48rpx;
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+		margin-left: 60rpx;
+		margin-right: 20rpx;
+	}
+	.addr{
+		width: 750rpx;
+		height: 70rpx;
+		margin: 0rpx;
+		justify-content: center;
+	}
+	.textInp{
+		color: #323234;
+		font-size: 28rpx;
+		font-weight: 400;
+		text-align: center;
+		line-height: 70rpx;
+	}
+	.companyWrap{
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		margin-bottom: 28rpx;
+	}
+	.codeWrap{
+		margin: 0;
+		padding-bottom: 34rpx;
+	}
+	.titleName{
+		width: 230rpx;
+		height: 46rpx;
+		color: #333;
+		font-weight: 500;
+		margin-right: 28rpx;
+		font-size: 32rpx;
+		text-align: left;
+	}
+	.inputFrame{
+		width: 416rpx;
+		height: 90rpx;
+		color: #323234;
+		font-size: 26rpx;
+		border-bottom-width: 2rpx;
+		border-bottom-color: #E1E4ED;
+		border-style: solid;
+	}
+	.getCode{
+		position: absolute;
+		top: 16rpx;
+		right: 0rpx;
+		width: 238rpx;
+		height: 63rpx;
+		background-color: #00BCAB;
+		border-radius: 64rpx;
+	}
+	.getCodeTime{
+		position: absolute;
+		top: 16rpx;
+		right: 0rpx;
+		width: 238rpx;
+		height: 63rpx;
+		background-color: #ccc;
+		border-radius: 64rpx;
+		
+		align-items: center;
+		justify-content: center;
+	}
+	// #ifdef APP-PLUS
+	.getCodeTime{
+		position: absolute;
+		top: 16rpx;
+		right: 0rpx;
+		width: 238rpx;
+		height: 63rpx;
+		background-color: #ccc;
+		border-radius: 64rpx;
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+		text-align: center;
+		line-height: 63rpx;
+	}
+	// #endif
+	// #ifdef APP-PLUS
+	.hint{
+		position: absolute;
+		bottom: -26rpx;
+		left: 14rpx;
+		width: 750rpx;
+		text-align: left;
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+	// #endif
+	// #ifdef H5
+	.hint{
+		position: absolute;
+		bottom: -20rpx;
+		left: 14rpx;
+		width: 750rpx;
+		text-align: left;
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #00BCAB;
+		border: none;
+	}
+	// #endif
+	.agreement{
+		flex-direction: row;
+		align-items: center;
+		/* padding-left: 46rpx; */
+	}
+	.agree{
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+		line-height: 26rpx;
+	}
+	.privacy{
+		border-bottom-width: 1rpx;
+		border-bottom-color: #F75252;
+		color: #F75252;
+		margin-left: 4rpx;
+		margin-right: 4rpx;
+	}
+	.serve{
+		border-bottom-width: 1rpx;
+		border-bottom-color: #F75252;
+		color: #F75252;
+		margin-left: 4rpx;
+		margin-right: 4rpx;
+	}
+	.other{
+		width: 670rpx;
+		height: 113rpx;
+		background-color: #F4F5FB;
+		border-radius: 16rpx;
+		justify-content: center;
+	}
+	.perform{
+		width: 204rpx;
+		height: 82rpx;
+		line-height: 82rpx;
+		background-color: #F75252;
+		text-align: center;
+		border-radius: 41rpx;
+		font-size: 36rpx;
+		font-weight: 500;
+		color: #FFFFFF;
+	}
+	.active{
+		border-radius: 16rpx;
+		border-color: #00BCAB;
+		color: #00BCAB;
+	}
+	.apply{
+		width: 576rpx;
+		height: 88rpx;
+		background-color: #487CF1;
+		border-radius: 44rpx;
+		font-size: 36rpx;
+		font-weight: 600;
+		color: #FFFFFF;
+		text-align: center;
+		line-height: 88rpx;
+	}
+</style>

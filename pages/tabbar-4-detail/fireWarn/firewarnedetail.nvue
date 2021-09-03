@@ -1,0 +1,107 @@
+<template>
+	<view style="background-color: #FFFFFF;" class="flex flex-column flex-1 w-100">
+		<!-- 火警报警已回执详情 -->
+		<uni-nav-bar left-icon="back" title="火情报警详情" :statusBar="true" @clickLeft="navigateBack"></uni-nav-bar>
+		<list class="flex flex-column w-100 flex-1">
+			<cell class="p-3 w-100">
+				<view style="border-radius: 16rpx;background-color: #F4F5FB;">
+					<view class="pl-3 pr-3 pt-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">报警人</text>
+						<text class="violation_bottom" v-if="firewarned.username">{{firewarned.username}}</text>
+						<text class="violation_bottom" v-else>非登记游客</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom:56rpx;">
+						<text class="violation_top">手机号</text>
+						<text class="violation_bottom">{{firewarned.phone}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom:56rpx;">
+						<text class="violation_top">报警时间</text>
+						<text class="violation_bottom">{{dateTran(firewarned.created_at)}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom:56rpx;">
+						<text class="violation_top">火情地点</text>
+						<text class="violation_bottom">{{firewarned.place}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom:56rpx;">
+						<text class="violation_top">火情地址</text>
+						<text class="violation_bottom">{{firewarned.place}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom:56rpx;">
+						<text class="violation_top">火情地址</text>
+						<text class="violation_bottom">{{firewarned.lng}}，{{firewarned.lat}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom:56rpx;">
+						<text style="font-size: 32rpx;font-weight: 400;color: #606266;">火情图片/视频</text>
+						<view class="flex flex-row justify-between flex-wrap">
+							<view v-for="(item,index) in imageList" :key="index" style="padding-top: 28rpx;">
+								<wt-media :media="headUrl+item.url" style="width: 300rpx;height: 197rpx;border-radius: 15rpx;"></wt-media>
+							</view>
+						</view>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom:56rpx;">
+						<text class="violation_top">描述</text>
+						<text class="violation_bottom">{{firewarned.describe}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">回执时间</text>
+						<text class="violation_bottom">{{dateTran(firewarned.handle_date)}}</text>
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		data(){
+			return{
+				firewarned:[],
+				imageList:[],
+				title:'',
+				headUrl:'https://fhm-oss.limefamily.cn/fhm/'
+			}
+		},
+		onLoad(e) {
+			// console.log(e);
+			this.title = e.park_name;
+			uni.$api.firewarn.getfiredetail({
+				id:e.id
+			})
+			.then(res=>{
+				console.log(res,'详情数据');
+				this.firewarned = res.data.data;
+				this.imageList = res.data.data.images;
+			})
+			.catch(err=>{
+				console.log(err)
+			})
+		},
+		methods:{
+			navigateBack(){
+				uni.navigateBack(1)
+			},
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+		}
+	}
+</script>
+
+<style>
+	.violation_top {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #606266;
+		padding-bottom: 14rpx;
+	}
+
+	.violation_bottom {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+</style>

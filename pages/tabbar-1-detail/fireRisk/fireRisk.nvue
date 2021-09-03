@@ -1,0 +1,313 @@
+<template>
+    <!-- 火险预警 -->
+    <view class="w-100 bg-white flex flex-column flex-1">
+        <uni-nav-bar left-icon="back" title="火险预警" :statusBar="true"></uni-nav-bar>
+        <!-- <view class="flex flex-row w-100 bg-white " style="height: 96rpx;">
+            <view class="flex flex-1 justify-center align-center" @click="open">
+                <text class="areaName">{{title}}</text>
+                <image src="../../../static/fireDanger/dropDown.png" style="width: 44rpx; height: 44rpx;"></image>
+            </view>
+				<picker @change="levelChange" :range="levelArray" :value="index" mode = selector ref="pickerOpen" class="flex flex-row flex-1 justify-center align-center">
+					<text class="areaName">{{levelColor || '预警级别'}}</text>
+					<image src="../../../static/fireDanger/dropDown.png" style="width: 44rpx; height: 44rpx;"></image>
+				</picker>
+        </view> -->
+        <!-- <wt-area ref="areaSelect" :chooseCity="chooseCity" @chose="chose" @confirm="confirm" @close="close"></wt-area> -->
+        <list class="flex flex-column flex-1 w-100">
+            <cell>
+                <!-- 预警级别图文排列部分 -->
+                <view class="w-100 pl-3 pr-3" style="margin-top: 24rpx;">
+                    <view style="height: 129rpx;margin-bottom: 16rpx;border-radius: 8rpx;"
+                        class="flex flex-row align-center  pl-24 pr-24" v-for="(item,index) in riskLevel" :key="index"
+                        :class="getBack(index)">
+                        <view class="position-relative flex flex-row flex-wrap justify-start align-start content-start flex-1">
+                            <text style="font-size: 24rpx;line-height: 36rpx;font-weight: 600;" class="position-absolute left-0"
+                                :class="getClass(index)">{{item.title}}</text>
+                            <text style="width: 500rpx;font-size: 24rpx;line-height: 36rpx;" class=""
+                                :class="getClass(index)">&emsp;&emsp;&emsp;&emsp;{{item.content}}</text>
+                        </view>
+                        <image :src="item.img" mode="" style="width: 94rpx;height: 81rpx;"></image>
+                    </view>
+                </view>
+                <!-- 火险预警数据表格部分 -->
+                <view class="bg-white" style="padding-top: 16rpx;">
+                    <image src="../../../static/fireIndex/kakou.png" mode="" style="width: 750rpx;height: 90rpx;"></image>
+                    <view v-for="(item,index) in listFire" :key="index">
+                        <view class="w-100 flex flex-row align-center" style="height: 100rpx;"
+                            :style="(index % 2 ==0) ? 'backgroundColor:#ffffff':'backgroundColor:#F8F8F7'">
+                            <view class="flex-1 flex flex-column justify-center align-center">
+                                <text class="content_style" style="width: 188rpx;line-height: 36rpx;">{{item.sender}}</text>
+                            </view>
+                            <text class="flex-1 content_style">{{item.levelContent}}</text>
+                            <text class="flex-1 content_style">{{item.expires}}</text>
+                        </view>
+                    </view>
+                </view>
+                <view style="width: 750rpx;height: 56rpx;"></view>
+            </cell>
+        </list>
+    </view>
+</template>
+ 
+<script>
+    import wtArea from '@/components/wt-area/wt-area.nvue'
+    export default {
+        comments:{
+            wtArea,
+        },
+        computed: {
+            choseCity() {
+                
+                if(this.index < 0) return '';
+                
+                return this.levelArray[this.index] 
+            }
+        },
+        data() {
+            return {
+				levelColor:null,
+				arealist:null,
+				levelArray:['全部','红色','橙色','黄色','蓝色'],
+				colorKey:null,
+                areaName: null,
+				cid:null,
+				title:'区域选择',
+                chooseCity: true,
+                // 图文列表的数据
+                riskLevel: [{
+                        id: 0,
+                        title: '蓝色预警',
+                        content: '：中度危险，森林火险等级二级，林内可燃物可以点燃，森林火灾较易发生。',
+                        img: '/static/fireIndex/blueRisk.png',
+                    },
+                    {
+                        id: 1,
+                        title: '黄色预警',
+                        content: '：较高火险，森林火险等级三级，林内可燃物较易燃烧，森林火灾较易发生。',
+                        img: '/static/fireIndex/yellowRisk.png',
+                    },
+                    {
+                        id: 2,
+                        title: '橙色预警',
+                        content: '：高火险，森林火险等级四级，林内可燃物容易燃烧，森林火灾容易发生，火势蔓延速度快。',
+                        img: '/static/fireIndex/orangeRisk.png',
+                    },
+                    {
+                        id: 3,
+                        title: '红色预警',
+                        content: '：极高火险，森林火险等级五级，林内可燃物极易燃烧，森林火灾极易发生，火势蔓延速度极快。',
+                        img: '/static/fireIndex/redRisk.png',
+                    }
+                ],
+                // 获取到的火险数据
+                listFire: []
+            }
+        },
+        onLoad() {
+            this.getRiskdata();
+            this.chose();
+            
+        },
+        methods: {
+			// 选择预警级别
+			levelChange(e){
+				let levelNum = e.detail.value;
+				if(levelNum == 0){
+					this.levelColor = '全部',
+					this.colorKey = 'Red,Orange,Yellow,Blue'
+				}else if(levelNum == 1){
+					this.levelColor = '红色',
+					this.colorKey = 'Red'
+				}else if(levelNum == 2){
+					this.levelColor = '橙色',
+					this.colorKey = 'Orange'
+				}else if(levelNum == 3){
+					this.levelColor = '黄色',
+					this.colorKey = 'Yellow'
+				}else{
+					this.levelColor = '蓝色',
+					this.colorKey = 'Blue'
+				}
+				this.getRiskdata();
+			},
+			// 修改预警等级的文字颜色
+			getClass(index) {
+				if (index == 0) {
+					return 'item_0'
+				} else if (index == 1) {
+					return 'item_1'
+				} else if (index == 2) {
+					return 'item_2'
+				} else {
+					return 'item_3'
+				}
+			},
+			// 修改预警等级的背景颜色
+			getBack(index) {
+				if (index == 0) {
+					return 'item_00'
+				} else if (index == 1) {
+					return 'item_11'
+				} else if (index == 2) {
+					return 'item_22'
+				} else {
+					return 'item_33'
+				}
+			},
+			//打开区域选择
+			open() {
+				this.$refs.areaSelect.open();
+			},
+			// 地区保存
+			confirm(arealist) {
+				this.arealist = arealist;
+				console.log(this.arealist)
+				if(arealist.length<=0){
+					this.cid = undefined;
+					this.title = '区域选择';
+				}else if(arealist.length == 3){
+					let code = this.arealist[ this.arealist.length-1].code
+					this.cid = code.substring(0,6)+'41600000'
+					this.title =this.areaName;
+				}else if(arealist.length == 2 || arealist.length == 1){
+					let code = this.arealist[0].code
+					this.cid = code.substring(0,6)+'41600000'
+					if(this.arealist[1].name == '市辖区'){
+						this.title = this.arealist[0].name;
+					}else{
+						this.title = this.arealist[1].name;
+					}
+				}
+				this.getRiskdata();
+				// this.$nextTick(()=>{
+				//     this.$refs.appointList.refreshData();
+				// })
+			},
+            chose(e){
+                console.log(e);
+                this.areaName = e == undefined ? null : e.name
+                console.log(this.areaName,'区域名字')
+            },
+            // 修改预警等级的文字颜色
+            getClass(index) {
+                if (index == 0) {
+                    return 'item_0'
+                } else if (index == 1) {
+                    return 'item_1'
+                } else if (index == 2) {
+                    return 'item_2'
+                } else {
+                    return 'item_3'
+                }
+            },
+            // 修改预警等级的背景颜色
+            getBack(index) {
+                if (index == 0) {
+                    return 'item_00'
+                } else if (index == 1) {
+                    return 'item_11'
+                } else if (index == 2) {
+                    return 'item_22'
+                } else {
+                    return 'item_33'
+                }
+            },
+            // 地区取消
+            clearArea() {
+                this.$refs.areaSelect.clear();
+            },
+            // 更新数据的方法
+            getRiskdata(){
+                uni.$api.fireIndex.getlistfilesbyrange({
+                    area: 'A',
+                    key: 'Red,Orange,Yellow,Blue'
+                })
+                .then(res=>{
+                    console.log(res,'请求火险预警列表成功');
+                        let fireList = res.data.data;
+                        if(fireList!=null){
+                            fireList.map((item) => {
+                                item.levelContent = ''
+                            })
+                            fireList.forEach((item) => {
+                                if (item.level == 1) {
+                                    item.levelContent = '红色'
+                                } else if (item.level == 2) {
+                                    item.levelContent = '橙色'
+                                } else if (item.level == 3) {
+                                    item.levelContent = '黄色'
+                                } else {
+                                    item.levelContent = '蓝色'
+                                }
+                            })
+                            this.listFire = fireList;
+                        }else{
+                            this.listFire = res.data.data
+                        }
+                })
+                .catch(err=>{
+                    console.log(err,'请求火险预警列表失败')
+                })
+            }
+        }
+    }
+</script>
+ 
+<style>
+    .item_0 {
+        color: #0062CC;
+    }
+ 
+    .item_1 {
+        color: #D7A511;
+    }
+ 
+    .item_2 {
+        color: #F4741C;
+    }
+ 
+    .item_3 {
+        color: #FF2120;
+    }
+ 
+    .item_00 {
+        background-color: #EAF3FF;
+        border-width: 2rpx;
+        border-style: solid;
+        border-color: #A1C5FF;
+    }
+ 
+    .item_11 {
+        background-color: #FFFAED;
+        border-width: 2rpx;
+        border-style: solid;
+        border-color: #F2D998;
+    }
+ 
+    .item_22 {
+        background-color: #FFEFE3;
+        border-width: 2rpx;
+        border-style: solid;
+        border-color: #FFCFAF;
+    }
+ 
+    .item_33 {
+        background-color: #FFF1F1;
+        border-width: 2rpx;
+        border-style: solid;
+        border-color: #FFC0C0;
+    }
+ 
+    .areaName {
+        font-size: 30rpx;
+        font-weight: 400;
+        color: #303233;
+    }
+ 
+    .content_style {
+        font-size: 28rpx;
+        font-weight: 400;
+        color: #606266;
+        text-align: center;
+    }
+</style>

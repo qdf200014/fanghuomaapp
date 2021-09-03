@@ -1,0 +1,257 @@
+<template>
+	<!-- <div class="wrap" @click="loseFocus"> -->
+	<div class="wrap">
+		<view class="loginTop">
+			<uni-nav-bar :statusBar="true" :border="false"></uni-nav-bar>
+			<image src="../../static/img/login/fanghuoma@2x.png" mode="" style="width: 240rpx;height: 80rpx;margin-top: 105rpx;"></image>
+			<view class="welcome">
+				<view class="line"></view>
+				<text class="welcomeTxt">欢迎您</text>				
+				<view class="line lineTwo"></view>
+			</view>
+		</view>
+		<uni-forms style="padding: 0; margin-left: 64rpx;">
+			<uni-forms-item class="uni-form-item uni-column" left-icon="person" name="phone">
+				<text class="phone">手机</text>
+				<input class=" inputBorder" v-model="phone" placeholder="请输入手机号" 
+				type="number"/>
+			</uni-forms-item>
+			<uni-forms-item class="uni-form-item uni-column" left-icon="locked" name="pwd" labelWidth="35">
+				<text class="pwd">密码</text>
+				<view class="flex flex-row position-relative">
+					<input type="text" password="true" class="inputBorder" v-model="passWord" placeholder="请输入密码" >
+					<image src="../../static/fireIndex/delete.png" style="width: 36rpx; height: 36rpx;position: absolute; right: 80rpx; top: 30rpx;" v-if="clearPwd" @click="clear"></image>
+				</view>
+			</uni-forms-item>
+			
+		</uni-forms>
+		<view class="forgetPwd">
+			<view class="forgrt redPwd" @click="toforgetPwd">
+				<text class="textFor">忘记密码</text>
+			</view>
+			<view class="register redPwd" @click="toRegister">
+				<text class="textReg">注册</text>
+			</view>
+		</view>
+		<view @click="login" class="loginBtn flex justify-center align-center" hover-class="hover-8">
+			<text class="text-white">登录</text>
+		</view>
+		<!-- #ifdef APP-PLUS -->
+		<iKnow></iKnow>
+		<!-- #endif -->
+	</div>
+</template>
+
+<script>
+	import iKnow from './iknow.nvue';
+	import {mapActions} from 'vuex';
+	export default {
+		components:{
+			iKnow
+		},
+		data(){
+			return {
+				phone: '',
+				passWord: '',
+				clearPwd: false
+			}
+		},
+		onLoad() {
+			console.log('login_onloadd');
+		},
+		watch: {
+			passWord(val){
+				if(val.length > 0){
+					this.clearPwd = true
+				}
+			}
+		},
+		onShow() {
+			this.phone = '',
+			this.passWord = ''
+		},
+		onHide() {
+			this.hideKeyboard();
+		},
+		methods:{
+			...mapActions({
+			  setRoleTree:'roleTree/setRoleTree',
+			  setUserInfo:'user/resetInfo'
+			}),
+			clear(){
+				this.passWord = '',
+				this.clearPwd = false
+			},
+			toforgetPwd(){
+				uni.hideKeyboard()
+				uni.navigateTo({
+					url:'/pages/login/forgetPwd/forgetPwd'
+				})
+			},
+			toRegister(){
+				uni.hideKeyboard()
+				uni.navigateTo({
+					url: '../register/index'
+				})
+			},
+			login(){
+				uni.hideKeyboard(); 
+				let strTemp = /^1[3|4|5|6|7|8|9][0-9]{9}$/;
+				let regex = /(?!.*\s)(?!^[\u4e00-\u9fa5]+$)(?!^[0-9]+$)(?!^[A-z]+$)(?!^[^A-z0-9]+$)^.{8,16}$/;
+				if(!this.phone){
+					uni.showToast({
+						title:'手机号不能为空',
+						icon:'none'
+					})
+				}else if(!strTemp.test(this.phone)){
+					uni.showToast({
+						title:'手机号不正确',
+						icon:'none'
+					})
+				}else if(!this.passWord){
+					uni.showToast({
+						title:'密码不能为空',
+						icon:'none'
+					})
+				}else{
+					uni.showLoading()
+					uni.$api.user.login({
+						Phone: this.phone,
+						PassWord: this.passWord
+					})
+					.then(res => {
+						uni.hideLoading();
+						if(res.data.statusCode == 200){
+							uni.setStorageSync('userInfo',res.data.data);
+							uni.setStorageSync('token', res.data.data.token);
+							let userInfo =  uni.getStorageSync('userInfo');
+							this.setUserInfo();
+							this.setRoleTree();
+							uni.switchTab({
+								url: '/pages/tabbar/tabbar-1/tabbar-1'
+							})
+						}else{
+							uni.showToast({
+								title: res.data.message,
+								icon: 'none'
+							})
+						}
+					})
+					.catch(err => {
+						uni.hideLoading();
+						console.log('login_ERR', err);
+					})
+				}
+				
+			},
+			hideKeyboard(){
+				uni.hideKeyboard();
+			}
+		}
+	}
+</script>
+
+<style>
+.wrap{
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 750rpx;
+	background-color: #FFF;
+}
+.loginTop{
+	align-items: center;
+}
+.line{
+	width: 48rpx;
+	height: 2rpx;
+	background-image: linear-gradient(90deg, #FFFFFF, #323234);
+
+}
+.lineTwo{
+	transform: rotate(180deg);
+}
+.welcomeTxt{
+	font-size: 30rpx;
+	font-family: PingFangSC-Medium, PingFang SC;
+	font-weight: 500;
+	color: #2F3034;
+	line-height: 30rpx;
+	margin: 0 67rpx;
+}
+.welcome{
+	flex-direction: row;
+	align-items: center;
+	height: 30rpx;
+	margin-top: 48rpx;
+	margin-bottom: 122rpx;
+}
+.phone{
+	font-size: 28rpx;
+	font-family: PingFangSC-Medium, PingFang SC;
+	font-weight: 500;
+	color: #2F3034;
+	line-height: 28rpx;
+}
+.pwd{
+	font-size: 28rpx;
+	font-family: PingFangSC-Medium, PingFang SC;
+	font-weight: 500;
+	color: #2F3034;
+	line-height: 28rpx;
+}
+.inputBorder{
+	margin-right: 64rpx;
+	width: 622rpx;
+	height: 90rpx;
+	border-style: solid;
+	border-bottom-color: #EEEFF3;
+	border-bottom-width: 2rpx;
+	font-size: 36rpx;
+	font-family: HelveticaNeue;
+	color: #333333;
+	
+}
+.forgetPwd{
+	flex-direction: row;
+	justify-content: space-between;
+}
+.redPwd{
+	font-size: 28rpx;
+	font-family: PingFangSC-Regular, PingFang SC;
+	font-weight: 400;
+	
+	line-height: 28rpx;
+	border-bottom-color: #F75252;
+	border-bottom-width: 1rpx;
+	border-style: solid;
+}
+.forgrt{
+	margin-left: 64rpx;
+}
+.register{
+	margin-right: 64rpx;
+}
+.textFor{
+	font-size: 28rpx;
+	color: #F75252;
+}
+.textReg{
+	font-size: 28rpx;
+	color: #F75252;
+}
+.loginBtn{
+	width: 204rpx;
+	height: 82rpx;
+	line-height: 82rpx;
+	text-align: center;
+	background-color: #F75252;
+	border-radius: 41rpx;
+	margin-left: 273rpx;
+	margin-top: 80rpx;
+	font-size: 36rpx;
+	font-family: PingFangSC-Medium, PingFang SC;
+	font-weight: 500;
+	color: #FFFFFF;
+}
+</style>

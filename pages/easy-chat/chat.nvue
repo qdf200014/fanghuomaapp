@@ -1,0 +1,491 @@
+<template>
+	<view class="im-flex-column im-flex-1 im-bg-grey-1 position-relative">
+		<!-- 顶部导航栏 -->
+		<nim-chat-navigation >
+			<view class="im-flex-column im-align-center">
+				<view class="im-flex im-flex-nowrap im-align-center">
+					<text class="im-font-34 im-font-black im-text-ellipsis" style="max-width: 350rpx" @tap="showWriting">{{ pageTitle }}</text>
+					<text v-if="scene==='team'" class="im-font-black im-font-34 im-mx-1">({{ teamInfo.memberNum }})</text>
+					<text v-if="isShowWriting" class="im-font-light im-font-28 im-ml-1">正在输入···</text>
+				</view>
+				
+			</view>
+			<view v-if="isInvalidTeam" slot="right" class="im-flex" @tap="clickMore">
+				<image src="/static/easy-chat/chat/more.png" mode="aspectFill" style="width: 40rpx;height: 40rpx;"></image>
+			</view>
+		</nim-chat-navigation>
+		<!-- 会商添加水印 -->
+		<view class="position-absolute w-100 flex flex-row justify-between flex-wrap" style="top: 140rpx;left: 0;height: 100%;" v-if="teamInfo.type === 'advanced'">
+			<view v-for="(item,index) in 40" :key="index" style="height: 150rpx;margin-top: 37rpx;" class="flex flex-column justify-center align-center"> 
+				<text style="transform: rotate(-30deg);color: #E9EAF0;font-size: 32rpx;font-weight: 400;">{{waterName}}{{waterUser}}</text>
+			</view>
+		</view>
+		<!-- 聊天滚动区域 -->
+		<nim-scroll-view ref="nimScroolView" :scene="scene" :to="to" :focus="inputFocus" :nowSessionInfo="nowSessionInfo" @clickScrollView="clickScrollView"></nim-scroll-view>
+		<!-- 底部悬浮扩展栏  高级群才会展示-->
+		<template v-if="teamInfo.type === 'advanced'">
+			<!-- <chat-bottom-extend :isShow="!isKeyboardShow"></chat-bottom-extend> -->
+			<chat-bottom-extend ref="chatBottomExtend"></chat-bottom-extend>
+		</template>
+		<!-- 底部聊天框 -->
+		<view v-if="isInvalidTeam" style="height: 110rpx;" :style="toolBottomStyle"
+			class="im-flex im-w-100 im-align-center im-position-relative im-justify-between im-bg-grey-1 im-px-3 im-py-2 im-border-top position-relative" >
+			<image @tap="changeMode" :src="modeIcon" mode="aspectFill" class="im-icon-5 im-mx-1"></image>
+			<view v-if="mode === 'input'" class="im-flex im-flex-1 im-align-start im-justify-start im-content-start im-mx-1" @touchend="clickTextArea">
+				<textarea
+					class="im-flex im-flex-1 im-content-start im-justify-start im-align-center im-bg-white im-round-3 im-px-2 im-py-2 im-font-28 im-position-relative im-mx-1"
+					style="height: 70rpx; max-width: 450rpx;"
+					:auto-height="false"
+					:maxlength="200"
+					:show-confirm-bar="false"
+					:value="textareaValue"
+					:adjust-position="false"
+					@focus="textareaFocus"
+					@confirm="sendMsg"
+					@input="textareaInput"
+				/>
+			</view>
+			<nim-chat-recording v-if="mode === 'audio'"></nim-chat-recording>
+			<image v-if="burnReadModel" src="/static/easy-chat/chat/open-burn-ream@2x.png" mode="aspectFill" class="im-icon-5 im-mx-1" @tap="closeBurnRead"></image>
+			<image src="/static/easy-chat/chat/biaoqingbao@2x.png" mode="aspectFill" class="im-icon-5 im-mx-1" @tap="openEmoji"></image>
+			<image v-if="textareaValue.length === 0" src="/static/easy-chat/chat/tianjia@2x.png" mode="aspectFill" class="im-icon-5 im-mx-1" @tap="opemMenu"></image>
+			<view v-if="textareaValue.length > 0" hover-class="im-bg-grey-3" style="width: 90rpx;height: 70rpx;" 
+			class="im-bg-blue-2 im-flex im-justify-center im-align-center im-round-1 im-mx-1" @tap="sendMsg"><text class="im-font-28 im-font-white">发送</text></view>
+			
+			<!-- 禁言控制栏 -->
+			<view v-if="teamMuteAll" class="im-position-absolute im-flex im-align-center im-justify-center im-top-0 im-bottom-0 im-left-0 im-right-0" 
+			style="background-color: rgba(0, 0, 0, 0.08);" @tap="(e) => {e.stopPropagation()}">
+				<text class="im-font-32 im-font-black-2 im-mr-5 im-pr-5">全员禁言中</text>
+			</view>
+		</view>
+
+		<!-- 扩展菜单 -->
+		<nim-chat-extend-menu ref="nimChatExtendMenu" :type="menuType" :show="menuShow" :sendOk="textareaValue.length > 0" @deleteInput="deleteInput"
+		 @sendMsg="sendMsg" @addEmoji="addEmoji" @clickScrollView="clickScrollView"></nim-chat-extend-menu>
+	</view>
+</template>
+
+<script>
+import nimScrollView from '@/components/easy-chat/nim-scroll-view.vue';
+import nimChatExtendMenu from '@/components/easy-chat/nim-chat-extend-menu.vue'
+import nimChatRecording from '@/components/easy-chat/nim-chat-recording.vue'
+import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+import chatBottomExtend from '@/components/easy-chat/chat-bottom-extend.vue'
+import { mapGetters, mapActions } from 'vuex';
+
+// 正在输入的计时器 , 3秒后移除显示
+let WritingTimeOut = null
+let _self = null
+
+export default {
+	data() {
+		return {
+			// textarea相关
+			textareaValue: '',
+			inputFocus: false,
+
+			// nim相关数据
+			scene: '',
+			to: '',
+			
+			// 菜单相关数据
+			menuShow: false,
+			// 展示menu的类型，
+			menuType: '',
+			
+			//输入模式 input 打字 audio 语音
+			mode: 'input',
+			
+			//是否显示正在输入
+			isShowWriting: false,
+			
+			// 判断键盘是否弹出
+			isKeyboardShow: false,
+			// 弹出键盘的高度
+			keyboardHeight: 0,
+			safeArea: uni.getSystemInfoSync().safeArea,
+			// 判断消息是否正在发送中
+			isSendMsg: false,
+			waterUser:'',
+			waterName:''
+		};
+	},
+	components: {
+		nimScrollView,
+		nimChatExtendMenu,
+		nimChatRecording,
+		nimChatNavigation,
+		chatBottomExtend,
+	},
+	computed: {
+		userUID() {
+			return this.$store.getters['initNim/userUID']
+		},
+		modeIcon() {
+			if (this.mode === 'input') {
+				return '/static/easy-chat/chat/yuyin@2x.png'
+			} else {
+				return '/static/easy-chat/chat/jianpan.png'
+			}
+		},
+		sessionObj() {
+			return this.$store.getters['initNim/sessionObj']
+		},
+		teamObj() {
+			return this.$store.getters['initNim/teamObj']
+		},
+		userObj() {
+			return this.$store.getters['initNim/userObj']
+		},
+		// 设置标题
+		pageTitle() {
+			let title = '聊天页面'
+			
+			if (this.scene === 'team' && this.teamObj && this.teamObj[this.to]) {
+				title = this.teamObj[this.to].name
+			} else if (this.scene === 'p2p' && this.userObj && this.userObj[this.to]) {
+				title = this.userObj[this.to].nick
+			}
+			
+			return title
+		},
+		// 正在输入的会话
+		writngSessionId() {
+			return this.$store.getters['initNim/writngSessionId']
+		},
+		// 当前会话的session信息
+		nowSessionInfo() {
+			return this.sessionObj[`${this.scene}-${this.to}`] || {}
+		},
+		// 阅后即焚模式
+		burnReadModel() {
+			return this.$store.getters['initNim/burnReadModel']
+		},
+		// 优化底部输入框不紧贴键盘
+		toolBottomStyle() {
+			let style = ''
+			if (this.isKeyboardShow) {
+				if (uni.getSystemInfoSync().platform === 'ios') {
+					style += `margin-bottom: ${this.keyboardHeight - this.safeArea.top + 20}px`
+				} else {
+					style += `margin-bottom: ${this.keyboardHeight}px`
+				}
+			}
+			return style
+		},
+		// 判断此群是否对自己已无效 true 有效 false 无效
+		isInvalidTeam() {
+			if (this.scene === 'team') {
+				return this.$store.getters['initNim/invalidTeamArr'].indexOf(this.to) > -1 ? false : true
+			} else {
+				return true
+			}
+		},
+		// 控制导航栏 的下移 视觉上整体页面不上推
+		chatNavigationStyle() {
+			if (this.isKeyboardShow) {
+				return `margin-top: ${this.keyboardHeight - 44}px;`
+			}
+			return ''
+		},
+		// 当前群的详细信息
+		teamInfo() {
+			if (this.scene === 'team' && this.teamObj[this.to]) {
+				return this.teamObj[this.to]
+			}
+			return {}
+		},
+		// 当前群是否全员禁言
+		teamMuteAll() {
+			if (this.teamInfo.owner === this.userUID) {
+				return false
+			}
+			return this.teamInfo.mute
+		},
+		...mapGetters({
+			userInfo: 'user/info'
+		})
+	},
+	onShow(){
+		this.getUserInfo(); // 用户信息更新
+		this.workbenchList();
+	},
+	watch: {
+		writngSessionId(n) {
+			this.showWriting()
+		},
+		teamInfo(newdata) {
+			console.log('检测当前群是否检验', newdata);
+			this.updateMuteView()
+		}
+	},
+	onLoad(event) {
+		console.log('页面接受的参数', event);
+		_self = this
+		
+		if (event.sessionId) {
+			this.$store.dispatch('initNim/setCurrentSessionId', event.sessionId);
+			this.$store.dispatch('initNim/nimResetSessionUnread', event.sessionId)
+			this.scene = event.sessionId.split('-')[0];
+			this.to = event.sessionId.split('-')[1];
+		}
+		
+		// 发送单聊已读回执
+		this.$store.dispatch('initNim/nimSendMsgReceipt', {
+			msg: this.nowSessionInfo.lastMsg
+		})
+		
+		// 如果是群 获取群成员
+		if (this.scene === 'team') {
+			this.$store.dispatch('initNim/nimGetTeamMembers', this.to)
+		}
+		
+		
+		// 监听键盘高度
+		uni.onKeyboardHeightChange(res => {
+			// console.log(res)
+			this.keyboardheightchange(res)
+		})
+	},
+	onUnload() {
+		this.$store.dispatch('initNim/resetCurrentSession')
+		this.clickScrollView()
+		if (this.burnReadModel) {
+			this.closeBurnRead()
+		}
+		uni.hideKeyboard()
+		uni.offKeyboardHeightChange(res => {
+			console.log(res,'取消监听键盘高度');
+		})
+	},
+	onHide() {
+		console.log('页面隐藏');
+		this.clickScrollView()
+		uni.hideKeyboard()
+	},
+	methods: {
+		...mapActions({
+			getUserInfo:'user/getUserInfo',
+		}),
+		workbenchList(){
+			let userInfo = this.userInfo;
+			console.log(userInfo,'用户信息')
+			this.waterUser = userInfo.phone;
+			this.waterName = userInfo.name;
+		},
+		clickTextArea(e) {
+			// 隐藏底部打开的菜单
+			this.menuShow = false;
+			this.menuType = ''
+		},
+		closeBurnRead() {
+			this.$store.commit('initNim/changeBurnReadModel')
+		},
+		// 在p2p情况下 发送正在输入的自定义系统通知
+		sendWritingSysMsg: getApp().globalData.throttle(() => {
+			if (_self.scene != 'p2p') {
+				return ;
+			}
+			
+			console.log('调用发送自定义通知');
+			let content = {
+				type: 'writingSysMsg',
+				// 是否需要缓存
+				isCatch: false,
+				data: {
+					scene: _self.scene,
+					to: _self.to
+				}
+			}
+			_self.$store.dispatch('initNim/nimSendCustomSysMsg', {
+				scene: _self.scene,
+				to: _self.to,
+				content: JSON.stringify(content),
+				sendToOnlineUsersOnly: true
+			})
+		}, 1000),
+		// 显示正在输入
+		showWriting() {
+			clearTimeout(WritingTimeOut)
+			this.isShowWriting = true
+			WritingTimeOut = setTimeout(() => {
+				this.isShowWriting = false
+			}, 3000)
+		},
+		// 前往设置页面
+		clickMore() {
+			console.log('设置页面');
+			uni.navigateTo({
+				url: '/pages/easy-chat/chat-details'
+			})
+		},
+		// 点击表情扩展中的表情
+		addEmoji(emoji) {
+			this.textareaValue += emoji
+		},
+		// 点击表情扩展中的删除
+		deleteInput() {
+			let lastText = this.textareaValue.slice(-1)
+			if (lastText === ']') {
+				let left = this.textareaValue.lastIndexOf('[')
+				if (left > -1) {
+					this.textareaValue = this.textareaValue.slice(0, left)
+					return ;
+				}
+			}
+			this.textareaValue = this.textareaValue.slice(0, -1)
+		},
+		// 切换模式
+		changeMode() {
+			this.mode === 'input' ? this.mode = 'audio' : this.mode = 'input'
+			// 清空输入框
+			this.textareaValue = ''
+			if (this.mode === 'audio') {
+				this.clickScrollView()
+			}
+		},
+		// 打开扩展菜单
+		opemMenu() {
+			this.menuType = 'extend'
+			if (!this.menuShow) {
+				this.clickScrollView()
+				this.$nextTick(() => {
+					this.menuShow = true
+				})
+			}
+		},
+		// 打开表情菜单
+		openEmoji() {
+			this.menuType = 'emoji'
+			this.mode = 'input'
+			if (!this.menuShow) {
+				this.clickScrollView()
+				this.$nextTick(() => {
+					this.menuShow = true
+				})
+			}
+		},
+		// 点击滚动区域， 取消聚焦 初始化页面状态
+		clickScrollView() {
+			console.log('点击滚动区域');
+			this.hideKeyWord()
+			this.keyboardHeight = 0
+			this.isKeyboardShow = false
+			this.$nextTick(() => {
+				this.inputFocus = false;
+				if (this.menuShow) {
+					this.menuShow = false;
+					this.menuType = ''
+				}
+			})
+			
+		},
+		// 收起键盘
+		hideKeyWord() {
+			uni.hideKeyboard()
+		},
+		// 输入框写入内容
+		textareaInput(e) {
+			console.log(e);
+			this.textareaValue = e.detail.value;
+			if (this.scene === 'p2p') {
+				this.sendWritingSysMsg()
+			}
+		},
+		keyboardheightchange(e) {
+			console.log(e);
+			this.keyboardHeight = e.height;
+			if (e.height > 0) {
+				this.$nextTick(() => {
+					this.inputFocus = true;
+					this.$refs.nimScroolView.goTop()
+					this.isKeyboardShow = true
+				})
+			} else {
+				this.isKeyboardShow = false
+			}
+		},
+		textareaFocus(e) {
+			console.log(e);
+			// 隐藏底部打开的菜单
+			this.menuShow = false;
+			this.menuType = ''
+		},
+		//发消息
+		sendMsg() {
+			console.log('msg', this.textareaValue);
+			
+			// 反垃圾处理 start
+			let ret = this.$store.getters['initNim/nim'].filterClientAntispam({
+				content: this.textareaValue
+			})
+			// console.log(ret);
+			switch (ret.type) {
+				case 0:
+					console.log('没有命中反垃圾词库', ret.result)
+					break
+				case 1:
+					console.log('已对特殊字符做了过滤', ret.result)
+					this.textareaValue = ret.result
+					break
+				case 2:
+					console.log('建议拒绝发送', ret.result)
+					break
+				case 3:
+					console.log('建议服务器处理反垃圾，发消息带上字段clientAntiSpam', ret.result)
+					break
+			}
+			// 反垃圾处理 end
+			
+			if (!this.textareaValue) {
+				uni.showToast({
+					title: '发送内容不能为空',
+					icon: 'none'
+				})
+				return ;
+			}
+			
+			if (this.burnReadModel) {
+				// console.log('越后积分');
+				this.$store.dispatch('initNim/nimSendburnReadMsg', {
+					scene: this.scene,
+					to: this.to,
+					// 阅后即焚的消息类型
+					type: 'text',
+					// 文本消息的内容
+					text: this.textareaValue
+				}).then(res => {
+					this.textareaValue = '';
+				})
+				return ;
+			}
+			
+			if (this.isSendMsg) {
+				uni.showToast({
+					title: '消息正在发送中···, 请稍后再试。',
+					icon: 'none'
+				})
+				return ;
+			}
+			
+			this.isSendMsg = true
+			
+			this.$store.dispatch('initNim/nimSendMsg', {
+					scene: this.scene,
+					to: this.to,
+					text: this.textareaValue
+				})
+				.then(res => {
+					this.textareaValue = '';
+					this.isSendMsg = false
+				})
+				.catch(err => {
+					console.error('error', err);
+					this.isSendMsg = false
+				});
+		}
+	}
+};
+</script>
+
+<style scoped></style>

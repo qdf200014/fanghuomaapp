@@ -1,0 +1,237 @@
+<template>
+	<view class="flex flex-1 w-100 flex-column">
+		<uni-nav-bar left-icon="back" :title="name+'的日报'" :statusBar="true">
+			<view class="flex flex-1 justify-end" slot="right">
+			</view>
+		</uni-nav-bar>
+		<view style="height: 56rpx;background-color: #FDEBE5;" class="flex flex-row  w-100 pl-3 pr-3 justify-between align-center" v-if="showLower" @click="closePerson">
+			<text style="font-size: 26rpx;color: #F07A4E;">{{name}}的日报</text>
+			<image src="../../../static/work/orange.png" mode="" style="width: 26rpx;height: 26rpx;" ></image>
+		</view>
+		<!-- 注意wt-list本身不具有flex布局，使用时包一层容器 -->
+		<view  style="margin-bottom: 120rpx" class="flex flex-1 w-100">
+			<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+			<wt-list api="dailynews.getdaily" :params="{types:1,guid:this.id}" ref="personList">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+		
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="ctx">
+		
+					<!-- 循环处理数据 -->
+					<cell v-for="(items,indexs) in ctx.dataList">
+						<view class="w-100 pl-3 pr-3 flex flex-column justify-center" style="height: 76rpx;">
+							<text style="font-size: 28rpx;font-weight: 400;color: #999999;">{{items.publihTime}}</text>
+						</view>
+						<view style="width: 750rpx;background-color: #FFFFFF;" class="p-3 border-bottom" v-for="(item,index) in items.dailys">
+							<view class="flex flex-row justify-between">
+								<view class="flex flex-row">
+									<view>
+										<view v-if="item.headUrl">
+											<image :src="item.headUrl || ''" style="width: 96rpx;height: 96rpx;border-radius: 48rpx;"></image>
+										</view>
+										<view class="defaultHead flex" v-else>
+											<text class="headName">{{item.userName.charAt(item.userName.length-2)+item.userName.charAt(item.userName.length-1)}}</text>
+										</view>
+									</view>
+									<view class="flex flex-column justify-center" style="padding-left: 24rpx;">
+										<text class="dayname">{{item.userName}}的日报</text>
+										<text class="daytime">{{item.createTime}}</text>
+									</view>
+								</view>
+								<view class="flex align-center" @click="Lower">
+									<image src="../../../static/addrBook/more.png" mode="heightFix" style="width: 32rpx;height: 7rpx;"></image>
+								</view>
+							</view>
+							<view class="flex flex-row" style="padding-top: 28rpx;padding-bottom: 31rpx;" @click="lowerList(item)">
+								<image :src="item.converUrl" mode="aspectFill" style="width: 240rpx;height: 160rpx;border-radius: 15rpx;" v-if="item.converUrl"></image>
+								<view>
+									<view style="width: 426rpx;margin-top: 8rpx;" class="flex flex-column justify-center" v-if="item.converUrl">
+										<text class="daydetail line-3 " style="padding-left: 24rpx;  line-height: 48rpx;">{{item.abstract}}</text>
+									</view>
+									<view style="width: 690rpx;"  v-else>
+										<text class="daydetail line-3" style="line-height: 48rpx;">{{item.abstract}}</text>
+									</view>
+								</view>
+							</view>
+							<view class="flex flex-row justify-between">
+								<view class="flex flex-row">
+									<view v-if="userID != item.userId" class="flex justify-center align-center">
+										<view style="background-color: rgba(72, 124, 241, 0.1);border-radius: 20rpx;padding-left: 12rpx;padding-right: 12rpx;" v-if="item.isReaded==false" class="flex flex-column justify-center align-center">
+											<text style="font-size: 24rpx;font-weight: 400;color:  rgba(72, 124, 241, 1);">未读</text>
+										</view>
+										<view style="background-color: rgba(148, 149, 153, 0.1);border-radius: 20rpx;padding-left: 12rpx;padding-right: 12rpx;" v-if="item.isReaded==true" class="flex flex-column justify-center align-center">
+											<text style="font-size: 24rpx;font-weight: 400;color:  rgba(148, 149, 153, 1);">已读</text>
+										</view>
+									</view>
+									<text style="font-size: 26rpx;font-weight: 400;color: #949599;margin-left: 24rpx;padding-top: 8rpx;padding-bottom: 8rpx;">{{item.readNum}}人已读</text>
+								</view>
+								<view class="flex flex-row">
+									<view class="flex flex-row">
+										<view class="flex justify-center align-center">
+											<image src="../../../static/work/common.png" mode="" style="width: 32rpx;height: 32rpx;"></image>
+										</view>
+										<view class="flex flex-column justify-center align-center">
+											<text class="commonnum" style="padding-left: 12rpx;">{{item.commentNum}}条评论</text>
+										</view>
+									</view>
+									<view class="flex flex-row justify-center" style="padding-left: 30rpx;">
+										<view class="flex flex-column justify-center align-centers">
+											<image src="../../../static/work/unreprise.png" mode="" style="width: 32rpx;height: 32rpx;" @click.stop="unLowerprise(item,$event)" v-if="item.isPrised ==false"></image>
+											<image src="../../../static/work/prised.png" mode="" style="width: 32rpx;height: 32rpx;" @click.stop="lowerprised(item,$event)"  v-if="item.isPrised ==true"></image>
+										</view>
+										<view class="flex flex-column justify-center align-center">
+											<text class="commonnum" style="padding-left: 12rpx;" v-if="item.priseNum>0">{{item.priseNum}}人点赞</text>
+											<text class="commonnum" style="padding-left: 12rpx;" v-else>点赞</text>
+										</view>
+									</view>
+								</view>
+							</view>
+						</view>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+		<uni-popup ref="popuplowernews" type="center">
+			<wt-dialog :maskClick='true' :btns="['取消','确定']"
+			@close="wtDialogConfirm" title="提示" @confirm="refreshLower">
+			<view class="flex flex-column justify-center align-center" style="padding-bottom: 32rpx;">
+				<text style="font-size: 26rpx;font-weight: 400;color: #030303;">查看{{this.name}}的所有日报</text>
+			</view>
+			</wt-dialog>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	import { throttle } from "@/common/common.js";
+	export default {
+		data() {
+			return {
+				id:'',
+				name:'',
+				showLower:true,
+				userID:''
+			}
+		},
+		onShow(){
+			// this.$refs.personList.refreshData();
+		},
+		mounted() {
+			console.log(this.$store.state.user.info,'用户信息');
+			let userInfo = this.$store.state.user.info;
+			this.userID = userInfo.userId;
+		},
+		onLoad(e) {
+			console.log(e);
+			this.id = e.userId;
+			this.name = e.userName;
+		},
+		methods: {
+			Lower(){
+				this.$refs.popuplowernews.open();
+			},
+			// 刷新数据
+			refreshLower(done, val, index){
+				done();
+				this.$refs.personList.refreshData();
+			},
+			lowerList(item){
+				if(item.dailyType==1){
+					uni.navigateTo({
+						// url:'../dailyNews/dailyNewsExt/dailyNewsExt?dailyId='+item.dailyId
+						url:'../forestDetail/forestDetail?dailyId='+item.dailyId
+					})
+				}else if(item.dailyType==0){
+					uni.navigateTo({
+						url:'../dailynewsDetail/dailynewsDetail?dailyId='+item.dailyId
+					})
+				}
+			},
+			closePerson(){
+				uni.navigateBack(1)
+			},
+			// 去点赞
+			unLowerprise:throttle(function(item,event){
+				// #ifdef APP-NVUE
+				event.stopPropagation()
+				// #endif
+				uni.$api.dailynews.addprise({
+					dailyId:item.dailyId
+				})
+				.then(res=>{
+					console.log(res,'点赞成功');
+					item.priseNum++;
+					item.isPrised=true;
+				})
+				.catch(err=>{
+					console.log(err)
+				})
+			}),
+			// 取消点赞
+			lowerprised:throttle(function(item,event){
+				// #ifdef APP-NVUE
+				event.stopPropagation()
+				// #endif
+				uni.$api.dailynews.delprise({
+					dailyId:item.dailyId
+				})
+				.then(res=>{
+					console.log(res);
+					item.priseNum--;
+					item.isPrised=false;
+				})
+				.catch(err=>{
+					console.log(err)
+				})
+			})
+		}
+	}
+</script>
+
+<style>
+.dayname {
+
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #2F3034;
+ }
+
+ .daytime {
+
+  font-size: 26rpx;
+  font-weight: 400;
+  color: #949599;
+ }
+
+ .daydetail {
+
+  font-size: 28rpx;
+  font-weight: 400;
+  color: #323234;
+ }
+
+ .commonnum {
+
+  font-size: 24rpx;
+  font-weight: 400;
+  color: #999999;
+ }
+ .defaultHead {
+ 	/* display: flex; */
+ 	justify-content: center;
+ 	align-items: center;
+ 	width: 96rpx;
+ 	height: 96rpx;
+ 	background-color: #F75252;
+ 	border-radius: 200;
+ 	border-width: 4rpx;
+ 	border-style: solid;
+ 	border-color: rgba(255, 196, 196, 0.67);
+ }
+ 
+ .headName {
+ 	font-size: 32rpx;
+ 	font-weight: 400;
+ 	color: #FFFFFF;
+ }
+</style>

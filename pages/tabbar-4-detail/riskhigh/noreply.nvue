@@ -1,0 +1,102 @@
+<template>
+	<view style="padding-left: 30rpx;padding-right: 30rpx;padding-top: 24rpx;">
+		<view style="position: relative;background-color: #FFFFFF;width: 690rpx;border-radius: 16rpx;">
+			<view style="position: absolute;right: 26rpx;top: 49rpx;">
+				<image src="../../../static/work/risk.png" mode="" style="width:170rpx;height:230rpx;"></image>
+			</view>
+			<view>
+				<view class="flex flex-row" style="padding-left: 25rpx;padding-right: 25rpx;padding-top: 40rpx;">
+					<view style="width: 200rpx;">
+						<text class="riskname">姓名：</text>
+						<text class="riskname">高危原因：</text>
+						<text class="riskname">申请名称：</text>
+					</view>
+					<view style="width: 450rpx;padding-left: 60rpx;">
+						<text class="riskdetail">{{item.userinfo.username}}</text>
+						<text class="riskdetail">{{item.userinfo.type}}</text>
+						<text class="riskdetail line-1">{{item.park_name}}</text>
+					</view>
+				</view>
+				<view class="border-top flex justify-center align-center" style="width:690rpx;height: 80rpx;">
+					<text class="look_detail" @click="gonorisk(item)">查看详情</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		props: {
+			item: {
+				type: [Object],
+				default: () => {}
+			},
+			index:{
+				type:Number
+			}
+		},
+		data(){
+			return{
+				headUrl:'https://fhm-oss.limefamily.cn/fhm/'
+			}
+		},
+		methods: {
+			gonorisk(item) {
+				uni.navigateTo({
+					url:'./noreplydetail?id='+item.id+'&title=' + item.park_name + '&index=' + this.index,
+				})
+			},
+			dateTran(time) {
+				return dayjs(time).format('YYYY-MM-DD HH:MM')
+			},
+		}
+	}
+</script>
+
+<style>
+	.violation_title {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		padding-left: 24rpx;
+	}
+
+	.violation_detail {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+		line-height: 44rpx;
+	}
+
+	.look_detail {
+
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+/* 		padding-top: 26rpx;
+		padding-bottom: 26rpx; */
+	}
+
+	.border-top {
+		border-top-width: 1rpx;
+		border-top-style: solid;
+		border-top-color: #EEEFF3;
+	}
+
+	.riskname {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		padding-bottom: 44rpx;
+	}
+
+	.riskdetail {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+		padding-bottom: 44rpx;
+	}
+</style>

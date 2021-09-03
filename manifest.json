@@ -1,0 +1,197 @@
+{
+    "name" : "防火码",
+    "appid" : "__UNI__B1A8336",
+    "description" : "",
+    "versionName" : "1.0.20_alpha",
+    "versionCode" : 190,
+    "networkTimeout" : {
+        "connectSocket" : 5000
+    },
+    "transformPx" : false,
+    // "debug" : true, //开发模式,拖慢性能
+    "app-plus" : {
+        "softinput" : {
+            "mode" : "adjustResize"
+        },
+        "safearea" : {
+            "background" : "transparent",
+            "bottom" : {
+                "offset" : "auto"
+            }
+        },
+        "runmode" : "liberate", // 安卓解压
+		
+		//true表示忽略版本检查提示框
+        "compatible" : {
+            "ignoreVersion" : true 
+        },
+		//true表示忽略版本检查提示框
+		
+        "nvueStyleCompiler" : "weex", // nvue-style编译模式 [weex|uni-app]
+        "splashscreen" : {
+           "alwaysShowBeforeRender" : true,
+           "waiting" : true,
+           "autoclose" : true,
+           "delay" : 0
+        },
+        "usingComponents" : true,
+        "compilerVersion" : 3,
+        "screenOrientation" : [ "portrait-primary" ], //  竖屏锁
+
+        /* 5+App特有相关 */
+        "modules" : {
+            "Geolocation" : {},
+            "Push" : {},
+            "SQLite" : {},
+            "VideoPlayer" : {},
+            "Share" : {}
+        },
+        /* 模块配置 */
+        "distribute" : {
+            /* 应用发布信息 */
+            "android" : {
+                /* android打包配置 */
+                "permissions" : [
+                    "<uses-feature android:name=\"android.hardware.camera\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera.autofocus\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CALL_PHONE\"/>",
+                    "<uses-permission android:name=\"android.permission.CALL_PRIVILEGED\"/>",
+                    "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
+                    "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\"/>",
+                    "<uses-permission android:name=\"android.permission.INSTALL_PACKAGES\"/>",
+                    "<uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\"/>",
+                    "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_LOGS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\"/>",
+                    "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
+                    "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
+                ],
+                "schemes" : "cffma",
+                "abiFilters" : [ "armeabi-v7a" ]
+            },
+            "ios" : {
+                "privacyDescription" : {
+                    "NSPhotoLibraryUsageDescription" : "设置用户头像",
+                    "NSPhotoLibraryAddUsageDescription" : "剪裁用户头像",
+                    "NSCameraUsageDescription" : "拍摄照片来设置用户头像",
+                    "NSLocationWhenInUseUsageDescription" : "为用户提供天气服务",
+                    "NSLocationAlwaysAndWhenInUseUsageDescription" : "为用户提供天气服务"
+                },
+                "urltypes" : "cffma",
+                "capabilities" : {
+                    "entitlements" : {
+                        "com.apple.developer.associated-domains" : [ "applinks:fanghuoma.com", "applinks:api.fanghuoma.com" ]
+                    }
+                }
+            },
+            /* ios打包配置 */
+            "sdkConfigs" : {
+                "ad" : {},
+                "geolocation" : {
+                    "amap" : {
+                        "__platform__" : [ "ios", "android" ],
+                        "appkey_ios" : "2330c9cc9e8e5cb2c6356e88309e159b",
+                        "appkey_android" : "a29fa5e034b2243227376c5ccbe6d6e3"
+                    }
+                },
+                "push" : {
+                    "unipush" : {}
+                },
+                "share" : {
+                    "weixin" : {
+                        "appid" : "wx400c3473954ca21a",
+                        "UniversalLinks" : "https://api.fanghuoma.com/"
+                    }
+                },
+                "oauth" : {}
+            },
+            "icons" : {
+                "android" : {
+                    "hdpi" : "unpackage/res/icons/72x72.png",
+                    "xhdpi" : "unpackage/res/icons/96x96.png",
+                    "xxhdpi" : "unpackage/res/icons/144x144.png",
+                    "xxxhdpi" : "unpackage/res/icons/192x192.png"
+                },
+                "ios" : {
+                    "appstore" : "unpackage/res/icons/1024x1024.png",
+                    "ipad" : {
+                        "app" : "unpackage/res/icons/76x76.png",
+                        "app@2x" : "unpackage/res/icons/152x152.png",
+                        "notification" : "unpackage/res/icons/20x20.png",
+                        "notification@2x" : "unpackage/res/icons/40x40.png",
+                        "proapp@2x" : "unpackage/res/icons/167x167.png",
+                        "settings" : "unpackage/res/icons/29x29.png",
+                        "settings@2x" : "unpackage/res/icons/58x58.png",
+                        "spotlight" : "unpackage/res/icons/40x40.png",
+                        "spotlight@2x" : "unpackage/res/icons/80x80.png"
+                    },
+                    "iphone" : {
+                        "app@2x" : "unpackage/res/icons/120x120.png",
+                        "app@3x" : "unpackage/res/icons/180x180.png",
+                        "notification@2x" : "unpackage/res/icons/40x40.png",
+                        "notification@3x" : "unpackage/res/icons/60x60.png",
+                        "settings@2x" : "unpackage/res/icons/58x58.png",
+                        "settings@3x" : "unpackage/res/icons/87x87.png",
+                        "spotlight@2x" : "unpackage/res/icons/80x80.png",
+                        "spotlight@3x" : "unpackage/res/icons/120x120.png"
+                    }
+                }
+            }
+        },
+        "nativePlugins" : {
+            "life-FileShare" : {
+                "__plugin_info__" : {
+                    "name" : "安卓ios分享任意类型文件",
+                    "description" : "ios和安卓任意分享文件",
+                    "platforms" : "Android,iOS",
+                    "url" : "https://ext.dcloud.net.cn/plugin?id=2307",
+                    "android_package_name" : "uni.UNIB1A8336",
+                    "ios_bundle_id" : "uni.UNIB1A8336",
+                    "isCloud" : true,
+                    "bought" : 1,
+                    "pid" : "2307",
+                    "parameters" : {}
+                }
+            },
+            "TX-TRTCCloud" : {
+                "__plugin_info__" : {
+                    "name" : "腾讯实时音视频插件，qq群: 933785472",
+                    "description" : "腾讯ios,android原生sdk，插件永久维护，欢迎提需求",
+                    "platforms" : "Android,iOS",
+                    "url" : "https://ext.dcloud.net.cn/plugin?id=824",
+                    "android_package_name" : "uni.UNIB1A8336",
+                    "ios_bundle_id" : "uni.UNIB1A8336",
+                    "isCloud" : true,
+                    "bought" : 1,
+                    "pid" : "824",
+                    "parameters" : {}
+                }
+            }
+        }
+    },
+    /* SDK配置 */
+    "quickapp" : {},
+    /* 快应用特有相关 */
+    "mp-weixin" : {
+        /* 小程序特有相关 */
+        "appid" : "",
+        "setting" : {
+            "urlCheck" : true
+        },
+        "usingComponents" : true
+    },
+    "h5" : {
+        "title" : "防火码",
+        "domain" : "",
+        "router" : {
+            "base" : "/h5/"
+        }
+    }
+}

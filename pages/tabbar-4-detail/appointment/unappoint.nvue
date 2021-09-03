@@ -1,0 +1,91 @@
+<template>
+	<view style="padding-left: 30rpx;padding-right: 30rpx;padding-top: 24rpx;">
+		<view style="position: relative;background-color: #FFFFFF;width: 690rpx;border-radius: 16rpx;">
+			<view style="position: absolute;right: 26rpx;top: 49rpx;">
+				<image src="../../../static/work/appoly.png" mode="" style="width:240rpx;height:240rpx;"></image>
+			</view>
+			<view>
+				<view class="flex flex-row" style="width: 690rpx;">
+					<text class="violation_title" style="width: 300rpx;padding-top: 32rpx;">姓名：</text>
+					<text class="violation_detail" style="width: 390rpx;padding-top: 36rpx;">{{item.name}}</text>
+				</view>
+				<view class="flex flex-row" style="width: 690rpx;">
+					<text class="violation_title" style="width: 300rpx;padding-top: 32rpx;">申请卡口名称：</text>
+					<text class="violation_detail" style="width: 390rpx;padding-top: 36rpx;">{{item.park_name}}</text>
+				</view>
+				<view class="flex flex-row" style="width: 690rpx;padding-bottom: 40rpx;">
+					<text class="violation_title" style="width: 300rpx;padding-top: 32rpx;">申请时间：</text>
+					<text class="violation_detail" style="width: 390rpx;padding-top: 36rpx;">{{dateTran(item.created_at)}}</text>
+				</view>
+				<view class="border-top flex justify-center align-center flex-column" style="width:690rpx;height: 88rpx;">
+					<text class="look_detail" @click="gounappoint(item)">查看详情</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		props:{
+			item:{
+				type:[Object],
+				default:()=>{}
+			},
+			index:{
+				type:Number
+			}
+		},
+		data(){
+			return{
+				use_type:''
+			}
+		},
+		mounted() {
+			console.log(this.item);
+			console.log(this.index,'预约的下标');
+			console.log(this.item.use_type);
+			this.use_type = this.item.use_type;
+		},
+		methods:{
+			gounappoint(item){
+				uni.navigateTo({
+					url:'./unappointDetail?id='+item.id+ '&index=' + this.index,
+				})
+			},
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+		},
+	}
+</script>
+
+<style>
+    .violation_title {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		padding-left: 24rpx;
+	}
+
+	.violation_detail {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.look_detail {
+
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+		padding-top: 26rpx;
+		padding-bottom: 26rpx;
+	}
+
+	.border-top {
+		border-top-width: 1rpx;
+		border-top-style: solid;
+		border-top-color: #EEEFF3;
+	}
+</style>

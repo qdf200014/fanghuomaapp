@@ -1,0 +1,39 @@
+<template>
+	<view>
+		<uni-nav-bar left-icon="back" title="看日报" :statusBar="true"></uni-nav-bar>
+		<view class="flex flex-row justify-between p-3 w-100">
+			<view class="flex flex-column align-center justify-center" style="padding-right: 20rpx;">
+				<text style="font-size: 34rpx;font-weight: 400;">按关键字检索</text>
+			</view>
+			<view style="background-color: #EEEFF3;border-radius: 35rpx;width: 500rpx;height: 72rpx;" class="flex flex-row align-center">
+				<image src="../../../static/fireIndex/search.png" mode="" style="width: 30rpx;height: 30rpx;margin-left: 34rpx;"></image>
+				<input type="text" class="flex flex-1" @input="searchInput" @confirm="search" style="margin-left: 8rpx;font-size: 26rpx;" :value="inputKey"/>
+			</view>
+		</view>
+		<view>
+			<text>按行政级别筛选</text>
+			<view class="flex flex-row">
+				<view v-for="(item,index) in areaList" :key="index">
+					<text>{{item}}</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				areaList:['省','市','县','乡','村']
+			}
+		},
+		methods: {
+			
+		}
+	}
+</script>
+
+<style>
+
+</style>

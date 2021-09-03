@@ -1,0 +1,330 @@
+<template>
+	<view class="wrap flex flex-1 flex-column w-100 justify-center align-center" >
+		<uni-nav-bar left-icon="back" :statusBar="true" :border="false"></uni-nav-bar>
+		
+		<list class="title flex-1 flex flex-column w-100">
+			<cell class="flex flex-column w-100 justify-center align-center">
+				<image src="../../../static/img/login/fanghuoma@2x.png" class="logo"></image>
+				<view class="pb-5" style="display: flex; flex-direction: row; justify-content: center; align-items: center; width: 750rpx;">
+					<view class="line"></view>
+					<text class="welcome">欢迎您</text>
+					<view class="line lineTwo"></view>
+				</view>
+				<view class="pt-5">
+					<view class="uni-form-item uni-column">
+						<text class="phone">手机</text>
+						<input class="inputBorder" type="number" v-model="formData.phone" @com placeholder="请输入手机号" @confirm="hideKeyboard"/>
+					</view>
+					<view class="uni-form-item uni-column phoneCode" name="code">
+						<text class="pwd">验证码</text>
+						<input class="inputBorder" maxlength="6" type="number" v-model="formData.code" @confirm="hideKeyboard" placeholder="请输入验证码"/>
+						<view class="getCode" v-if="verifyShow" @click="getCode">
+							<text class="codeText">获取验证码</text>
+						</view>
+						<text class="getCodeTime" v-else >{{'剩余'+verifyTip+'秒'}}</text>
+					</view>
+					<view class="uni-form-item uni-column">
+						<text class="NewPwd pwd">新密码</text>
+						<input type="password" class="inputBorder" v-model="formData.newPwd" placeholder="请输入新密码" @confirm="hideKeyboard"/>
+						<text class="hint" style="height: 50rpx;">密码长度8-32位，须包含数字、字母、符号至少两种以上元素</text>
+					</view>
+					
+					<view class="uni-form-item uni-column">
+						<text class="isPwd pwd">确认密码</text>
+						<input type="password" class="inputBorder" v-model="formData.affirmPwd" placeholder="请输入确认密码" @confirm="hideKeyboard"/>
+					</view>
+				</view>
+				<view class="btw m-3" hover-class="hover-8" @click="forgetPwdCom">
+					<text style="line-height: 82rpx;
+					text-align: center;
+					font-size: 36rpx;
+					font-family: PingFangSC-Medium, PingFang SC;
+					font-weight: 500;
+					color: #FFFFFF;">下一步</text>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	export default {
+		data(){
+			return {
+				formData:{
+					phone: '',
+					code: '',
+					newPwd: '',
+					affirmPwd: '',
+					},
+				verifyShow: true,
+				verifyTip: 60,
+				disabled:true,
+				timer: null
+			}
+		},
+		onShow() {
+			this.formData.phone = '',
+			this.formData.code = '',
+			this.formData.newPwd = '',
+			this.formData.affirmPwd = ''
+		},
+		onHide() {
+			this.hideKeyboard();
+			if(this.timer){
+				clearTimeout(this.timer)
+				this.timer = null
+			}
+		},
+		methods: {
+			hideKeyboard(){
+				uni.hideKeyboard();
+			},
+			//验证码倒计时
+			getCode(){
+				
+				let strTemp = /^1[3|4|5|6|7|8|9][0-9]{9}$/;
+				if(!this.formData.phone){
+					uni.showToast({
+						title:"手机号不能为空",
+						icon:'none'
+					})
+				}else if(!strTemp.test(this.formData.phone)){
+					uni.showToast({
+						title:"手机号不正确",
+						icon:'none'
+					})
+				}else{
+					uni.$api.user.sendcode({
+						  "phone": this.formData.phone,
+						  "type": "setpwd"
+					})
+					.then(res => {
+						  console.log(res)
+						  if(res.statusCode == 200){
+							  this.verifyShow = false
+							  this.timedown(this.verifyTip)
+						  }
+					})
+					.catch(err => {
+						  console.log(err)
+									  
+					})
+					 this.verifyShow = false
+				}
+			},
+			timedown(num){
+				 this.verifyShow = false
+				 var interval = setInterval(() => {
+					 let times = --this.verifyTip
+					 this.verifyTip = times<10?'0'+times:times //小于10秒补 0
+					 }, 1000)
+					 setTimeout(() => {
+						if(num >= 1){
+							this.verifyTip=60
+							this.verifyShow = true
+					   }
+					   
+						clearInterval(interval)
+					 }, 60000)  
+			},
+			forgetPwdCom(){
+				uni.hideKeyboard();
+				if(!this.formData.phone){
+					uni.showToast({
+						title:'手机号不能为空',
+						icon:'none'
+					})
+				}else if(!this.formData.code){
+					uni.showToast({
+						title:'验证码不能为空',
+						icon:'none'
+					})
+				}else if(!this.formData.newPwd){
+					uni.showToast({
+						title:'新密码不能为空',
+						icon:'none'
+					})
+				}else if(this.formData.newPwd !== this.formData.affirmPwd){
+					uni.showToast({
+						title:'两次密码不一致',
+						icon:'none'
+					})
+				}else if(!this.formData.affirmPwd){
+					uni.showToast({
+						title:'确认密码不能为空',
+						icon:'none'
+					})
+				}else{
+					uni.$api.user.upduserpassword({
+						'Phone': this.formData.phone,
+						'PassWord':this.formData.newPwd,
+						'Code': this.formData.code
+					})
+					.then(res => {
+						console.log(res)
+						if(res.data.statusCode == 200){
+							uni.showToast({
+								title:"修改成功",
+								icon:'success'
+							})
+							this.timer = setTimeout(() => {
+								uni.navigateBack(1)
+							},1000)
+							
+						}else {
+							uni.showToast({
+								title: res.data.message,
+								icon:'none'
+							})
+						}
+					})
+					.catch(err => {
+						console.log(res)
+					})
+				}
+			},
+			hideKeyboard(){
+				this.hideKeyboard();
+			}
+		},
+	}
+</script>
+
+<style>
+.wrap{
+	width: 750rpx;
+	background-color: #FFF;
+	}
+	.title{
+		width: 750rpx;
+		justify-content: center;
+		align-items: center;
+		text-align: center;
+	}
+	.logo{
+		margin-top: 102rpx;
+		width: 240rpx;
+		height: 80rpx;
+		margin-bottom: 76rpx;
+	}
+	.welcome{
+		font-size: 30rpx;
+		font-family: PingFangSC-Medium, PingFang SC;
+		font-weight: 500;
+		color: #2F3034;
+		line-height: 30rpx;
+		margin: 0 32rpx;
+	}
+	.line{
+		width: 96rpx;
+		height: 4rpx;
+		background-image: linear-gradient(90deg, #FFFFFF, #323234);
+		margin-bottom: 6rpx;
+	}
+	.lineTwo{
+		transform: rotate(180deg);
+	}
+	.uni-form-item{
+		padding-bottom: 40rpx;
+		text-align: left;
+	}
+	.inputBorder{
+		width: 622rpx;
+		height: 92rpx;
+		border-bottom-color: #eeeff3;
+		border-bottom-width: 2rpx;
+		border-style: solid;
+		font-size: 36rpx;
+		font-family: HelveticaNeue;
+		color: #333333;
+	}
+	.phone{
+		font-size: 28rpx;
+		font-family: PingFangSC-Medium, PingFang SC;
+		font-weight: 600;
+		color: #2F3034;
+		line-height: 56rpx;
+	}
+	.pwd{
+		font-size: 28rpx;
+		font-family: PingFangSC-Medium, PingFang SC;
+		font-weight: 600;
+		color: #2F3034;
+		line-height: 56rpx;
+	}
+	.forgetPwd{
+		justify-content: space-between;
+	}
+	.forgrt{
+		margin-left: 64rpx;
+	}
+	.register{
+		margin-right: 64rpx;
+	}
+	.redPwd{
+		font-size: 28rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #F75252;
+		line-height: 28rpx;
+		border-bottom-width: 2rpx;
+		border-bottom-color: #F75252;
+		border-style: solid;
+	}
+	.btw{
+		width: 204rpx;
+		height: 82rpx;
+		background-color: #F75252;
+		border-radius: 82rpx;
+	}
+	.phoneCode{
+		position: relative;
+	}
+	.getCode{
+		position: absolute;
+		top: 68rpx;
+		right: 40rpx;
+		width: 238rpx;
+		height: 62rpx;
+		background-color: #00BCAB;
+		border-radius: 64rpx;
+	}
+	.hint{
+		position: absolute;
+		bottom: -20rpx;
+		left: 0rpx;
+		width: 750rpx;
+		text-align: left;
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+	.getCodeTime{
+		position: absolute;
+		top: 68rpx;
+		right: 40rpx;
+		width: 238rpx;
+		height: 62rpx;
+		background-color: #ccc;
+		text-align: center;
+		border-radius: 64rpx;
+		font-size: 26rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #FFFFFF;
+		line-height: 63rpx;
+	}
+	.codeText{
+		font-size: 26rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #FFFFFF;
+		line-height: 62rpx;
+		text-align: center;
+	}
+	.btwWrap{
+		
+		padding-bottom: 120rpx;
+	}
+</style>

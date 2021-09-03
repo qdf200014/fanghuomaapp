@@ -1,0 +1,86 @@
+<template>
+	<view class="flex flex-1 flex-column w-100" style="background-color: #F4F5FB">
+		<uni-nav-bar left-icon="back" title="同行人员" :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-1 flex-column w-100 p-3">
+			<cell>
+				<view style="width: 690rpx;background-color: #FFFFFF;margin-bottom: 24rpx;border-radius: 8rpx;height: 180rpx;" class="flex flex-row align-center p-border"  v-for="(item,index) in peersList" :key="index">
+					<view class="p-3">
+						<image src="../../../static/work/headimg.png" mode="" style="width: 100rpx;height: 100rpx;"></image>
+					</view>
+					<view style="padding-left: 32rpx;">
+						<text class="people_name">{{item.name}}</text>
+					</view>
+					<view class="people-box">
+						<text class="people_type">{{item.type}}</text>
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	export default {
+		data(){
+			return{
+				peersList:[]
+			}
+		},
+		onLoad(e) {
+			console.log(e);
+			uni.$api.appointment.getpeers({
+				id:e.id
+			})
+			.then(res=>{
+				console.log(res,'getpeers_RES')
+				this.peersList = res.data.data;
+				console.log(this.peersList)
+			})
+			.catch(err=>{
+				console.log(err,'getpeers_ERR')
+			})
+		}
+	}
+</script>
+
+<style>
+	.people_name {
+
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #323234;
+	}
+
+	.people_type {
+		height: 22rpx;
+		line-height: 22rpx;
+		font-size: 22rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+	.people-box{
+		
+		height: 32rpx;
+		background-color: #487CF1;
+		border-radius: 8rpx;
+		opacity: 0.4;
+		margin-left: 16rpx;
+		padding-top: 5rpx;
+		padding-bottom: 5rpx;
+		padding-left: 16rpx;
+		padding-right: 16rpx;
+	}
+	.shen{
+		
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #949599;
+		padding-top: 20rpx;
+	}
+	.p-border{
+		border-width: 1rpx;
+		border-style: solid;
+        border-color: #E6E6E6;;
+	}
+
+</style>

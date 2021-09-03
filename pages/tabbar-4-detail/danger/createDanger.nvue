@@ -1,0 +1,684 @@
+<template>
+	<view class="flex flex-column w-100 flex-1">
+		<uni-nav-bar left-icon="back" @clickLeft="leftone" :title="(stepDemo==0) ? '第一步':'第二步'" :statusBar="true"
+		 :isOperation="false"></uni-nav-bar>
+		<!-- 第一步 -->
+		<view v-if="stepDemo == 0">
+			<!-- 进度条 -->
+			<view class="w-100 flex flex-row justify-center align-center bg-white" style="height: 127rpx;">
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center rounded-2" style="width: 26rpx;height: 26rpx;background: rgba(240, 122, 78, 0.6);">
+						<view class="rounded-2" style="width: 14rpx;height: 14rpx;background: #F07A4E;"></view>
+					</view>
+					<text class="font-3 pt-1" style="color: #F07A4E;">创建文号</text>
+				</view>
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center" style="height: 26rpx;">
+						<view style="width: 145rpx;height: 2rpx;background-color: #DFE3EB;"></view>
+					</view>
+					<text class=" font-3 pt-1" style="color: #FFF">-</text>
+				</view>
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center rounded-2" style="width: 26rpx;height: 26rpx;background: rgba(223, 227, 235, 0.6);">
+						<view class="rounded-2" style="width: 14rpx;height: 14rpx;background: #DFE3EB;"></view>
+					</view>
+					<text class="theme-main-color font-3 pt-1">编辑内容</text>
+				</view>
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center" style="height: 26rpx;">
+						<view style="width: 145rpx;height: 2rpx;background-color: #DFE3EB;"></view>
+					</view>
+					<text class=" font-3 pt-1" style="color: #FFF">-</text>
+				</view>
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center rounded-2" style="width: 26rpx;height: 26rpx;background: rgba(223, 227, 235, 0.6);">
+						<view class="rounded-2" style="width: 14rpx;height: 14rpx;background:  #DFE3EB;"></view>
+					</view>
+					<text class="theme-main-color font-3 pt-1">完成签字</text>
+				</view>
+			</view>
+			<!-- 内容 -->
+			<view class="mt-2 bg-white flex flex-column flex-1">
+				<view class="bg-white pl-3 pr-3 pt-4">
+					<text class="createTitle">选择类型：</text>
+					<view style="padding-left: 32rpx;padding-top: 20rpx;" v-for="(items,index) in fileList">
+						<uni-data-checkbox v-model="items.value" :multiple="false" :localdata="items.smallFile" mode="list" />
+					</view>
+				</view>
+				<view class="bg-white pl-3 pr-3 pt-4 pb-4">
+					<text class="createTitle">创建文号：</text>
+					<view style="padding-left: 32rpx;padding-top: 20rpx;" v-for="(itm,index) in dnumberList">
+						<uni-data-checkbox  @getCity="getCity" v-model="itm.value" :multiple="false" :localdata="itm.smallDnumber" mode="list" :value="value" :guoProvice="guoProvice"/>
+					</view>
+					<view style="padding-left: 32rpx;background-color: #F4F5FB;border-radius: 16rpx;margin-top: 32rpx;" class="pb-3 flex flex-row"
+					 v-if="dnumberList[0].value == 0">
+						<wts-data-checkbox v-model="companyList.value" :multiple="false" @changeInput="changeInput" :localdata="companyList.options"
+						 mode="list"></wts-data-checkbox>
+					</view>
+				</view>
+				<view style="padding-left: 32rpx;padding-right: 32rpx;position: fixed;bottom: 56rpx;">
+					<view style="background-color: #F75252;width: 686rpx;height: 88rpx;border-radius: 44rpx;" @click="goTwo" :style="stepOneIsNext?'':'opacity:0.5;'"
+					 class="flex flex-column justify-center align-center">
+						<text style="color: #FFFFFF;font-size: 36rpx;font-weight: 600;">下一步</text>
+					</view>
+				</view>
+			</view>
+		</view>
+		<!-- 第二步 -->
+		<view v-else-if="stepDemo == 1" class="flex flex-column flex-1">
+			<!-- 步骤条 -->
+			<view class="w-100 flex flex-row justify-center align-center bg-white" style="height: 127rpx;">
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center rounded-2" style="width: 26rpx;height: 26rpx;background: rgba(240, 122, 78, 0.6);">
+						<view class="rounded-2" style="width: 14rpx;height: 14rpx;background: #F07A4E;"></view>
+					</view>
+					<text class="font-3 pt-1" style="color: #F07A4E;">创建文号</text>
+				</view>
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center" style="height: 26rpx;">
+						<view class="theme-main-bg" style="width: 145rpx;height: 2rpx;"></view>
+					</view>
+					<text class=" font-3 pt-1" style="color: #FFF">-</text>
+				</view>
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center rounded-2" style="width: 26rpx;height: 26rpx;background: rgba(240, 122, 78, 0.6);">
+						<view class="rounded-2" style="width: 14rpx;height: 14rpx;background: #F07A4E;"></view>
+					</view>
+					<text class="font-3 pt-1" style="color: #F07A4E;">编辑内容</text>
+				</view>
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center" style="height: 26rpx;">
+						<view style="width: 145rpx;height: 2rpx;background-color: #DFE3EB;"></view>
+					</view>
+					<text class=" font-3 pt-1" style="color: #FFF">-</text>
+				</view>
+				<view class="flex flex-column justify-center align-center">
+					<view class="flex justify-center align-center rounded-2" style="width: 26rpx;height: 26rpx;background: rgba(223, 227, 235, 0.6);">
+						<view class="rounded-2" style="width: 14rpx;height: 14rpx;background:  #DFE3EB;"></view>
+					</view>
+					<text class="theme-main-color font-3 pt-1">完成签字</text>
+				</view>
+			</view>
+			<list class="flex-1 flex flex-column w-100 bg-white" style="background-color: #F4F5FB;margin-top: 20rpx;">
+				<!-- <cell class="bg-white  pl-3 pr-3">
+					
+				</cell> -->
+				<cell class="bg-white pl-3 pr-3 flex flex-column pb-3" style="padding-bottom: 56rpx;">
+					<view class="flex flex-row justify-between align-center border-bottom" style="height: 112rpx;">
+						<text class="selectitle">红头单位名称：</text>
+						<view class="flex flex-column justify-end align-end">
+							<input type="text" placeholder="请输入" @confirm="confirm" style="font-size: 28rpx;font-weight: 400;width: 400rpx;text-align: right;"
+							 v-model="modifyList.RedUnitName">
+						</view>
+					</view>
+					<view class="flex flex-row justify-between align-center border-bottom" style="height: 112rpx;">
+						<text class="selectitle">督查单位：</text>
+						<view class="flex flex-column justify-end align-end">
+							<input type="text" placeholder="请输入" @confirm="confirm" style="font-size: 28rpx;font-weight: 400;width: 400rpx;text-align: right;"
+							 v-model="modifyList.InspectionUnit">
+						</view>
+					</view>
+					<view class="flex flex-row justify-between align-center border-bottom" style="height: 112rpx;">
+						<text class="selectitle">被督查单位：</text>
+						<view class="flex flex-column justify-end align-end">
+							<input type="text" placeholder="请输入" @confirm="confirm" style="font-size: 28rpx;font-weight: 400;width: 400rpx;text-align: right;"
+							 v-model="modifyList.InspectedUnit">
+						</view>
+					</view>
+					<view class="flex flex-row justify-between align-center border-bottom" style="height: 112rpx;">
+						<text class="selectitle">督查开始时间：</text>
+						<view class="flex flex-row justify-center align-center" @click="start">
+							<text :class="(startTime!='') ? 'timeContenta' :'timeContent'" style="padding-right: 18rpx;">{{dataTrns(startTime) || '请选择'}}</text>
+							<image src="../../../static/work/drop.png" mode="" style="width: 24rpx;height: 18rpx;"></image>
+						</view>
+					</view>
+					<view class="flex flex-row justify-between align-center border-bottom" style="height: 112rpx;">
+						<text class="selectitle">督查结束时间：</text>
+						<view class="flex flex-row justify-center align-center" @click="end">
+							<text :class="(endTime!='') ? 'timeContenta' :'timeContent'" style="padding-right: 18rpx;">{{dataTrns(endTime) || '请选择'}}</text>
+							<image src="../../../static/work/drop.png" mode="" style="width: 24rpx;height: 18rpx;"></image>
+						</view>
+					</view>
+					<view class="flex flex-row justify-between align-center border-bottom" style="height: 112rpx;">
+						<text class="selectitle">上报整改情况时间：</text>
+						<view class="flex flex-row justify-center align-center" @click="zong">
+							<text :class="(zongTime!='') ? 'timeContenta' :'timeContent'" style="padding-right: 18rpx;">{{dataTrns(zongTime) || '请选择'}}</text>
+							<image src="../../../static/work/drop.png" mode="" style="width: 24rpx;height: 18rpx;"></image>
+						</view>
+					</view>
+					<view class="pt-4">
+						<text class="selectitle">问题清单：</text>
+					</view>
+					<view class="pt-4" v-for="(item,index) in list" :key="index">
+						<text class="moreTitle">{{item.num}}.{{item.text}}</text>
+						<uni-data-checkbox v-model="item.value" :multiple="true" :localdata="item.answers" mode="list" style="padding-left: 32rpx;" />
+						<view class="flex flex-column justify-center otherinput" v-if="item.value.indexOf(item.answers[item.answers.length-1].value) >=0">
+							<input type="text" placeholder="请输入" @confirm="confirm" class="inputOther" v-model="item.other">
+						</view>
+					</view>
+				</cell>
+			</list>
+			<view style="padding-bottom: 56rpx;" class="bg-white pt-1 p-3 border-top">
+				<view style="background-color: #F75252;width: 686rpx;height: 88rpx;border-radius: 44rpx;" @click="gocontentTwo"
+				 :style="stepTwoIsNext?'':'opacity:0.5;'" class="flex flex-column justify-center align-center">
+					<text style="color: #FFFFFF;font-size: 36rpx;font-weight: 600;">下一步</text>
+				</view>
+			</view>
+		</view>
+		<!-- 第二步文章 -->
+		<view v-else-if="stepDemo == 2" class="flex flex-column flex-1">
+			<list class="flex flex-1 flex-column" v-if="cunList.redUnitName">
+				<cell class="pl-3 pr-3 bg-white">
+					<view style="padding-bottom: 24rpx;padding-top: 56rpx;" class="border-bottom-4 flex flex-column justify-center align-center">
+						<text class="contentTitle">{{cunList.redUnitName}}</text>
+					</view>
+					<view class="flex flex-column align-end" style="padding-top: 16rpx;">
+						<text class="smallTitle" v-if="cunList.numType==1">{{cunList.numText || cunList.NumText}}{{cunList.numProvince}}{{cunList.numYear || cunList.NumYear}}{{cunList.numNumber || cunList.NumNumber}}</text>
+						<text class="smallTitle" v-else>{{cunList.numProvince}}{{cunList.numText || cunList.NumText}}{{cunList.numYear || cunList.NumYear}}{{cunList.numNumber || cunList.NumNumber}}</text>
+					</view>
+					<view class="flex flex-column justify-center align-center pt-4 pb-4">
+						<text class="smallName">森林草原防火{{cunList.fileType == 1 ? '隐患整改通知书' : '督查问题清单' }}</text>
+					</view>
+					<text class="companyName">{{cunList.inspectedUnit}}：</text>
+					<view style="padding-top: 16rpx;padding-bottom: 16rpx;">
+						<text class="contentTop">&emsp;&emsp;{{dataTrn(cunList.inspectionStartTime)}}至{{dataTrn(cunList.inspectionEndTime)}},{{cunList.inspectionUnit}}对你单位进行督查,依据《国家林业和草原局森林草原防火督查工作管理办法(试行)》,发现存在{{cunList.hiddenDangerCount}}处{{cunList.fileType == 1 ? '隐患' : '问题' }},具体如下:</text>
+					</view>
+					<text class="contentTop" v-for="(item,index) in cunList.hiddenDangerSelectInfo" :key="index">&emsp;&emsp;{{item.hiddenContent}}</text>
+					<text class="contentTop" style="padding-top: 16rpx;">&emsp;&emsp;上述问题，对具备整改条件、能够当下改的，拿出具体措施和办法，明确时限和要求，按期整改到位；对短期内不能解决的，要制定整改方案，明确阶段目标，实行清单式、台账式管理，督查组将适时组织“回头看”，推动整改任务落实。各省级林草主管部门防火处于60日内将各单位整改情况汇总后报国家林草局防火司。</text>
+					
+					<text class="contentTop pl-2" style="padding-top: 96rpx;">督查工作组组长签字：</text>
+					<!-- 签字区域 -->
+					<view class="flex justify-end align-end ">
+						<view style="width: 345rpx;height: 210rpx;"></view>
+					</view>
+					<view class="pt-4 pl-2" style="padding-bottom: 16rpx;">
+						<text class="contentTop">被督查单位责任人签字：</text>
+					</view>
+					<!-- 签字区域 -->
+					<view class="flex justify-end align-end ">
+						<view style="width: 345rpx;height: 210rpx;"></view>
+					</view>
+				</cell>
+				<cell class="w-100 bg-white">
+					<view style="width: 690rpx;" class=" flex flex-row justify-end pt-4 pb-5">
+						<text class="contentTop">{{createTime}}</text>
+					</view>
+				</cell>
+				<cell class="w-100" style="height: 128rpx;"></cell>
+				<view style="height: 128rpx;"
+				 class="w-100 flex flex-row justify-between align-center bg-white border-top px-3 position-fixed left-0 bottom-0">
+					<view class="flex justify-center align-center pl-2 flex-column" @click="innerBack">
+						<image src="/static/work/modify.png" style="width: 44rpx;height: 44rpx;"></image>
+						<text style="font-size: 22rpx;color: #545B62;padding-top: 10rpx;">修改</text>
+					</view>
+					<view style="width: 250rpx;height: 88rpx;background-color: #FFFFFF;border-radius: 44rpx;" class="border-test flex flex-column justify-center align-center"
+					 @click="baocun">
+						<text style="color: #F75252;">暂存</text>
+					</view>
+					<view style="width: 250rpx;height: 88rpx;background-color: #F75252;border-radius: 44rpx;" class="flex flex-column justify-center align-center"
+					 @click="writeName">
+						<text style="color: #FFFFFF;">签字</text>
+					</view>
+				</view>
+			</list>
+		</view>
+
+		<!-- 日历 -->
+		<uni-calendar ref="calendar1" :insert="false" @confirm="confirmStart" />
+		<uni-calendar ref="calendar2" :insert="false" @confirm="confirmEnd" />
+		<uni-calendar ref="calendar3" :insert="false" @confirm="confirmZong" />
+	</view>
+
+</template>
+<script>
+	import wtSteps from '@/components/wt-steps/wt-steps.vue';
+	import dayjs from 'dayjs';
+	import {
+		mapGetters
+	} from 'vuex';
+	export default {
+		components: {
+			wtSteps,
+		},
+		data() {
+			return {
+				stepDemo: 0,
+				currentYear: '',
+				startTime: '',
+				endTime: '',
+				zongTime: '',
+				lala: '',
+				list: [], //问题清单数据
+				fileList: [{
+					value: null,
+					smallFile: [{
+							value: 2,
+							text: '督查问题清单'
+						},
+						{
+							value: 1,
+							text: '隐患整改通知书'
+						}
+					]
+				}],
+				dnumberList: [{
+					value: null,
+					smallDnumber: [{
+							value: 1,
+							cityType:3,
+							text: '国家林草局：林防督',
+							text1: `[${dayjs().format('YYYY')}]*号`,
+							NText: `林防督[${dayjs().format('YYYY')}]`
+						},
+						{
+							value: 0,
+							text: '省级以下单位'
+						}
+					]
+				}],
+				companyList: {
+					vaue: null,
+					options: [{
+						value: 2,
+						text: `林防隐[${dayjs().format('YYYY')}]*号`,
+						NText: ''
+					}, {
+						value: 3,
+						text: `林防督[${dayjs().format('YYYY')}]*号`,
+						NText: ''
+					}]
+				},
+				stepStatus: 0,
+				stepStatus1: 0,
+				activeRadio: '',
+				country: 0,
+
+
+				id: 0,
+				backStep: 0, // 页面返回状态，即stepDemo返回的状态
+
+				NumName: '',
+				radio1: 0,
+				cunList: {},
+				modifyList: {
+					RedUnitName: '', // 红头单位名称
+					InspectionUnit: '', // 督察单位i名称
+					InspectedUnit: '', /// 被督察单位
+				},
+				choseCity: null,
+				choseIndex: null,
+				createTime:dayjs().format('YYYY年MM月DD日'),
+				guoProvice:''
+			}
+		},
+		computed: {
+			...mapGetters({
+				userInfo: 'user/info'
+			}),
+			modifyStorageKey() {
+				return `${this.userInfo.userId}_modifyList`;
+			},
+			/**
+			 * 是否可以进入第二步
+			 */
+			stepOneIsNext() {
+				// 第一步未选择
+				if (this.fileList[0].value == null || this.dnumberList[0].value == null) return false;
+				// 当选择国家级的时候
+				if (this.dnumberList[0].value == 1){
+					// 未输入国家级的地区
+					if(this.choseCity == null) return false;
+				}
+				// 选择省级单位
+				if (this.dnumberList[0].value == 0) {
+					// 未选择省级单位
+					if (this.companyList.value == null) return false;
+					// 未填写文件号
+					if (this.companyList.options.filter(item => item.value == this.companyList.value)[0].NText == '') return false;
+				}
+				return true;
+			},
+			// 是否可以进入第二点五步
+			stepTwoIsNext() {
+				// 未填写单位名
+				if (this.modifyList.RedUnitName == '' || this.modifyList.InspectionUnit == '' || this.modifyList.InspectedUnit ==
+					'') return false;
+				// 未选择时间
+				if (this.startTime == '' || this.endTime == '' || this.zongTime == '') return false;
+
+				// 查找选择项
+				let list = this.list.filter(item => {
+					return item.value && item.value.length > 0;
+				})
+				// 未选择问题
+				if (list.length <= 0) return false;
+
+				// 选项中包含其他,并未填写内容
+				let list_flag = true;
+				list.forEach(item => {
+					if (item.value.indexOf(item.answers[item.answers.length - 1].value) >= 0 && (item.other == null || item.other ==
+							'')) list_flag = false;
+				});
+				if (!list_flag) return false;
+
+				return true;
+			}
+		},
+		onLoad(e) {
+			uni.removeStorageSync('choseIndex')
+			this.id = e.id;
+			this.getModifyListStorage();
+			if (e.id) {
+				this.stepDemo = 2;
+				this.backStep = 2;
+				// 获取展示信息
+				uni.$api.danger.gethiddendanger({
+						id: e.id
+					})
+					.then(res => {
+						console.log(res, '列表页暂存进来的');
+						let data = res.data.data;
+						this.cunList = data;
+						this.guoProvice = data.numProvince;
+						console.log(data)
+						// 第一步的选项回填
+						this.fileList[0].value = data.fileType;
+						data.numType == 1 ? (this.dnumberList[0].value = 1 , this.choseCity = data.numProvince) : (this.dnumberList[0].value = 0, this.companyList.value =
+							data.numType, this.companyList.options[data.numType - 2].NText = data.numProvince);
+					})
+					.catch(err => {
+						console.log(err)
+					});
+				// 获取展示数据
+				this.modifyContent();
+			}
+			uni.$api.danger.getquestions()
+				.then(res => {
+					console.log(res, 'getquestions_RES');
+					this.list = res.data.data;
+					console.log(this.list, '列表数据')
+					this.list.map((item) => {
+						item.value = []
+						item.other = ''
+					})
+				})
+				.catch(err => {
+					console.log(err, 'getquestions_ERR')
+				})
+			this.currentYear = dayjs().format('YYYY');
+			console.log(this.currentYear, '当前年');
+		},
+		methods: {
+			getCity(city){
+				console.log('aaaaaaaaaaaaaaaaaaa',city)
+				this.choseCity = city
+			},
+			// 获取本地缓存单位名称
+			getModifyListStorage() {
+				let modifyList = uni.getStorageSync(this.modifyStorageKey) || {
+					RedUnitName: '',
+					InspectionUnit: '',
+					InspectedUnit: '',
+				};
+
+				this.modifyList = modifyList;
+			},
+			// 缓存本地单位名称
+			setModifyListStorage() {
+				let modifyList = {
+					RedUnitName: this.modifyList.RedUnitName,
+					InspectionUnit: this.modifyList.InspectionUnit,
+					InspectedUnit: '',
+				};
+				uni.setStorageSync(this.modifyStorageKey, modifyList);
+			},
+			confirm() {
+				uni.hideKeyboard()
+			},
+			// 第一步-input输入框
+			changeInput(event) {
+				console.log(event,'==========')
+				this.companyList.options[event.index].NText = event.item.NText;
+			},
+			// 点击下一步跳到第二步
+			goTwo() {
+				if (this.stepOneIsNext) {
+					this.stepDemo = -1;
+					this.$nextTick(() => {
+						this.stepDemo = 1;
+					})
+				}
+			},
+			// 日历部分开始
+			start() {
+				uni.hideKeyboard()
+				this.$refs.calendar1.open();
+			},
+			end() {
+				uni.hideKeyboard()
+				this.$refs.calendar2.open();
+			},
+			zong() {
+				uni.hideKeyboard()
+				this.$refs.calendar3.open();
+			},
+			confirmStart(e) {
+				this.startTime = e.fulldate;
+			},
+			confirmEnd(e) {
+				this.endTime = e.fulldate;
+			},
+			confirmZong(e) {
+				this.zongTime = e.fulldate;
+			},
+			// 跳第二步的文章页面--点第二步的下一步
+			gocontentTwo() {
+
+				if (!this.stepTwoIsNext) return false;
+
+				uni.showLoading();
+				// 先保存
+				this.save();
+			},
+			//保存接口
+			save(){
+				uni.$api.danger.updhiddendanger({
+						Fhd_id: this.id,
+						FileType: this.fileList[0].value,
+						numText:this.dnumberList[0].value ? '林防督' :this.companyList.options.filter(item => item.value == this.companyList.value)[0].text.replace('['+dayjs().format('YYYY')+']*号', ''),
+						numYear:'['+dayjs().format('YYYY')+']',
+						NumType: this.dnumberList[0].value ? this.dnumberList[0].value : this.companyList.value,
+						numProvince: this.dnumberList[0].value ? this.choseCity : this.companyList.options.filter(
+							item => item.value == this.companyList.value)[0].NText,
+						...this.modifyList,
+						InspectionStartTime: this.startTime,
+						InspectionEndTime: this.endTime,
+						ReportTime: this.zongTime,
+						Answers: this.list
+					})
+					.then(res => {
+						console.log(res, '暂存成功');
+						this.setModifyListStorage();
+						this.id = res.data.data;
+						// 再拉取
+						uni.$api.danger.gethiddendanger({
+								id: this.id
+							})
+							.then(res => {
+								this.cunList = res.data.data;
+								this.stepDemo = 2;
+							})
+							.catch(err => {
+								console.log(err)
+							})
+					})
+					.catch(err => {
+						console.log(err, '暂存失败')
+					})
+					.finally(() => {
+						uni.hideLoading();
+					})
+			},
+			modifyContent() {
+				uni.$api.danger.getfhiddeninfo({
+						id: this.id
+					})
+					.then(res => {
+						console.log(res, '点击修改');
+						let data = res.data.data;
+						this.modifyList.RedUnitName = data.redUnitName;
+						this.modifyList.InspectionUnit = data.inspectionUnit;
+						this.modifyList.InspectedUnit = data.inspectedUnit;
+						this.list = data.answers;
+						this.startTime = data.inspectionStartTime;
+						this.endTime = data.inspectionEndTime;
+						this.zongTime = data.reportTime;
+					})
+					.catch(err => {
+						console.log(err, '修改失败')
+					})
+			},
+			leftone() {
+				if (this.stepDemo == 1){
+					this.choseIndex = uni.getStorageSync('choseIndex')
+					this.choseCity = this.guoProvice;
+				}else{
+					if (this.stepDemo == this.backStep) return uni.navigateBack();
+				}
+				
+				
+				this.innerBack();
+			},
+			innerBack() {
+				let step = this.stepDemo;
+				this.stepDemo = -1;
+				this.$nextTick(() => {
+					if (step - 1 < 0) step = 3;
+					this.stepDemo = step - 1;
+				})
+			},
+			writeName() {
+				uni.navigateTo({
+					url: './signature/signature?id=' + this.id
+				})
+			},
+
+			dataTrn(timeTrn) {
+				if ('' == timeTrn) return '';
+				return dayjs(timeTrn).format('YYYY年MM月DD日')
+			},
+			dataTrns(timeTrn) {
+				if ('' == timeTrn) return '';
+				return dayjs(timeTrn).format('YYYY-MM-DD')
+			},
+			// 暂存
+			baocun() {
+				this.save();
+				uni.navigateBack();
+			}
+		},
+	}
+</script>
+
+<style>
+	.createTitle {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #333333;
+	}
+
+	.createContent {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.selectitle {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #323234;
+	}
+
+	.timeContent {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.timeContenta {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.moreTitle {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #333333;
+	}
+
+	.moreContent {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.inputOther {
+		font-size: 28rpx;
+		padding-left: 24rpx;
+	}
+
+	.otherinput {
+		width: 690rpx;
+		height: 88rpx;
+		background-color: #F4F5FB;
+		border-radius: 6px;
+	}
+
+	.contentTitle {
+		/* #ifndef APP-PLUS-NVUE */
+		letter-spacing: 1rpx;
+		/* #endif */
+		font-size: 44rpx;
+		font-weight: 600;
+		color: #FF1D1D;
+		line-height: 44rpx;
+	}
+
+	.border-bottom-4 {
+		border-bottom-width: 2rpx;
+		border-bottom-style: solid;
+		border-bottom-color: #FF1D1D;
+	}
+
+	.smallTitle {
+		font-size: 28rpx;
+		font-weight: 600;
+		color: #666666;
+	}
+
+	.smallName {
+		font-size: 40rpx;
+		font-weight: 400;
+		color: #333333;
+	}
+
+	.companyName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #333333;
+	}
+
+	.contentTop {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #333333;
+		line-height: 45rpx;
+	}
+
+	.modify {
+		font-size: 22rpx;
+		color: #545B62;
+		padding-top: 10rpx;
+	}
+</style>

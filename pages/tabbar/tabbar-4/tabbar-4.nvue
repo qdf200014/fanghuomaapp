@@ -1,0 +1,233 @@
+<template>
+	<view class="flex flex-column flex-1" style="background-color: #FFFFFF;">
+		<uni-nav-bar title="工作台" :statusBar="true" :border="false"></uni-nav-bar>
+		<list class="w-100 flex flex-column">
+
+			<cell v-for="(mod, mIndex) in workbenchList" v-if="mod.isShow" :key="mIndex" >
+				<text class="title-4">{{mod.name}}</text>
+				<uni-grid :column="4" :showBorder="false">
+					<uni-grid-item v-for="(item, index) in mod.list" :key="index">
+						<view class="flex flex-column justify-center align-center" @click="workbenchClick(item.event)" style="height: 185rpx;">
+							<image :src="item.icon" class="img-4"></image>
+							<text class="content-4">{{item.name}}</text>
+						</view>
+					</uni-grid-item>
+				</uni-grid>
+			</cell>
+		</list>
+
+	</view>
+</template>
+<script>
+	import workbenchConfig from './workbenchConfig.js';
+	import { mapGetters, mapActions } from 'vuex';
+	import deepClone from '@/utils/js-deep-clone';
+	import appConfig from '@/common/appConfig/appConfig.js'
+	export default {
+		data(){
+			return {
+				// userInfo:{
+				// 	managementRole:5,	// 管理角色：1林长 2专业扑火对于 3护林员 4瞭望员 5其他
+				// 	isAdmin:0,			// 0不是管理员1是管理员
+				// 	oldOrgType:1,		// 是否为场景管理员 0否 1是
+				// 	oldHasPark: false,	// 是否有责任区
+				// 	status:0,			// 状态：0未审核 1已通过 2拒绝 3禁用
+				// 	HasPark :false,		// 是否有所属林场
+				// 	ParkAreaCode : false,	// 所属林场编码
+				// }
+			}
+		},
+		computed:{
+			workbenchList(){
+				let list = deepClone(workbenchConfig);
+				let userInfo = this.userInfo;
+				list.forEach(mod=>{
+					mod.isShow = true;
+					(mod.hasOwnProperty('isAdmin') && (mod.isAdmin != userInfo.isAdmin)) ? (mod.isShow = false) :'';	// 管理员权限
+					(mod.hasOwnProperty('oldHasPark') && (mod.oldHasPark != userInfo.oldHasPark)) ? (mod.isShow = false) : '';	// 有责任区
+					mod.list.forEach(item=>{
+						(item.hasOwnProperty('oldOrgType') && (item.oldOrgType != userInfo.oldOrgType)) ? (item.event = 'noPermission') :'';	// oldOrgType场景管理员 0否1是
+						userInfo.status != 1 ? (item.event = 'noPass') :'';	// 未通过审核人员
+					})
+				});
+				return list;
+			},
+			...mapGetters({
+				userInfo:'user/info'
+			})
+		},
+		onShow() {
+			this.getUserInfo();	// 用户信息更新
+		},
+		methods: {
+			...mapActions({
+				getUserInfo:'user/getUserInfo',
+			}),
+			// 点击工作台
+			workbenchClick(fn){
+				fn && this[fn]();
+			},
+			// 未通过审核
+			noPass(){
+				uni.showToast({
+					title: '您的资质审核未通过',
+					icon: 'none'
+				});
+			},
+			// 无权限人员
+			noPermission(){
+				uni.showToast({
+					title: '您没有此行为权限',
+					icon: 'none'
+				});
+			},
+			// 跳政府公告
+			notice() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/government/government'
+				})
+			},
+			// 跳日报
+			daily(){
+				uni.navigateTo({
+					url:'../../tabbar-1-detail/dailyNews/dailyNews'
+				})
+			},
+			// 跳签到
+			sign(){
+				uni.showToast({
+					title: appConfig.tipText,
+					icon:'none'
+				})
+			},
+			// 跳会商
+			bussiness(){
+				uni.navigateTo({
+					url:'../../discussion/index'
+				})
+			},
+			// 跳人员审批
+			goapproval() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/approval/approval'
+				})
+			},
+			// 跳高危人群预警
+			gorisk() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/riskhigh/riskhigh'
+				})
+			},
+			// 跳投票管理
+			govote() {
+				uni.navigateTo({
+					url: '../../vote/list/index'
+				})
+			},
+			// 跳违规举报
+			goviolation() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/violation/violation'
+				})
+			},
+			gofirewarn() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/fireWarn/fireWarn'
+				})
+			},
+			gosos() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/sos/sos'
+				})
+			},
+			// 跳到二维码下载
+			gotwocode() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/twoCode/twoCode'
+				})
+			},
+			// 跳推广指标
+			goextension() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/extension/extension'
+				})
+			},
+			// 跳预约办证审批
+			goappointment() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/appointment/appointment'
+				})
+			},
+			// 跳进山人员统计
+			gomountain() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/mountain/mountain'
+				})
+			},
+			// 跳人员管理
+			gomanage() {
+				uni.navigateTo({
+					url: '../../tabbar-4-detail/management/management'
+				})
+			},
+			// 跳隐患整改
+			goHistory() {
+				uni.navigateTo({
+					url:'../../tabbar-1-detail/historyToday/historyToday'
+				})
+			},
+			// 扫码
+			scanRqCode() {
+				// 允许从相机和相册扫码
+				let targetStr = 'cert?n=';
+				uni.scanCode({
+					success: function(res) {
+						if (res.result.indexOf(targetStr) < 0) return uni.showToast({
+							title: '二维码无效',
+							icon: 'none'
+						});
+						uni.showLoading({
+							mask: false
+						});
+						uni.$api.appointment.check({
+							cert_number:res.result.split(targetStr)[1]
+						})
+						.then(response=>{
+							uni.hideLoading();
+							console.log('appointment.check_RES', response);
+							uni.navigateTo({
+								url: `../../tabbar-4-detail/scanQrCode/scanQrCode?query=${encodeURIComponent(JSON.stringify(response.data.data))}`
+							})
+						})
+						.catch(err=>{
+							uni.hideLoading();
+							console.log('appointment.check_ERR', err);
+						})
+					}
+				});
+			},
+		}
+	}
+</script>
+<style>
+	.img-4 {
+		width: 90rpx;
+		height: 90rpx;
+	}
+
+	.content-4 {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #606266;
+		margin-top: 19rpx;
+	}
+
+	.title-4 {
+
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #323234;
+		padding-left: 45rpx;
+		padding-top: 40rpx;
+	}
+</style>

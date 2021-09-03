@@ -1,0 +1,309 @@
+<template>
+    <view class="flex flex-1 flex-column w-100">
+        <uni-nav-bar left-icon="back" :title="title" :statusBar="true" :right-text="(sourceType==0 || sourceType==3) ? '': '确定'" @clickRight="backLast" :fixed="true"></uni-nav-bar>
+        <view  class="position-relative flex flex-1 w-100">
+            <wt-list class="contactInfoList" api="addressBook.getmaillistuserlist" @resultRequest="resultRequest" :limit="100" :isGetMore="true" :params="{attr: levelUser.attr,area: levelUser.area,types : isCity ? 1 : 0}">
+                <template v-slot:dataList="ctx">
+                    <cell class="contactInfo flex flex-row justify-between w-100" v-for="(item,index) of chengeList(ctx.dataList)" :key="item.userId" @click.stop="toPersonal(item,$event)">
+                        <view class="flex flex-row align-center pl-3" style="height: 138rpx;">
+                            <view class="justify-center"  v-if="sourceType == 0 || sourceType ==3 ? false : true" style="width: 80rpx; height: 138rpx;" @click.stop="pitch(item,$event,index)">
+                                <image src="../../static/discussion/select.png" style="width: 44rpx; height: 44rpx;" v-if="item.selectValue == true"></image>
+                                <image src="../../static/discussion/unselected.png" style="width: 44rpx; height: 44rpx;" v-if="item.selectValue == false"></image>
+                                <image src="../../static/addrBook/checked.png" style="width: 44rpx; height: 44rpx;" v-if="item.selectValue == 3"></image>
+                            </view>
+                            <image :src="item.headUrl" v-if="item.headUrl" class="avatar"></image>
+                            <view class="defaultHead" v-else>
+                                <text class="headName">{{item.name.charAt(item.name.length-2)+item.name.charAt(item.name.length-1)}}</text>
+                            </view>
+                            <!-- <headImg :userinfo="item" style="position: absolute; left: 85rpx; width: 96rpx; height: 96rpx;"></headImg> -->
+                            <text class="contactName">{{item.name}}</text>
+                            <text class="duty" v-if="item.jobName">{{item.jobName}}</text>
+                        </view>
+                        <view class="connection flex flex-row align-center pr-3" v-if="sourceType < 2 ? true : false">
+                            <image src="../../static/addrBook/sendMsg@2x.png" style="width: 74rpx; height: 74rpx; margin-right: 30rpx;"
+                            @click.stop="sendMsg(item,$event)"></image>
+                            <image src="../../static/addrBook/callPhone@2x.png" style="width: 74rpx; height: 74rpx;" 
+                            @click.stop="openUnitname(item,index,$event)"></image>
+                        </view>
+                        <view class="connection flex flex-row align-center pr-3" v-if="sourceType==3">
+                            <view class="flex justify-center align-center" hover-class="hover-8" @click.stop="lookTa(item)" style="background-color: #00BCAB;width: 212rpx;height: 56rpx;border-radius: 28rpx;">
+                                <text class="text-white font-sm">查看Ta的日报</text>
+                            </view>
+                        </view>
+                    </cell>
+                </template>
+            </wt-list>
+        </view>
+        <uni-popup ref="popupWtNameDialog" type="bottom">
+            <view class="w-100 flex justify-center align-center p-2">
+                <wt-dialog :btns="[{
+                    text:'取消',
+                }]" :btnMode="4" :title="`是否致电  ${name}`"  @close="wtDialogCancel">
+                    <text class="mb-3 text-center" style="height: 104rpx; line-height: 104rpx;" @click="callPhone">{{phone}}</text>
+                </wt-dialog>
+            </view>
+            
+        </uni-popup>
+    </view>
+</template>
+ 
+<script>
+    import { mapGetters, mapActions } from 'vuex';
+    import headImg from '@/components/universalHead.nvue'
+    export default {
+        components:{
+            headImg
+        },
+        data(){
+            return {
+                current: -1,
+                pitchs: false,
+                dataList: [],
+                levelUser:{},
+                name: '',
+                phone: '',
+                showHead: true,
+                headName: '',
+                nowadayLevel:'',
+                nowadayCode:'',
+                choseUser:[],
+                title:'',
+                sourceType:0,    // 页面来源
+                types: null,
+                isCity: null
+            }
+        },
+        computed:{
+			...mapGetters({
+				selectedList: 'user/selectedList'
+			}),
+            teamMembersObj() {
+                return this.$store.getters['initNim/teamMembersObj']
+            },
+            currentSessionId() {
+                return this.$store.getters['initNim/currentSessionId']
+            },
+            to() {
+                return this.currentSessionId && this.currentSessionId.split('-')[1]
+            }
+        },
+        onLoad(option) {
+            let msg = JSON.parse(decodeURIComponent(option.msg))
+            this.title = msg.title;
+            this.sourceType = msg.sourceType;
+            this.isCity = msg.isCity
+            if(msg.isCity){
+                this.types = 1
+            }else{
+                this.types = 0
+            }
+            
+            
+            // if(msg.sourceType == 'createNormalTeamImmediate'){
+            //     this.sourceType = 1;
+            // }
+            
+            this.levelUser = msg
+            console.log(msg)
+            uni.$api.addressBook.getmaillistuserlist({
+                "types": this.types,
+                "attr": msg.attr,
+                "area": msg.area
+            }).then(res => {
+                this.dataList = res.data.data
+                if(this.dataList.headUrl == null){
+                    this.showHead = false
+                }
+            }).catch(err => {
+                console.log(err)
+            })
+        },
+        methods:{
+            chengeList(data){
+                if(this.levelUser.sourceType == 'addMember'){
+					let memberIndex = null
+					let memberId = this.teamMembersObj[this.to].members.map(item => item.account)
+					let selectedIndex = null
+					let selectedId = this.selectedList.map(item => item.userId)
+					let userIdList = data.map(item => item.userId)
+					console.log(userIdList)
+					console.log(memberId)
+					for (let i = 0; i < memberId.length; i++) {
+						if(userIdList.indexOf(memberId[i]) > -1){
+							memberIndex = userIdList.indexOf(memberId[i])
+							data[memberIndex].selectValue = 3
+						}
+					}
+					for (let i = 0; i < selectedId.length; i++) {
+						if(userIdList.indexOf(selectedId[i]) > -1){
+							selectedIndex = userIdList.indexOf(selectedId[i])
+							data[selectedIndex].selectValue = true
+						}
+					}
+					return data;
+                }
+				if(this.levelUser.sourceType == 'createNormalTeamImmediate' || this.levelUser.sourceType == 2){
+				    let memberIndex = null
+				    let memberId = this.selectedList.map(item => item.userId)
+				    let userIdList = data.map(item => item.userId)
+				    for (let i = 0; i < memberId.length; i++) {
+				        if(userIdList.indexOf(memberId[i]) > -1){
+				            memberIndex = userIdList.indexOf(memberId[i])
+				            data[memberIndex].selectValue = true
+				        }
+				    }
+				    
+				    console.log(data[memberIndex] && data[memberIndex].selectValue)
+				    console.log(data)
+				    return data;
+				}
+                return data;
+            },
+            resultRequest(e) {
+                // console.log('rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr',e)
+                this.choseList = e.data.data
+                this.choseList = this.choseList.map(item => {
+                    item.selectValue = false
+                    return item
+                })
+                console.log('rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr',this.choseList)
+            },
+            
+            ...mapActions({
+                clearSelected:'user/clearSelected',
+                selectUser:'user/selectUser',
+                unSelectUser:'user/unSelectUser'
+            }),
+            backLast(){
+                if( this.sourceType == 0 || this.sourceType == 3 ) return
+                
+                let list = this.choseUser.filter(item=>item.isChecked);
+                
+                console.log('list_', list);
+                
+                this.selectUser(list);
+                uni.navigateBack()
+            },
+            pitch(item,event,index){
+                // #ifdef APP-NVUE
+                event.stopPropagation()
+                // #endif
+                console.log('ssssssssssssssssssssssssssssss',item)
+                item.selectValue = !item.selectValue
+                // item.isChecked = item.isChecked ? false : true;
+                if(item.selectValue){
+                    this.selectUser([item]);
+                } else {
+                    this.unSelectUser([item]);
+                }
+            },
+            toPersonal(item,event){
+                console.log(item)
+                // #ifdef APP-NVUE
+                event.stopPropagation()
+                // #endif
+                uni.navigateTo({
+                    url:'./personalPage?userId=' + item.userId + '&sourceType=' + this.sourceType
+                })
+            },
+            openUnitname(item,index,event){
+                // #ifdef APP-NVUE
+                event.stopPropagation()
+                // #endif
+                this.name = item.name
+                this.phone = item.phone
+                // this.$refs.popupWtNameDialog.open();
+                
+                if (uni.getSystemInfoSync().platform == "android") {
+                    this.$refs.popupWtNameDialog.open();
+                }
+                if (uni.getSystemInfoSync().platform == "ios") {
+                    this.callPhone();
+                }
+            },
+            callPhone(){
+                uni.makePhoneCall({
+                    phoneNumber: this.phone, //仅为示例
+                    // complete() {
+                    //     this.wtDialogNameConfirm(done,value);
+                    // }
+                });
+                
+            },
+            sendMsg(item,event){
+                // #ifdef APP-NVUE
+                event.stopPropagation()
+                // #endif
+                uni.navigateTo({
+                    url: '/pages/easy-chat/chat?sessionId=p2p-' + item.userId
+                })
+            },
+            // 查看他的所有日报
+            lookTa(item){
+                uni.navigateTo({
+                    url:'../tabbar-1-detail/personalDaily/personalDaily?userId='+item.userId + "&userName=" + item.name
+                })
+            },
+            wtDialogCancel(done,value){
+                done()
+            }
+        }
+    }
+</script>
+ 
+<style>
+.contactInfoList{
+    width: 750rpx;
+}
+.contactInfo{
+    width: 690rpx;
+    height: 138rpx;
+    flex-direction: row;
+    align-items: center;
+    background-color: #FFF;
+    border: 0rpx;
+    border-bottom-width: 1rpx; 
+    border-bottom-color: #EEEFF3; 
+    border-style: solid;
+}
+.avatar{
+    width: 96rpx;
+    height: 96rpx; 
+    border-width: 4rpx;
+    border-style: solid;
+    border-color: #FFF;
+    border-radius: 50%; 
+}
+.contactName{
+    font-size: 32rpx;
+    font-weight: 400;
+    color: #323234;
+    margin-left: 24rpx;
+    margin-right: 16rpx;
+}
+.defaultHead{
+    justify-content: center;
+    align-items: center;
+    width: 96rpx;
+    height: 96rpx;
+    background-color: #F75252;
+    border-radius: 50%;
+    border-width: 4rpx;
+    border-style: solid;
+    border-color: rgba(255, 196, 196, 0.67);
+}
+.headName{
+    font-size: 32rpx;
+    font-weight: 400;
+    color: #FFFFFF;
+}
+.duty{
+    padding: 4rpx 16rpx;
+    border-width: 1rpx;
+    border-style: solid;
+    font-size: 22rpx;
+    border-color: #F07A4E;
+    color: #F07A4E;
+    border-radius: 20px;
+}
+</style>

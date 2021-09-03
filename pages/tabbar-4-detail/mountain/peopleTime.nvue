@@ -1,0 +1,349 @@
+<template>
+	<view class="flex flex-column w-100 flex-1">
+		<uni-nav-bar left-icon="back" title="防火码" :statusBar="true"></uni-nav-bar>
+		<view style="width: 750rpx;height: 116rpx;background-color: #F7FAFE;" class="pl-4 pr-4 flex flex-row justify-between">
+			<view class="flex flex-column justify-center">
+				<text class="allReason" @click="typeOpen">{{type}}</text>
+			</view>
+			<view class="flex flex-column justify-center" @click="phonesort">
+				<text class="phoneSort">按手机号排序</text>
+			</view>
+		</view>
+		<view style="width: 750rpx;height: 58rpx;background-color: #F4F5FB;" class="pl-4 pr-4 flex flex-row justify-between">
+			<view class="flex flex-column justify-center">
+				<text class="allDara">共{{len}}条数据</text>
+			</view>
+			<view class="flex flex-column justify-center">
+				<text class="phoneTime">{{start}}-{{end}}</text>
+			</view>
+		</view>
+		<list class="flex flex-1 flex-column w-100">
+			<cell>
+				<scroll-view scroll-x="true" class="flex flex-row">
+					<view class="flex flex-row">
+						<view>
+							<view style="width: 163rpx;height: 88rpx;background-color: #EFEFEF;"  class="flex justify-center align-center flex-column">
+								<text class="people_title">姓名</text>
+							</view>
+							<view style="width: 163rpx;height: 88rpx;"  class="flex justify-center align-center flex-column" v-for="(item,index) in registerList" :key="index" :style="{'background-color': (index%2==0 ? '#F7F7F7':'#EFEFEF')}">
+								<text class="people_title line-1">{{item.name}}</text>
+							</view>
+						</view>
+						<view>
+							<view style="width: 228rpx;height: 88rpx;background-color: #EFEFEF;"  class="flex justify-center align-center flex-column">
+								<text class="people_title">手机号</text>
+							</view>
+							<view style="width: 228rpx;height: 88rpx;"  class="flex justify-center align-center flex-column" v-for="(item,index) in registerList" :key="index" :style="{'background-color': (index%2==0 ? '#F7F7F7':'#EFEFEF')}">
+								<text class="people_title  line-1">{{item.phone}}</text>
+							</view>
+						</view>
+						<view>
+							<view style="width: 402rpx;height: 88rpx;background-color: #EFEFEF;"  class="flex justify-center align-center flex-column">
+								<text class="people_title">景区名称</text>
+							</view>
+							<view style="width: 402rpx;height: 88rpx;"  class="flex justify-center align-center flex-column" v-for="(item,index) in registerList" :key="index" :style="{'background-color': (index%2==0 ? '#F7F7F7':'#EFEFEF')}">
+								<text class="people_title  line-1">{{item.park_name}}</text>
+							</view>
+						</view>
+						<view>
+							<view style="width:148rpx;height: 88rpx;background-color: #EFEFEF;"  class="flex justify-center align-center flex-column">
+								<text class="people_title">卡口名称</text>
+							</view>
+							<view style="width:148rpx;height: 88rpx;"  class="flex justify-center align-center flex-column"  v-for="(item,index) in registerList" :key="index" :style="{'background-color': (index%2==0 ? '#F7F7F7':'#EFEFEF')}">
+								<text class="people_title line-1">{{item.entrance}}</text>
+							</view>
+						</view>
+						<view>
+							<view style="width: 296rpx;height: 88rpx;background-color: #EFEFEF;"  class="flex justify-center align-center flex-column">
+								<text class="people_title">登记时间</text>
+							</view>
+							<view style="width: 296rpx;height: 88rpx;"  class="flex justify-center align-center flex-column" v-for="(item,index) in registerList" :key="index" :style="{'background-color': (index%2==0 ? '#F7F7F7':'#EFEFEF')}">
+								<text class="people_title  line-1">{{item.register_date}}</text>
+							</view>
+						</view>
+						<view>
+							<view style="width: 234rpx;height: 88rpx;background-color: #EFEFEF;"  class="flex justify-center align-center flex-column">
+								<text class="people_title">进山原因</text>
+							</view>
+							<view style="width: 234rpx;height: 88rpx;"  class="flex justify-center align-center flex-column"  v-for="(item,index) in registerList" :key="index" :style="{'background-color': (index%2==0 ? '#F7F7F7':'#EFEFEF')}">
+								<text class="people_title line-1">{{item.in_type}}</text>
+							</view>
+						</view>
+						<view>
+							<view style="width: 234rpx;height: 88rpx;background-color: #EFEFEF;"  class="flex justify-center align-center flex-column">
+								<text class="people_title">同行人员</text>
+							</view>
+							<view style="width: 234rpx;height: 88rpx;"  class="flex justify-center align-center flex-column" v-for="(item,index) in registerList" :key="index"  :style="{'background-color': (index%2==0 ? '#F7F7F7':'#EFEFEF')}">
+								<text class="people_look  line-1" v-if="item.peers_count!=0" @click="golook(item)">查看同行人员</text>
+								<text class="people_title  line-1" v-else>未登记</text>
+							</view>
+						</view>
+					</view>
+				</scroll-view>
+			</cell>
+		</list>
+		<uni-popup type="bottom" ref='typePopup'>
+			<view class="w-100 p-3" style="background-color: #FFFFFF;">
+				<view style="background-color: #FFFFFF;" class="flex justify-center align-center justify-between">
+					<text class="close" @click="close">关闭</text>
+					<text class="in-type">进山原因</text>
+					<text class="close" @click="comfire">确定</text>
+				</view>
+				<view style="background-color: #FFFFFF;width: 690rpx;height: 96rpx;padding-top: 64rpx;padding-bottom: 50rpx;" class="flex flex-column justify-center border-bottom">
+					<text class="selectype">选择原因</text>
+				</view>
+				<view v-for="(item,index) in typeList" :key="index" @click="selectType(item,index)">
+					<view style="height: 96rpx;" class="flex flex-column justify-center">
+						<text :class="tabIndex==index ? 'type_red' : 'type_name'">{{item.name}}</text>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				typeList: [{
+						id: 0,
+						name: '全部原因'
+					},
+					{
+						id: 3,
+						name: '游玩/活动'
+					},
+					{
+						id: 2,
+						name: '生产作业'
+					},
+					{
+						id: 6,
+						name: '车辆通行'
+					},
+					{
+						id: 7,
+						name: '采集山产品'
+					},
+					{
+						id: 1,
+						name: '祭祀'
+					},
+					{
+						id: 5,
+						name: '迁坟'
+					},
+					{
+						id: 4,
+						name: '其他'
+					}
+				],
+				type: '全部原因',
+				tabIndex:0,
+				typename:'',
+				typeId:0,
+				typeid:0,
+				start:'',
+				end:'',
+				registerList:[],
+				len:0,
+				mounts:{},
+				organization_id:''
+			}
+		},
+		onLoad(e) {
+			console.log(e);
+			this.start = e.start,
+			this.end = e.end,
+			this.organization_id = e.organization_id;
+			if(this.organization_id == 'null' || this.organization_id == 'undefined'){
+				this.mounts = {
+					from_date:e.start,
+					to_date:e.end,
+					
+				}
+			}else{
+				this.mounts = {
+					from_date:e.start,
+					to_date:e.end,
+					organization_id:this.organization_id,
+				}
+			}
+			uni.$api.mountains.registerList(this.mounts)
+			.then(res=>{
+				console.log(res,'registerList_RES')
+				this.registerList = res.data.data.items;
+				this.len = this.registerList.length;
+			})
+			.catch(err=>{
+				console.log(err,'registerList_ERR')
+			})
+		},
+		methods: {
+			typeOpen() {
+				this.$refs.typePopup.open();
+			},
+			close() {
+				this.$refs.typePopup.close();
+			},
+			comfire() {
+				this.type = this.typename;
+				this.$refs.typePopup.close();
+				this.typeid = this.typeId;
+				if(this.typeid == 0){
+					this.type='全部原因'
+					uni.$api.mountains.registerList({
+						from_date:this.start,
+						to_date:this.end,
+						organization_id:this.organization_id
+					})
+					.then(res=>{
+						console.log(res,'registerList_RES')
+						this.registerList = res.data.data.items;
+						this.len = this.registerList.length;
+						console.log(this.registerList,'啦啦啦啦');
+					})
+					.catch(err=>{
+						console.log(err,'registerList_ERR')
+					})
+				}else{
+					uni.$api.mountains.registerList({
+						from_date:this.start,
+						to_date:this.end,
+						in_type:this.typeid,
+						organization_id:this.organization_id
+					})
+					.then(res=>{
+						console.log(res,'registerList_RES')
+						this.registerList = res.data.data.items;
+						this.len = this.registerList.length;
+					})
+					.catch(err=>{
+						console.log(err,'registerList_ERR')
+					})
+				}
+			},
+			selectType(item,index){
+				this.tabIndex = index;
+				this.typename = item.name;
+				this.typeId = item.id;
+			},
+			// 按手机号进行排序
+			phonesort(){
+				if(this.typeid == 0){
+					uni.$api.mountains.registerList({
+						from_date:this.start,
+						to_date:this.end,
+						sort:'phone',
+						organization_id:this.organization_id
+					})
+					.then(res=>{
+						console.log(res,'registerList_RES')
+						this.registerList = res.data.data.items;
+						this.len = this.registerList.length;
+						// console.log(this.registerList,'按手机号进行排序');
+					})
+					.catch(err=>{
+						console.log(err,'registerList_ERR')
+					})
+				}else{
+					uni.$api.mountains.registerList({
+						from_date:this.start,
+						to_date:this.end,
+						in_type:this.typeid,
+						sort:'phone',
+					})
+					.then(res=>{
+						console.log(res,'registerList_RES')
+						this.registerList = res.data.data.items;
+						this.len = this.registerList.length;
+						console.log(this.registerList,'按手机号进行排序');
+					})
+					.catch(err=>{
+						console.log(err,'registerList_ERR')
+					})
+				}
+			},
+			// 查看同行人员
+			golook(item){
+				uni.navigateTo({
+					url:'./mountainPeople?id='+item.id
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.allReason {
+
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #303233;
+	}
+
+	.phoneSort {
+
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #5A71F5;
+	}
+
+	.allDara {
+
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #303233;
+	}
+
+	.phoneTime {
+
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.people_title {
+
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #303233;
+	}
+
+	.in-type {
+
+		font-size: 30rpx;
+		font-weight: 500;
+		color: #191F25;
+	}
+
+	.close {
+		font-size: 30rpx;
+		font-weight: 500;
+		color: #F25643;
+	}
+
+	.selectype {
+
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+	.type_name{
+		
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #191F25;
+	}
+	.type_red{
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #F25643;
+	}
+	.people_look{
+		font-size: 30rpx;
+		font-weight: 400;
+		color:#487CF1;
+	}
+</style>

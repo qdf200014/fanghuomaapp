@@ -1,0 +1,91 @@
+<template>
+	<view class="flex flex-1 flex-column w-100" style="background-color: #F4F5FB">
+		<uni-nav-bar left-icon="back" title="同行人员" :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-1 flex-column w-100 p-3">
+			<cell>
+				<view style="width: 690rpx;height: 180rpx;background-color: #FFFFFF;margin-bottom: 24rpx;border-radius: 8rpx;"
+				 class="flex  align-center p-border" v-for="(item,index) in peopleList" :key="index">
+					<view class="p-3">
+						<image src="../../../static/work/headimg.png" mode="" style="width: 100rpx;height: 100rpx;"></image>
+					</view>
+					<view class="flex justify-between">
+						<view class="flex flex-row">
+							<text class="people_name">{{item.name}}</text>
+							<view class="people_box">
+								<text class="people_type">{{item.type}}</text>
+							</view>
+						</view>
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				peopleList: []
+			}
+		},
+		onLoad(e) {
+			console.log(e, '同行人员');
+			uni.$api.riskhigh.getriskhighpeople({
+					id: e.id
+				})
+				.then(res => {
+					console.log('getriskhighpeople_RES', res)
+					this.peopleList = res.data.data
+				})
+				.catch(err => {
+					console.log('getriskhighpeople_ERR', err)
+				})
+		}
+	}
+</script>
+
+<style>
+	.people_name {
+
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #323234;
+	}
+
+	.people_type {
+
+		height: 22rpx;
+		line-height: 22rpx;
+		font-size: 22rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+
+	.people_box {
+		height: 32rpx;
+		background-color: #487CF1;
+		border-radius: 8rpx;
+		opacity: 0.4;
+		margin-left: 16rpx;
+		padding-top: 5rpx;
+		padding-bottom: 5rpx;
+		padding-left: 16rpx;
+		padding-right: 16rpx;
+	}
+
+	.shen {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #949599;
+		padding-top: 20rpx;
+	}
+
+	.p-border {
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #E6E6E6;
+		;
+	}
+</style>

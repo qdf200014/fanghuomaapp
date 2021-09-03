@@ -1,0 +1,97 @@
+.font-1{
+	font-size: 38upx;
+	font-family: PingFangSC-Medium, PingFang SC;
+	font-weight: 500;
+	color: #323234;
+}
+.font-2{
+	font-size: 30upx;
+	font-family: PingFangSC-Medium, PingFang SC;
+	font-weight: 500;
+	color: #323234;
+}
+.font-3{
+	font-size: 26upx;
+	font-family: PingFangSC-Regular, PingFang SC;
+	font-weight: 400;
+	color: #606266;
+}
+.font-4{
+	font-size: 26upx;
+	font-family: HelveticaNeue;
+	color: #949599;
+}
+.font-5{
+	font-size: 24upx;
+	font-family: HelveticaNeue;
+	color: #C2C3C8;
+}
+.theme-bg{
+	background-color: #949599;
+}
+.theme-search{
+	background-color: #EEEFF3;
+}
+.theme-timeline{
+	background-color: #EEEFF3;
+}
+.theme-main-bg{
+	background-color: #F75252;
+}
+.theme-main-color{
+	color: #F75252;
+}
+.theme-main-border{
+	border-color: #F75252;
+}
+
+.theme-second-bg{
+	background-color: #F07A4E;
+}
+.theme-second-color{
+	color: #F07A4E;
+}
+.theme-second-border{
+	border-color: #F07A4E;
+}
+
+.theme-second-green-bg{
+	background-color: #00BCAB;
+}
+.theme-second-green-color{
+	color: #00BCAB;
+}
+.theme-second-green-border{
+	border-color: #00BCAB;
+}
+
+.theme-second-blue-bg{
+	background-color: #487CF1;
+}
+.theme-second-blue-color{
+	color: #487CF1;
+}
+.theme-second-blue-border{
+	border-color: #487CF1;
+}
+.hover-8{
+	opacity: 0.8;
+}
+
+.line-1{
+	lines: 1;
+	text-overflow: ellipsis;
+}
+
+.line-2{
+	lines: 2;
+	text-overflow: ellipsis;
+}
+
+.line-3{
+	lines: 3;
+	text-overflow: ellipsis;
+}
+.Oswald-Regular {
+	font-family: Oswald-Regular;
+}

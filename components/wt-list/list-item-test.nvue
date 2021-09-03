@@ -1,0 +1,19 @@
+<template>
+	<view>
+		<text>{{item.title}}</text>
+	</view>
+</template>
+
+<script>
+	export default {
+		props:{
+			item:{
+				type:[Array, Object],
+				default:()=>[]
+			}
+		}
+	}
+</script>
+
+<style>
+</style>

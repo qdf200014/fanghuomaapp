@@ -1,0 +1,312 @@
+<template>
+	<view class="flex flex-1 flex-column w-100">
+		<uni-nav-bar left-icon="back" left-text="返回" right-text="菜单" title="写日报" :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-1 flex-column w-100">
+			<cell v-for="(item,index) in extMode" :key="index">
+				<view class="flex flex-row flex-wrap" v-if="item.label">
+					<text class="text-danger" v-if="item.required">*</text><text>{{item.label}}/{{item.tip}}</text>
+				</view>
+				<view v-if="item.ui == 'Radio'">
+					<uni-data-checkbox  v-model="item.value" :localdata="item.option" />
+					<view v-if="item.hasOwnProperty(item.value)">
+						<input type="text" :placeholder="item[item.value].placeholder" v-model="item[item.value].value" />
+					</view>
+				</view>
+				<view v-if="item.ui == 'CheckBox'">
+					<uni-data-checkbox :value="item.value" v-model="item.value" :multiple="true" :localdata="item.option" />
+					<view v-if="item.value.indexOf(item.option[item.option.length-1].value)>-1">
+						<input type="text" :placeholder="item[item.value].placeholder" v-model="item[item.value].value" />
+					</view>
+				</view>
+				<view v-if="item.ui == 'Switcher'">
+					<switch :checked="item.value" @change="item.value = !item.value"/>
+				</view>
+				<view v-if="item.ui == 'Select'">
+					<picker mode="selector" :range="item.option" @change="item.value = $event.detail.value">
+						<view>{{item.option[item.value] || '请选择'}}</view>
+					</picker>
+				</view>
+				<view v-if="item.ui == 'Text'">
+					<textarea v-model="item.value" :placeholder="item.placeholder" />
+				</view>
+				<view v-if="item.ui == 'Input'">
+					<input :type="item.type" v-model="item.value" :placeholder="item.placeholder" />
+				</view>
+				<view v-if="item.ui == 'Image'">
+					<view class="flex flex-row flex-wrap">
+						<image v-for="(imgItem , imgIndex) in item.option" style="width: 100rpx;height: 100rpx;" class="border" :src="imgItem" mode="aspectFill"></image>
+						<view class="border flex align-center justify-center" v-if="item.option.length<item.max" @click="openCamera('img', item)" style="width: 100rpx;height: 100rpx;">
+							<text class="font-5">添加</text>
+						</view>
+					</view>
+				</view>
+				<view v-if="item.ui == 'Video'">
+					<view class="flex flex-row flex-wrap">
+						<video v-for="(videoItem , videoIndex) in item.option" :src="videoItem" style="width: 100rpx;height: 100rpx;" class="border" :controls="false"></video>
+						<view class="border flex align-center justify-center" v-if="item.option.length<item.max" @click="openCamera('video', item)" style="width: 100rpx;height: 100rpx;">
+							<text class="font-5">添加</text>
+						</view>
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				mode1:[
+					{
+						"name": "TextArea",
+						"label": "",
+						"ui": "Text",
+						"type": "String",
+						"tip": "必选",
+						"required": true,
+						"option": [],
+						"placeholder": "请填写日报内容",
+						"min": 100,
+						"max": 1000,
+						"value": ""
+					},
+					{
+						"name": "Image",
+						"label": "图片选择",
+						"ui": "Image",
+						"type": "String",
+						"tip": "非必选",
+						"required": false,
+						"option": [],
+						"placeholder": "图片选择",
+						"min": 0,
+						"max": 9,
+						"value": ""
+					}, {
+						"name": "Video",
+						"label": "视频选择",
+						"ui": "Video",
+						"type": "String",
+						"tip": "非必选",
+						"required": false,
+						"option": [],
+						"placeholder": "视频选择",
+						"min": 0,
+						"max": 9,
+						"value": ""
+					}
+				],
+				mode2:[{
+					"name": "Radio",
+					"label": "1、是否按照既定计划完成本日的巡护路线",
+					"ui": "Radio",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": [{text:"是", value:0}, {text:"否", value:1}],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": "",
+					"1":{
+						placeholder:'请输入原因',
+						value:''
+					}
+				},{
+					"name": "Radio",
+					"label": "2、巡护过程中是否发现异常",
+					"ui": "Radio",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": [{text:"是", value:0}, {text:"否", value:1}],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": ""
+				},{
+					"name": "CheckBox",
+					"label": "",
+					"ui": "CheckBox",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": [{text:"火情灾害", value:0}, {text:"林地占用", value:1}, {text:"其他（需说明原因）", value:2}],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": [0,1],
+					"2": {
+						placeholder:'请输入原因',
+						value:''
+					}
+				},{
+					"name": "Radio",
+					"label": "3、责任区域内防火/公共设施是否有损坏",
+					"ui": "Radio",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": [{text:"是", value:0}, {text:"否", value:1}],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": "",
+					"1":{
+						placeholder:'请输入原因',
+						value:''
+					}
+				},{
+					"name": "TextArea",
+					"label": "4、备注（选填）",
+					"ui": "Text",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": [],
+					"placeholder": "备注",
+					"min": 100,
+					"max": 1000,
+					"value": ""
+				}],
+				extMode: [{
+					"name": "Radio",
+					"label": "单选",
+					"ui": "Radio",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": [{text:"R1", value:0}, {text:"R2", value:1}, {text:"R3", value:2}, {text:"其他", value:3}],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": "",
+					"3":""
+				}, {
+					"name": "CheckBox",
+					"label": "多选",
+					"ui": "CheckBox",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": [{text:"R11", value:0}, {text:"R22", value:1}, {text:"R33", value:2}],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": []
+				}, {
+					"name": "Switch",
+					"label": "开关",
+					"ui": "Switcher",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": ["123123", "2344"],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": false
+				}, {
+					"name": "Select",
+					"label": "下拉选择",
+					"ui": "Select",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": ["123123", "2344"],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": null
+				}, {
+					"name": "TextArea",
+					"label": "文本域",
+					"ui": "Text",
+					"type": "String",
+					"tip": "必选",
+					"required": true,
+					"option": ["123123", "2344"],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": ""
+				}, {
+					"name": "Input",
+					"label": "普通输入",
+					"ui": "Input",
+					"type": "text",
+					"tip": "必选",
+					"required": true,
+					"option": ["123123", "2344"],
+					"placeholder": "PH",
+					"min": 100,
+					"max": 1000,
+					"value": ""
+				}, {
+					"name": "Image",
+					"label": "图片选择",
+					"ui": "Image",
+					"type": "String",
+					"tip": "非必选",
+					"required": false,
+					"option": [],
+					"placeholder": "图片选择",
+					"min": 0,
+					"max": 9,
+					"value": ""
+				}, {
+					"name": "Video",
+					"label": "视频选择",
+					"ui": "Video",
+					"type": "String",
+					"tip": "非必选",
+					"required": false,
+					"option": [],
+					"placeholder": "视频选择",
+					"min": 0,
+					"max": 9,
+					"value": ""
+				}]
+			}
+		},
+		onLoad(e) {
+			this.extMode = this.mode2;
+			// console.log(e,'护林员日报跳转');
+			// uni.$api.dailynews.getdailydetail({
+			// 	dailyId : e.dailyId
+			// })
+			// .then(res=>{
+			// 	console.log(res);
+			// 	this.extMode = JSON.parse(res.data.data.content);
+			// })
+			// .catch(err=>{
+			// 	console.log(err)
+			// })
+		},
+		methods: {
+			openCamera(type, item){
+				if(type == 'img'){
+					uni.chooseImage({
+					    count: (item.max - item.option.length),
+					    success: (res)=> {
+							item.option = item.option.concat(res.tempFiles.map(img=>img.path));
+					    }
+					});
+				}
+				
+				if(type == 'video'){
+					uni.chooseVideo({
+						success: (res)=> {
+							item.option.push(res.tempFilePath);
+						}
+					});
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

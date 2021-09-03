@@ -1,0 +1,271 @@
+<template>
+	<view style="display: flex;width: 750rpx;flex: 1;">
+		
+		<view class="hearder">
+			<image class="header_button" src="../../../static/call/zoom@3x.png" @click="zoomIn" mode=""></image>
+			<text class="header_text">等待接通</text>
+			<image class="header_button" src="../../../static/call/add@3x.png" mode=""></image>
+		</view>
+		<!-- 接电话 -->
+			<!-- 第三层：来电界面，等待用户选择接受还是拒绝 -->
+		<view  v-if="call_type ==0" class="flex-column bg-dark flex-1 position-relative">
+			<image class="flex-1 position-absolute" src="../../../static/call/bg@2x.png" mode="scaleToFill"></image>
+		 
+			<view class="flex-1 left-0 top-0 right-0 bottom-0  position-absolute flex-column align-center justify-center">
+				<image :src="sigData.avatar || 'http://yx-web.nos.netease.com/webdoc/h5/im/default-icon.png'" mode="aspectFill" style="width: 218rpx;height: 218rpx;border-radius:20rpx;"></image>
+				<text class="_call-user-name mt-5">{{ sigData.nickName }}</text>
+				<text class="_call-tip-text mt-3">邀请你视频聊天...</text>
+			</view>
+		</view>
+		<!-- 打电话 -->
+		<view v-if="call_type == 1" class="flex-column bg-dark flex-1 position-relative">
+			<trtc_video_view ref="videoView" :style="position_my"></trtc_video_view>
+			<text class="_call-user-name mt-5" style="text-align: center;margin-top: 800rpx;">等待对方接听</text>
+		</view>
+
+		<!-- 未接通 -->
+		<view class="block_call">
+			<view class="block_call_item" v-for="(item,index) in button_noconnect" :key="index" @click="disConnect(index)" v-if="item.type">
+				<image class="button_image" :src="item.url" mode=""></image>
+				<text  class="button_text">{{ call_type == 1 ? '取消' : item.text}}</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	//插件对象
+	let TRTC = uni.requireNativePlugin('TX-TRTC');
+	
+	//悬浮窗插件对象
+	let FW = uni.requireNativePlugin('Float-Window');
+	
+	export default {
+		data(){
+			return{
+				call_type:-1,//类型 1打 0接
+				sigData:'',//接口传递
+				button_noconnect:[],
+				button_connect:[ //接通后按钮
+					{
+						url:'../../../static/call/jingyin@2x.png',
+						text:'静音',
+						url_active:'../../../static/call/jingyin-active@2x.png'
+					},
+					{
+						url:'../../../static/call/callbreak.png',
+						text:'挂断',
+						url_active:'../../../static/call/callbreak.png'
+					},
+					{
+						url:'../../../static/call/mianti@2x.png',
+						text:'扬声器',
+						url_active:'../../../static/call/mianti-active@2x.png'
+					}
+				],
+				videoWidth:220, //第一视频宽
+				videoHeight:340,//第一视频高
+				position_my:'width:110px;height:140px;position: fixed;right: 20rpx;top: 180rpx;',
+				userSig:'',
+			}
+		},
+		onLoad(option) {
+			
+			this.call_type = option.isCreator // 类型 1打0接
+			this.sigData = JSON.parse(decodeURIComponent(option.sigData));
+			console.log('页面接受的参数', this.sigData);
+			console.log('类型', this.call_type);
+			this.button_noconnect = [
+				{
+					url:'../../../static/call/guaduan@2x.png',
+					text:'拒绝',
+					type:true
+				},
+				{
+					url:'../../../static/call/videoJie.png',
+					text:'接听',
+					type:option.isCreator == 0 ? true : false
+				},
+			],
+			//检查权限
+			TRTC.checkPermission(function(res){
+				console.log(res);
+			});
+			
+			//获取签名
+			uni.$api.rtc.signature({
+			    requestPayload: this.userUID,
+			}).then(res => {
+			    this.userSig = res.data.data
+				//进入房间
+				this.enterRoom();
+			}).catch(err => {
+			    console.log(err);
+			})
+		},
+		mounted() {
+			this.startVideo();
+			
+			//关闭悬浮窗
+			FW.closeFloatWindow("TRTC_FW_TAG");
+		},
+		computed:{
+			//userID
+			userUID() {
+			    return this.$store.getters['initNim/userUID']
+			}
+		},
+		methods: {
+			//进入房间
+			enterRoom() {
+				//判断悬浮窗是否存在
+				var ret = FW.isShowFloatWindow("TRTC_FW_TAG");
+				if (ret) {
+					return;
+				}
+				//加入房间
+				var scene = 0; //视频通话 = 0;视频互动直播 = 1;语音通话 = 2;语音互动直播 = 3;
+				TRTC.enterRoom({
+					sdkAppId:'1400475030',
+					roomId:this.sigData.roomId,
+					userId:this.userUID,
+					userSig:this.userSig
+				}, scene);
+			},
+			startVideo() {
+				//判断悬浮窗是否存在
+				var ret = FW.isShowFloatWindow("TRTC_FW_TAG");
+				if (ret == true) {
+					TRTC.stopLocalPreview(this.targetUserId, 0);
+					var remoteVideoView = this.$refs.remoteVideoView;
+					remoteVideoView.startRemoteView(this.targetUserId, 0);
+					console.log(this.targetUserId);
+				}
+				
+				//开启音频
+				TRTC.stopLocalAudio();
+				TRTC.startLocalAudio(2);
+				
+				//开始视频
+				TRTC.stopLocalPreview();
+				var videoView = this.$refs.videoView;
+				videoView.startLocalPreview(true);
+				
+			},
+			//挂断
+			disConnect(e) {
+				console.log(e)
+				console.log('断开连接');
+				if(e == 0){ //挂断
+					uni.navigateBack({});
+					
+					var videoView = this.$refs.videoView;
+					videoView.stopLocalPreview();
+					
+					var remoteVideoView = this.$refs.remoteVideoView;
+					remoteVideoView.stopRemoteView(this.targetUserId, 0);
+					
+					TRTC.exitRoom();
+					
+					//关闭悬浮窗
+					FW.closeFloatWindow("TRTC_FW_TAG");
+				}else{  //接电话
+					
+				}
+			},
+			joinRoom() {
+				console.log('加入房间');
+			},
+
+			closeFloatWindow() {
+				//关闭悬浮窗
+				FW.closeFloatWindow("TRTC_FW_TAG");
+			},
+			// 缩小
+			zoomIn() {
+				uni.navigateBack({});
+				
+				TRTC.startLocalPreview(true);
+				
+				var iconPath = plus.io.convertLocalFileSystemURL("_www/static/phone_icon.png");
+				console.log(iconPath);
+				//打开悬浮窗
+				FW.showFloatWindow({
+					tag:"TRTC_FW_TAG",//指定窗口唯一标记
+					width:60,//悬浮窗宽度
+					height:60,//悬浮窗高度
+					x:0,//悬浮窗x位置
+					y:150,//悬浮窗y位置
+					views:[//悬浮窗定义
+						{
+							id:"bg_layer",//控件唯一标识
+							type:"layer",//控件类型 text=文本控件 image=图片控件 layer=层控件
+							backgroundColor:"#FFFFFF",//背景颜色
+							cornerRadius:12,//圆角半径
+							width:-1,//控件宽度 -1铺满父控件
+							height:-1//控件高度，-2根据内容显示高度
+						},
+						{
+							id:"phone_img_view",//控件唯一标识
+							type:"image",//控件类型 text=文本控件 image=图片控件 layer=层控件
+							src:iconPath,////图片路径 原生本地路径或网络url
+							width:32,//控件宽度
+							height:32,//控件高度
+							layoutGravity:1|48,//控件对齐位置 LEFT=3;TOP=48;RIGHT=5;BOTTOM=80;CENTER=17;CENTER_HORIZONTAL=1;CENTER_VERTICAL=16;
+							marginTop:6//marginRight右边距 marginLeft左边距 marginTop顶部边距 marginBottom底部边距
+						},
+						{
+							id:"time_text_view",//控件唯一标识
+							type:"text",//控件类型 text=文本控件 image=图片控件 layer=层控件
+							width:54,//控件宽度
+							height:24,//控件高度
+							layoutGravity:1|80,//控件对齐位置 LEFT=3;TOP=48;RIGHT=5;BOTTOM=80;CENTER=17;CENTER_HORIZONTAL=1;CENTER_VERTICAL=16;
+							marginBottom:6,//marginBottom底部边距,注：相对对齐位置的边距，不是对上面控件的边距
+							//marginRight:12,//marginRight右边距 marginLeft左边距 marginTop顶部边距 marginBottom底部边距
+							text:"00:00",//文本
+							textColor:"#FF0000",//文本颜色
+							textSize:14,//文本大小
+							textAlignment:"center"//文本对齐方式 left左对齐 center居中 right右对齐
+						}
+					]
+				});
+			}
+		}
+	}
+</script>
+
+<style scoped>
+
+.hearder{
+	width: 750rpx;padding: 0 30rpx;
+	display: flex;justify-content: space-between;flex-direction: row;
+	position: fixed;left: 0;top: 80rpx;
+}
+.header_text{
+	color: white;
+}
+.header_button{
+	width: 44rpx;height: 44rpx;
+}
+._call-user-name {
+    color: #ffffff;
+    font-size: 50rpx;
+    font-weight: 500;
+}
+._call-tip-text {
+    color: #a4a4a4;
+    font-size: 30rpx;
+    font-weight: 500;
+}
+.block_call{
+	width: 750rpx;padding: 30rpx;
+	display: flex;justify-content: space-around;flex-direction: row;
+	position: fixed;left: 0;bottom: 0;
+}
+.button_image{
+	width: 144rpx;height: 144rpx;
+}
+.button_text{
+	width: 144rpx;color: white;text-align: center;font-size: 24rpx;line-height: 60rpx;
+}
+</style>

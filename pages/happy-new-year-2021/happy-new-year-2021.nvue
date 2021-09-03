@@ -1,0 +1,43 @@
+<template>
+	<view style="display: flex;flex: 1;width: 750rpx;align-items: center;justify-content: center;flex-direction: column;">
+		<view style="width: 750rpx;height: 422rpx;">
+			<video src="/static/happyNewYear2021/happyNewYear2021.mp4" object-fit="cover"
+			 :enable-progress-gesture="false" :show-fullscreen-btn="false" :show-center-play-btn="false" style="width: 750rpx;height: 422rpx;"
+			 :show-loading="false"
+			 poster="/static/happyNewYear2021/happyNewYear2021.png"
+			 :controls="true" :autoplay="true" @play="startVideo" @ended="endVideo"></video>
+		</view>
+		<image src="/static/happyNewYear2021/close.png" style="width: 56rpx;height: 56rpx;margin-top: 56rpx;" @click="endVideo"></image>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				isBack: false
+			}
+		},
+		onBackPress() {
+			return !this.isBack;
+		},
+		onLoad() {
+			console.log('start_onLoad_happy_new_year');
+		},
+		onUnload() {
+			console.log('end_onUnload_happy_new_year');
+		},
+		methods: {
+			endVideo(event) {
+				console.log('endVideo_', event);
+				if (this.isBack) return;
+				this.isBack = true;
+				uni.navigateBack();
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

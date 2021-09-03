@@ -1,0 +1,276 @@
+<template>
+	<view class="flex flex-column w-100 flex-1">
+		<uni-nav-bar left-icon="back" title="日报" :statusBar="true">
+			<view class="flex flex-1 justify-end" slot="right">
+				<!-- <image src="../../../static/fireIndex/daysearch.png" style="width: 36rpx;height: 36rpx;"></image> -->
+				<image src="../../../static/fireIndex/select.png" style="width: 36rpx;height: 36rpx;margin-left: 20rpx;margin-right: 10rpx;"
+				 @click="select"></image>
+			</view>
+		</uni-nav-bar>
+		<view style="width: 750rpx;height: 96rpx;background-color: #FFFFFF;" class="flex justify-center align-center flex-row">
+			<view v-for="(item,index) in tabList" :key="index" style="width:188rpx;height: 78rpx;" class="flex align-center justify-center"
+			 @click="handleIndex(index)" :class="(tabIndex == index) ? 'border-blue' : ''">
+				<text :class="(tabIndex == index) ? 'blue' : 'black'">{{item}}</text>
+			</view>
+			<view style="width: 188rpx;height: 78rpx;" class="flex flex-row justify-center align-center border-left" :style="(tabIndex==1)?'visibility:hidden':'visibility:visible'">
+				<view>
+					<image src="../../../static/fireIndex/weidu.png" mode="" style="width:40rpx;height: 40rpx;" @click="gounread" v-if="ishowRead"></image>
+					<image src="../../../static/fireIndex/yidu.png" mode="" style="width: 40rpx;height: 40rpx;" v-else @click="goreader"></image>
+				</view>
+				<text class="black" style="padding-left: 12rpx;">未读</text>
+			</view>
+		</view>
+		<swiper class="flex flex-column w-100 flex-1" :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
+		 :duration="duration" @change="changeCurrent" :current="tabIndex" v-if="readed">
+			<swiper-item class="flex flex-column w-100 flex-1">
+				<view class="flex flex-column w-100 flex-1">
+					<allnews v-on:goall="goStatus($event, index)" v-if="isShowAll==false" ref="allnewsDaily"></allnews>
+					<lookallnews @checkAll="isShowAll = false;" v-else :dailyId="dailyId" :userName="userName" :userId="userId" ref="lookallNews"></lookallnews>
+				</view>
+			</swiper-item>
+			<swiper-item class="flex flex-column w-100 flex-1">
+				<view class="flex flex-column w-100 flex-1">
+					<minenews v-on:gomine="goStatus1($event, index)" v-if="isShowMine==false" ref="minenewsDaily"></minenews>
+					<lookmineNews v-else :dailyId="dailyId" :userName="userName" :userId="userId" @checkMine="isShowMine=false" ref="lookmineNews"></lookmineNews>
+				</view>
+			</swiper-item>
+			<swiper-item class="flex flex-column w-100 flex-1">
+				<view class="flex flex-column w-100 flex-1">
+					<lowernews v-on:golower="goStatus2($event,index)" v-if="isShowLower==false" ref="lowernewsDaily"></lowernews>
+					<looklowernews v-else :dailyId="dailyId" :userName="userName" :userId="userId" @checkLower="isShowLower=false" ref="looklowerNews"></looklowernews>
+				</view>
+			</swiper-item>
+		</swiper>
+		<view v-else class="flex flex-column w-100 flex-1">
+			<selectRead v-on:goselectRead="goStatus2($event,index)" v-if="!isShowLower" ref="selectList"></selectRead>
+			<looklowernews v-else :dailyId="dailyId" :userName="userName" :userId="userId" @checkLower="isShowLower=false"></looklowernews>
+		</view>
+		<uni-popup ref="popupWtDialog1" type="center">
+			<wt-dialog :maskClick='true' :btns="['取消','确定']" title="提示" @confirm="agree1">
+				<view class="flex flex-column justify-center align-center" style="padding-bottom: 32rpx;">
+					<text style="font-size: 26rpx;font-weight: 400;color: #030303;">查看{{userName}}的所有日报</text>
+				</view>
+			</wt-dialog>
+		</uni-popup>
+		<uni-popup ref="popupWtDialog2" type="center">
+			<wt-dialog :maskClick='true' :btns="['取消','确定']" title="提示" @confirm="agree2">
+				<view class="flex flex-column justify-center align-center" style="padding-bottom: 32rpx;">
+					<text style="font-size: 26rpx;font-weight: 400;color: #030303;">查看{{userName}}的所有日报</text>
+				</view>
+			</wt-dialog>
+		</uni-popup>
+		<uni-popup ref="popupWtDialog3" type="center">
+			<wt-dialog :maskClick='true' :btns="['取消','确定']" title="提示" @confirm="agree3">
+				<view class="flex flex-column justify-center align-center" style="padding-bottom: 32rpx;">
+					<text style="font-size: 26rpx;font-weight: 400;color: #030303;">查看{{userName}}的所有日报</text>
+				</view>
+			</wt-dialog>
+		</uni-popup>
+		<view style="position: fixed;bottom: 0;left: 0;" @click="gowrite">
+			<image src="../../../static/fireIndex/write.png" style="width: 750rpx;height: 150rpx;"></image>
+		</view>
+
+		<uni-popup :animation="false" type="bottom" ref="screenPage">
+			<view class="position-fixed top-0 left-0 right-0 bottom-0">
+				<screen-page @cancel="closeScreenPage" @confirm="changeParams()"></screen-page>
+			</view>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	import allnews from '../dayilynews/allnews.nvue';
+	import minenews from '../dayilynews/minenews.nvue';
+	import lowernews from '../dayilynews/lowernews.nvue';
+	import lookmineNews from '../lookmineNews/lookmineNews.nvue';
+	import lookallnews from '../lookmineNews/lookallnews.nvue';
+	import looklowernews from '../lookmineNews/looklowernews.nvue';
+	import screenPage from './screenPage.nvue';
+	import selectRead from '../dayilynews/selectRead.nvue'
+	export default {
+		data() {
+			return {
+				tabList: ['全部', '我的日报', '下级日报'],
+				tabIndex: 0,
+				isShowAll: false,
+				isShowMine: false,
+				isShowLower: false,
+				userName: '',
+				ishowRead: true,
+				readed: true,
+			}
+		},
+		components: {
+			allnews,
+			minenews,
+			lowernews,
+			lookmineNews,
+			lookallnews,
+			looklowernews,
+			screenPage,
+			selectRead
+		},
+		onShow(){
+			if (this.isShowAll==false) {
+				this.$refs.allnewsDaily.refreshAllNews();
+			} else if(this.isShowAll==true) {
+				this.$refs.lookallNews.refreshLookAll();
+			}
+			
+			if(this.isShowMine==false) {
+				this.$refs.minenewsDaily.refreshMineNews();
+			} else if(this.isShowMine == true) {
+				this.$refs.lookmineNews.refreshMine();
+			}
+			
+			if(this.isShowLower == false) {
+				this.$refs.lowernewsDaily.refreshLowerNews();
+			} else if(this.isShowLower == true) {
+				this.$refs.looklowerNews.refreshLower();
+			}
+		},
+		onLoad() {
+			uni.$api.dailynews.getdailymould()
+				.then(res => {
+					console.log(res, '获取的日报类型')
+					this.mouldType = res.data.data.mouldType;
+					console.log(this.mouldType,'======================================================')
+				})
+				.catch(err => {
+					console.log(err)
+				})
+			
+		},
+		methods: {
+			handleIndex(index) {
+				this.tabIndex = index;
+			},
+			changeCurrent(e) {
+				this.tabIndex = e.detail.current || 0;
+			},
+			goStatus(val, index) {
+				console.log(val, '全部从子级拿来的值');
+				this.dailyId = val.dailyId;
+				this.userName = val.userName;
+				this.userId = val.userId;
+				this.$refs.popupWtDialog1.open();
+			},
+			goStatus1(val, index) {
+				console.log(val, '我的从子级拿来的值');
+				this.dailyId = val.dailyId;
+				this.userName = val.userName;
+				this.userId = val.userId;
+				this.$refs.popupWtDialog2.open();
+			},
+			goStatus2(val, index) {
+				console.log(val, '下级从子级拿来的值');
+				this.dailyId = val.dailyId;
+				this.userName = val.userName;
+				this.userId = val.userId;
+				this.$refs.popupWtDialog3.open();
+			},
+			agree1(done, val, index) {
+				done();
+				// uni.navigateTo({
+				// 	url:'../lookmineNews/lookmineNews?userName='+this.userName
+				// })
+				this.isShowAll = true;
+
+			},
+			agree2(done, val, index) {
+				done();
+				this.isShowMine = true;
+			},
+			agree3(done, val, index) {
+				done();
+				// uni.navigateTo({
+				// 	url:'../lookmineNews/lookmineNews?userName='+this.userName
+				// })
+				this.isShowLower = true;
+			},
+			// 去写日报
+			gowrite() {
+				console.log('1111111');
+				if (this.mouldType == 1) {
+					uni.navigateTo({
+						url: '../forestNews/forestNews'
+					})
+				} else if(this.mouldType == 0){
+					uni.navigateTo({
+						url: '../writenews/writenews'
+					})
+				}
+			},
+			select() {
+				// 筛选
+				// this.$refs.screenPage.open();
+				// uni.navigateTo({
+				// 	url:'../selectNews/selectNews'
+				// })
+				uni.navigateTo({
+					url: './screenPage'
+				})
+			},
+			closeScreenPage() {
+				this.$refs.screenPage.close();
+			},
+			changeParams() {
+				// 改变wtlist参数
+
+			},
+			// 筛选未读
+			goreader() {
+				this.ishowRead = true;
+				this.readed = true;
+			},
+			// 筛选已读的
+			gounread() {
+				this.ishowRead = false;
+				this.readed = false;
+			}
+		},
+		// mounted() {
+		// 	console.log(this.$store.state.user.info,'用户信息');
+
+		// }
+	}
+</script>
+
+<style>
+	.black {
+
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.blue {
+
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+
+	.border-blue {
+
+		border-bottom-width: 4rpx;
+		border-bottom-style: solid;
+		border-bottom-color: #487CF1;
+
+	}
+
+	.block {
+		/* #ifndef APP-PLUS-NVUE */
+		display: block;
+		/* #endif */
+
+	}
+
+	.none {
+		/* #ifndef APP-PLUS-NVUE */
+		display: none;
+		/* #endif */
+		
+
+	}
+</style>

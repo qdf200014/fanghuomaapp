@@ -1,0 +1,490 @@
+<template>
+	<view class="flex w-100 flex-column flex-1">
+		<!-- 导航栏 -->
+		<view style="background-color: #FFFFFF;">
+			<uni-status-bar />
+			<!-- 		<wt-search-bar :radius="100" @confirm="search" bgColor="#EEEFF3"
+			 @cancel="cancel" cancelButton="always" @input="searchInput" :searchVal="inputKey" :showSync="showSync"/> -->
+			<view class="flex flex-row justify-between p-3 w-100">
+				<view style="background-color: #EEEFF3;border-radius: 35rpx;width: 586rpx;height: 72rpx;" class="flex flex-row align-center">
+					<image src="../../../static/fireIndex/search.png" mode="" style="width: 30rpx;height: 30rpx;margin-left: 34rpx;"></image>
+					<input type="text" placeholder="防火通讯录、交流、聊天记录、动态" class="flex flex-1" @input="searchInput" @confirm="search" style="margin-left: 8rpx;font-size: 26rpx;"
+					 :value="inputKey" />
+				</view>
+				<view class="flex flex-column align-center justify-center" @click="gofront">
+					<text style="font-size: 34rpx;font-weight: 400;color: #487CF1;">取消</text>
+				</view>
+			</view>
+		</view>
+		<!-- 热搜 -->
+		<view class="pl-3 pr-3 pt-4" v-if="inputKey== ''">
+			<view class="flex flex-row justify-between">
+				<text style="font-size: 32rpx;font-weight: 400;color: #323234;">热门搜索</text>
+			</view>
+			<view class="flex flex-row flex-wrap" style="margin-top: 40rpx;">
+				<view style="height: 66rpx;background-color: #EEEFF3;border-radius: 33rpx;margin-right: 24rpx;margin-bottom: 24rpx;max-width:690rpx"
+				 class="pl-3 pr-3 pt-2 pb-2 flex flex-row align-center justify-center" v-for="(item,index) in searchHotList" :key="index"
+				 @click="historySearch(item)">
+					<text class="nosearch line-1 flex-1">{{item}}</text>
+				</view>
+			</view>
+		</view>
+		<!-- 搜索历史部分 -->
+		<view class="pl-3 pr-3 pt-4" v-if="inputKey== ''">
+			<view class="flex flex-row justify-between">
+				<text style="font-size: 32rpx;font-weight: 400;color: #323234;">搜索历史</text>
+				<text style="font-size: 26rpx;font-weight: 400;color: #949599;" @click="empty">清除历史记录</text>
+			</view>
+			<view class="flex flex-row flex-wrap" style="margin-top: 40rpx;">
+				<view style="height: 66rpx;background-color: #EEEFF3;border-radius: 33rpx;margin-right: 24rpx;margin-bottom: 24rpx;max-width:690rpx"
+				 class="pl-3 pr-3 pt-2 pb-2 flex flex-row align-center justify-center" v-for="(item,index) in searchHistoryList"
+				 :key="index" @click="historySearch(item)">
+					<text class="nosearch line-1 flex-1">{{item}}</text>
+				</view>
+			</view>
+		</view>
+		<view class="flex w-100 flex-column flex-1" style="background-color: #F4F5FB;" v-if="inputKey != ''">
+			<view style="width: 750rpx;height: 94rpx;background-color: #FFFFFF;" class="flex justify-center align-center flex-row">
+				<view v-for="(item,index) in tabList" :key="index" style="width:150rpx;height: 78rpx;" class="flex align-center justify-center"
+				 @click="handleIndex(index)" :class="(tabIndex == index) ? 'border-blue' : ''">
+					<text :class="(tabIndex == index) ? 'blue' : 'black'">{{item}}</text>
+				</view>
+			</view>
+			<swiper class="flex flex-column w-100 flex-1  position-relative" :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
+			 :duration="duration" @change="changeCurrent" :current="tabIndex">
+				<swiper-item class="flex flex-column w-100">
+
+					<no-data v-if="peopleList.length==0 && fireList.length==0 && sessionList.length>0 && chatLists.length==0" class="no-data"></no-data>
+
+					<list class="flex flex-column w-100">
+						<cell class="flex flex-column w-100">
+							<search-all :inputKey="inputKey" v-on:gopeoples="peoplemore" @phonePeople="getvalue($event)"></search-all>
+							<list class="bg-white w-100 align-center" style="margin-top: 24rpx;" v-if="searchRecordNum > 0 ? true : false">
+								<cell style="height: 100rpx;" class="flex w-100 px-3">
+									<view class="border-bottom justify-center" style="height: 100rpx; width: 690rpx;">
+										<text class="title">交流</text>
+									</view>
+								</cell>
+
+								<cell class="flex w-100 " v-for="item in sessionList" :key="item.id">
+									<session-item :session="item" :searchKey="inputKey" @searchSuccess="sessionSearchSucess" style="width: 690rpx;"></session-item>
+								</cell>
+								<cell class="flex flex-column w-100 align-center">
+									<view class="flex justify-center align-center " style="height: 90rpx;" @click="goGroup" v-if="searchRecordNum>=3 ? true : false">
+										<text class="look_more">查看更多</text>
+									</view>
+								</cell>
+
+							</list>
+							<view class="bg-white w-100 align-center" style="margin-top: 24rpx;" v-if="chatLists.length > 0">
+								<view class="all_title" style="width: 690rpx;">
+									<view class="justify-center border-bottom" style="height: 100rpx; width: 690rpx;">
+										<text class="title">聊天记录</text>
+									</view>
+									<view class="chatList flex flex-row align-center border-bottom justify-between" style="height: 138rpx;" v-for="(item,index) in chatList"
+									 :key="index">
+										<view class="flex flex-row align-center">
+											<image :src="item.url" style="width: 96rpx; height: 96rpx; margin-right: 24rpx;" v-if="item.url"></image>
+											<view class="defaultHead" v-else>
+												<text class="headName">{{item.fromNick.charAt(item.fromNick.length-2)+item.fromNick.charAt(item.fromNick.length-1)}}</text>
+											</view>
+											<view class="chat_content flex flex-column" style="margin-left: 24rpx;">
+												<text class="chat_title">{{item.fromNick}}</text>
+												<text class="chat_detail" style="width: 350rpx; lines: 1; text-overflow: ellipsis;">{{item.text}}</text>
+											</view>
+										</view>
+										<text style="
+											font-size: 24rpx;
+											font-weight: 400;
+											color: #C2C3C8;
+											line-height: 24rpx;">{{item.createdTime}}</text>
+									</view>
+									<view class="flex justify-center align-center " style="height: 90rpx;" @click="goChat" v-if="chatLists.length>=3">
+										<text class="look_more">查看更多</text>
+									</view>
+								</view>
+							</view>
+							<search-fire :inputKey="inputKey" v-on:gofires="firemore" @fireSearch="govalue($event)"></search-fire>
+						</cell>
+					</list>
+				</swiper-item>
+				<swiper-item class="flex flex-column w-100 flex-1">
+					<view class="flex flex-column w-100 flex-1">
+						<search-people-all :inputKey="inputKey"></search-people-all>
+					</view>
+				</swiper-item>
+				<swiper-item class="flex flex-column w-100 flex-1">
+					<view class="flex flex-column w-100 flex-1">
+						<search-record :inputKey="inputKey"></search-record>
+					</view>
+				</swiper-item>
+				<swiper-item class="flex flex-column w-100 flex-1">
+					<view class="flex flex-column w-100 flex-1">
+						<search-chat :inputKey="inputKey"></search-chat>
+					</view>
+				</swiper-item>
+				<swiper-item class="flex flex-column w-100 flex-1">
+					<view class="flex flex-column w-100 flex-1">
+						<search-fire-all :inputKey="inputKey"></search-fire-all>
+					</view>
+				</swiper-item>
+			</swiper>
+		</view>
+	</view>
+</template>
+
+<script>
+	import searchAll from './searchAll.nvue';
+	import searchFire from './searchFire.nvue';
+	import searchPeopleAll from './searchPeopleAll.nvue';
+	import wtSearchBar from '@/components/wt-search-bar/wt-search-bar.vue';
+	import searchFireAll from './searchFireAll.nvue';
+	import searchRecord from './searchRecord.nvue';
+	import searchChat from './searchChat.nvue'
+	import sessionItem from '@/components/easy-chat/session-item.vue';
+	import noData from '@/components/nodata.nvue';
+	// import {
+	// 	debounce,
+	// 	throttle
+	// } from '@/components/uni-easyinput/common.js'
+	export default {
+		data() {
+			return {
+				inputKey: '', //搜索历史的字段
+				searchHistoryList: [], //搜索出来的火情内容
+				searchHotList: [], // 热搜列表
+				valuename: null,
+				tabList: ['全部', '防火通讯录', '交流', '聊天记录', '动态'],
+				tabIndex: 0,
+				phonePeople: [], //搜索出来的通讯录
+				current: 0,
+				showSync: true,
+				pdata: [],
+				chatList: [],
+				chatLists: [],
+				sessionList: [],
+				searchRecordNum: 0,
+				peopleList: [],
+				fireList: []
+			}
+		},
+		components: {
+			searchAll,
+			searchFire,
+			searchPeopleAll,
+			wtSearchBar,
+			searchFireAll,
+			searchRecord,
+			searchChat,
+			sessionItem,
+			noData
+		},
+		computed: {
+			userUID() {
+				return this.$store.getters['initNim/userUID']
+			},
+			sessionArr() {
+				let arr = []
+				let topArr = []
+				this.$store.getters['initNim/sessionArr'].map(item => {
+					if (item.isTop) {
+						topArr.push(item)
+					} else {
+						arr.push(item)
+					}
+
+				})
+				return topArr.concat(arr)
+			},
+		},
+		onLoad() {
+			// this.searchHistoryList = uni.getStorageInfoSync('searchList')
+			this.getSearchList();
+		},
+		methods: {
+			sessionSearchSucess() {
+				console.log('sessionSearchSucess');
+				this.searchRecordNum++
+			},
+
+			getSearchList() {
+				// 历史搜索
+				try {
+					const value = uni.getStorageSync('searchList');
+					if (value) {
+						console.log(value);
+						this.searchHistoryList = value;
+					}
+				} catch (e) {
+					console.log(err)
+				}
+				// 热搜
+
+				uni.$api.homeSearch.getfiresearchkey({
+						page: 0,
+						limit: 6
+					})
+					.then(res => {
+						console.log('getfiresearchkey_RES', res);
+						this.searchHotList = res.data.data.map(item => item.searchKey);
+					})
+					.catch(err => {
+						console.log('getfiresearchkey_ERR', err);
+					})
+			},
+			getvalue(data) {
+				// this.pdata = data;
+				console.log(data, '子级给父级传来的通讯录的值');
+				this.peopleList = data;
+			},
+			govalue(data) {
+				console.log(data, '子级给的要闻的值');
+				this.fireList = data;
+			},
+			changeCurrent(e) {
+				this.tabIndex = e.detail.current || 0;
+			},
+			handleIndex(index) {
+				this.tabIndex = index;
+			},
+			cancel() {
+				uni.navigateBack(1)
+			},
+			search(e) {
+				console.log(e, 'e的值');
+				this.inputKey = e.detail.value.trim();
+				console.log(this.inputKey, '搜搜的值');
+				if (this.inputKey == "") {
+					uni.showToast({
+						title: '搜索内容不能为空',
+						icon: 'none'
+					})
+				} else {
+					if (this.searchHistoryList.indexOf(this.inputKey) < 0) {
+						this.searchHistoryList.unshift(this.inputKey)
+						// uni.setStorageSync('searchList', this.searchHistoryList);
+						try {
+							uni.setStorageSync('searchList', this.searchHistoryList)
+						} catch (e) {
+							console.log(err)
+						}
+					} else {
+						var i = this.searchHistoryList.indexOf(this.inputKey);
+						this.searchHistoryList.splice(i, 1);
+						this.searchHistoryList.unshift(this.inputKey)
+					}
+				}
+			},
+			historySearch(item) {
+				this.search({
+					detail: {
+						value: item
+					}
+				})
+
+			},
+			empty() {
+				uni.showToast({
+					title: '已清空',
+					icon: 'none'
+				})
+				uni.removeStorage({
+					key: 'searchList'
+				})
+				this.searchHistoryList = [];
+			},
+			// 搜索中的值
+			searchInput(e) {
+				console.log(e, '实时获取搜索中的值');
+				this.inputKey = e.detail.value.trim()
+				uni.$api.im.getSessionList({
+					query: {
+						type: 'text',
+						'text-like': this.inputKey,
+					},
+					page: 1,
+					limit: 20,
+					userId: this.userUID
+				}).then(res => {
+					console.log('$$$$$$$$$$$444', res)
+					this.chatLists = res.data.data
+					this.chatList = this.chatLists.slice(0, 3)
+					console.log(this.chatList, '聊天记录')
+				}).catch(err => {
+					console.log(err)
+				})
+				console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', this.sessionArr);
+				console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', this.sessionArr.length);
+				this.sessionList = this.sessionArr
+				console.log(this.sessionList, '交流')
+			},
+			// 点击通讯录的查看更多
+			peoplemore() {
+				this.tabIndex = 1;
+			},
+			firemore() {
+				this.tabIndex = 4;
+			},
+			gofront() {
+				uni.navigateBack(1);
+			},
+			goGroup() {
+				this.tabIndex = 2
+			},
+			goChat() {
+				this.tabIndex = 3;
+			}
+		}
+	}
+</script>
+
+<style>
+	/* #ifndef APP-PLUS */
+	page {
+		width: 100%;
+		min-height: 100%;
+		display: flex;
+		font-family: siyuanSimSun;
+	}
+
+	/* #endif */
+	.black {
+
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.blue {
+
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+
+	.border-blue {
+
+		border-bottom-width: 4rpx;
+		border-bottom-style: solid;
+		border-bottom-color: #487CF1;
+
+	}
+
+	.title {
+		font-size: 38rpx;
+		font-weight: 600;
+		color: #323234;
+		line-height: 38rpx;
+	}
+
+	.chat_title {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #323234;
+		line-height: 32rpx;
+		margin-bottom: 16rpx;
+	}
+
+	.chat_detail {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+		line-height: 26rpx;
+	}
+
+	.quxiao {
+		width: 68rpx;
+		height: 48rpx;
+		font-size: 34rpx;
+		font-weight: 400;
+		color: #487CF1;
+		line-height: 48rpx;
+	}
+
+	.search_title {
+		width: 364px;
+		height: 26px;
+		font-size: 26px;
+		font-weight: 400;
+		color: #949599;
+		line-height: 26px;
+	}
+
+	.sinput {
+		width: 364rpx;
+		height: 26rpx;
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #949599;
+	}
+
+	.search_content {
+		height: 66rpx;
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #606266;
+		line-height: 26rpx;
+		background-color: #EEEFF3;
+		border-radius: 33px;
+		padding: 24rpx;
+		margin-right: 24rpx;
+		margin-bottom: 24rpx;
+		/* opacity: 0.09; */
+	}
+
+	.nosearch {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #606266;
+	}
+
+	.search {
+		font-size: 26rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+
+	.swiper_title {
+
+		font-size: 38rpx;
+		font-weight: 600;
+		color: #323234;
+	}
+
+	.swiper_name {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #323234;
+	}
+
+	.border-manag {
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #F07A4E;
+	}
+
+	.defaultHead {
+		justify-content: center;
+		align-items: center;
+		width: 96rpx;
+		height: 96rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+
+	.headName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+
+	.look_more {
+		font-size: 30rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+</style>

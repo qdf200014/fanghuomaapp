@@ -1,0 +1,237 @@
+<template>
+	<view class="flex flex-1 flex-column">
+		<view class="tab_title w-100 flex flex-row border-bottom">
+			<view class="flex-1 align-center justify-center" style="height: 96rpx;" v-for="(item,index) in tabList" :key="index" @click="tabHeaderChange(index)"
+			 :class="index==tabIndex?'derd':''">
+				<text :class="index==tabIndex?'size':'default'">{{item.title}}</text>
+			</view>
+		</view>
+		<swiper :indicator-dots="false" :autoplay="false" :duration="1000" :current="tabIndex" @change="tabChange" class="flex flex-1">
+			<swiper-item v-for="(item,index) in tabList" :key="index">
+				<view class="im-flex-1" v-if="index == 0 ? true : false">
+					<view class="modules w-100 flex flex-row flex-wrap pl-3 pr-3">
+						<view class="module justify-center position-relative" style="margin-right: 16rpx;">
+							<image src="../../static/discussion/now-discussion.png" class="module position-absolute top-0 left-0"></image>
+							<view class="allDiscussion">
+								<text class="disTitle">当前会商</text>
+								<view class="flex-row align-end">
+									<text class="numSize">{{discussionNum.conductConsNum}}</text>
+									<text class="textSize">场</text>
+								</view>
+							</view>
+						</view>
+						<view class="module justify-center position-relative">
+							<image src="../../static/discussion/all-discussion.png" class="module position-absolute top-0 left-0"></image>
+							<view class="allDiscussion">
+								<text class="disTitle">全部会商</text>
+								<view class="flex-row align-end">
+									<text class="numSize">{{discussionNum.allConsNum}}</text>
+									<text class="textSize">场</text>
+								</view>
+							</view>
+						</view>
+						<view class="module justify-center position-relative" style="margin-right: 16rpx; margin-top: 16rpx; margin-bottom: 24rpx;">
+							<image src="../../static/discussion/discussion-number.png" class="module position-absolute top-0 left-0"></image>
+							<view class="allDiscussion">
+								<text class="disTitle">会商总人数</text>
+								<view class="flex-row align-end">
+									<text class="numSize">{{discussionNum.consPeopleNum}}</text>
+									<text class="textSize">人</text>
+								</view>
+							</view>
+						</view>
+						<view class="module justify-center position-relative " style="margin-top: 16rpx; margin-bottom: 24rpx;">
+							<image src="../../static/discussion/all-resolute.png" class="module position-absolute top-0 left-0"></image>
+							<view class="allDiscussion">
+								<text class="disTitle">会商总时长</text>
+								<view class="flex-row align-end">
+									<text class="numSize">{{discussionNum.durationNum}}</text>
+									<text class="textSize">时</text>
+								</view>
+							</view>
+						</view>
+					</view>
+					
+					<!-- 会商会话列表 开始 -->
+					<list class="im-border-top im-flex-1">
+						<cell class="im-bg-white" v-for="item in advancedArr" :key="item.id">
+							<session-item :session="item" :searchKey="searchKey" :isShowAdvancedFlag="false"></session-item>
+						</cell>
+					</list>
+					<!-- 会商会话列表 结束 -->
+					
+				</view>
+				<view v-else class="flex flex-column flex-1 " >
+					<wt-list api="discussion.getepilog" :limit="20" ref="refWtList">
+						<template v-slot:dataList="ctx">
+							<cell class="w-100 align-center flex flex-row border-bottom" style="height: 138rpx;" v-for="(item,index) in ctx.dataList" :key="index" @click="toDetail(item.voteId)">
+								<image :src="item.voteUrl || config" class="imgSize"></image>
+								<view class="flex flex-column">
+									<text class="listSize">{{item.title}}</text>
+									<text style="
+									margin-top: 18rpx;
+									font-size: 24rpx;
+									font-weight: 400;
+									color: #949599;
+									line-height: 24rpx;
+									text-align: left;">{{item.startTime}}</text>
+								</view>
+							</cell>
+						</template>
+					</wt-list>
+				</view>
+				
+			</swiper-item>
+		</swiper>
+	</view>
+</template>
+
+<script>
+	import sessionItem from '@/components/easy-chat/session-item.vue'
+	import sessionItemAvatar from '@/components/easy-chat/session-item-avatar.vue'
+	import { debounce } from "@/App.vue"
+	
+	export default {
+		data() {
+			return {
+				tabList: [{
+					title: '会商'
+				},{
+					title: '结论'
+				}],
+				tabIndex: 0,
+				nowDay: '',
+				discussionNum:{},
+				config: '/static/easy-chat/team/advanced/1.png'
+			}
+		},
+		components: {
+			sessionItem
+		},
+		created() {
+			uni.$api.consultation.getappconsultations().then(res => {
+				console.log(res)
+				if(res.data.statusCode == 200){
+					this.discussionNum = res.data.data
+				}
+			}).catch(err => {
+				console.log(err)
+			})
+		},
+		watch: {
+			tabIndex(val) {
+				if (val == 1) {
+					this.$refs.refWtList[0].refreshData()
+				}
+			}
+		},
+		computed: {
+			teamObj() {
+				return this.$store.getters['initNim/teamObj']
+			},
+			// 高级群聊天数组 高级群单独展示 只展示前三个
+			advancedArr() {
+				let arr = []
+				let topArr = []
+				this.$store.getters['initNim/sessionArr'].map(item => {
+					// console.log('asdasdasdasdadasdas', this.teamObj[item.to]);
+					
+					if (item.scene === 'team' && this.teamObj[item.to] && this.teamObj[item.to].type === 'advanced') {
+						if (item.isTop) {
+							topArr.push(item)
+						} else {
+							arr.push(item)
+						}
+					}
+				})
+				return topArr.concat(arr)
+			}
+		},
+		methods: {
+			tabChange(e) {
+				this.tabIndex = e.detail.current || 0
+			},
+			tabHeaderChange(i) {
+				this.tabIndex = i
+			},
+			
+			//去结论详情
+			toDetail(voteId){
+				console.log('dnsalkdnas');
+				uni.navigateTo({
+					url:'/pages/discussion/verdict?voteId='+voteId,
+					fail(err) {
+						console.log('err_', err);
+					}
+				})
+			}
+		},
+	}
+</script>
+
+<style>
+.tab_title {
+	flex-direction: row;
+	justify-content: center;
+}
+.derd {
+	border-bottom-color: #487CF1;
+	border-bottom-width: 4rpx;
+	border-style: solid;
+}
+.default{
+	font-size: 28rpx;
+	font-weight: 400;
+	color: #949599;
+	line-height: 30rpx;
+}
+.size{
+	font-size: 28rpx;
+	color: #487CF1;
+}
+.flex-1 {
+	flex: 1;
+}
+.modules{
+	padding-top: 30rpx;
+}
+.module{
+	width: 337rpx;
+	height: 150rpx;
+	border-radius: 16rpx;
+}
+.allDiscussion{
+	margin-left: 32rpx;
+}
+.disTitle{
+	font-size: 26rpx;
+	font-weight: 400;
+	color: #FFFFFF;
+	line-height: 26rpx;
+	margin-bottom: 20rpx;
+}
+.numSize{
+	font-size: 56rpx;
+	font-weight: 500;
+	color: #FFFFFF;
+	line-height: 56rpx;
+}
+.textSize{
+	font-size: 22rpx;
+	font-weight: 500;
+	color: #FFFFFF;
+	line-height: 22rpx;
+}
+.imgSize{
+	width: 96rpx; 
+	height: 96rpx; 
+	margin-left: 28rpx; 
+	margin-right: 24rpx;
+}
+.listSize{
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #323234;
+	line-height: 32rpx;
+}
+</style>

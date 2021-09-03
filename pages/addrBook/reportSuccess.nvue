@@ -1,0 +1,31 @@
+<template>
+	<view class="flex flex-column flex-1 w-100 align-center justify-center">
+		<uni-nav-bar left-icon="back" title="举报成功" :fixed="true" :statusBar="true" :isOperation="false" @clickLeft="back"></uni-nav-bar>
+		<view class="flex flex-column justify-center align-center">
+			<image src="../../static/addrBook/reportSuccess.png" style="width: 120rpx; height: 120rpx;"></image>
+			<text style="text-align: center;">举报成功</text>
+			<text style="width: 500rpx; font-size: 32rpx; font-weight: 500; margin-top: 20rpx; text-align: center;">举报已提交，我们将在2小时内进行处理（夜间时段会稍有延迟）</text>
+			<view class="flex flex-row" style="width: 300rpx; margin-top: 30rpx;">
+				<text style="font-size: 18rpx; text-align: center; color: #8A8A8A;">我们会根据</text>
+				<text style="font-size: 18rpx; text-align: center; color: #09C2C9;">《防火码平台行为规范》</text>
+			</view>
+			<text style="font-size: 18rpx; text-align: center; color: #8A8A8A;">进行审核，感谢您的举报</text>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		methods:{
+			back(){
+				uni.navigateBack({
+					delta:2
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

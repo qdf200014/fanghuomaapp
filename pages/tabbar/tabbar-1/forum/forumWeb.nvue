@@ -1,0 +1,166 @@
+<template>
+	<view class="flex flex-1 flex-column">
+		<!-- <uni-nav-bar left-icon="back" :fixed="true" :statusBar="true" @clickLeft="turnLeft" :isOperation="false"></uni-nav-bar> -->
+		<uni-status-bar />
+		<web-view ref="fireWebView" :src="this.forumMsg.forumUrl" class="flex flex-1 w-100"></web-view>
+		
+		<!-- <view :style="`height: ${keyBoardHeight}px;`"></view> -->
+		
+		<movable-area style="width: 200rpx;height: 800rpx; top: 200rpx;bottom: 100rpx;" class="im-position-fixed im-left-0 flex flex-1">
+			<movable-view @click="back" direction="vertical" :inertia="true" class="flex align-center justify-center im-bg-blue-1"
+					style="width: 100rpx;height: 100rpx;border-top-right-radius: 30rpx;border-bottom-right-radius: 30rpx;">
+				<text class="text-white im-font-32">返回</text>
+			</movable-view>
+		</movable-area>
+	</view>
+</template>
+
+<script>
+// 拖动动画页面
+const BindingX = uni.requireNativePlugin('bindingx');
+
+export default {
+	data() {
+		return {
+			forumMsg: null,
+			bottomSize: 0,
+			viewObj: null,
+			yPos: 200,
+			xPos: 0,
+			keyBoardHeight: 0
+		};
+	},
+	onLoad(option) {
+		console.log(JSON.parse(decodeURIComponent(option.forumMsg)));
+		this.forumMsg = JSON.parse(decodeURIComponent(option.forumMsg));
+
+		this.keyFn = (res) => {
+			console.log(res);
+			this.keyBoardHeight = res.height
+		}
+		
+		// this.open();
+		// setTimeout(() => {
+		// 	this.hideWebview()
+		// }, 6000)
+	},
+	destroyed() {
+		// let ws=plus.webview.getWebviewById( 'QAZVFR' );
+		// console.log('aaaaaaaaaaaaaaaaaaaaaaaaaa', ws);
+		// ws.close()
+	},
+	mounted() {
+		// console.log(this.$refs.fireWebView);
+		// let webview = plus.webview.currentWebview()
+		// console.log();
+		// // // 监听键盘高度
+		// // 	uni.onKeyboardHeightChange(res => {
+		// // 		let ws=plus.webview.getWebviewById( 'QAZVFR' );
+		// // 		if(res.height && res.height > 0){
+		// // 			console.log(res.height)
+		// // 			ws.setStyle({
+		// // 				// bottom: '330px'
+		// // 			})
+		// // 		}else {
+		// // 			ws.setStyle({
+		// // 				bottom: '0px'
+		// // 			})
+		// // 		}
+		// // 	})
+		
+		uni.onKeyboardHeightChange(this.keyFn)
+	},
+	onUnload() {
+		uni.offKeyboardHeightChange(this.keyFn)
+	},
+	computed: {
+		blockPosition() {
+			let style = ''
+			
+			// style += `left: ${this.xPos}px;`
+			
+			style += `top: ${this.yPos}px;`
+			
+			console.log('aaa', style);
+			
+			return style
+		}
+	},
+	methods: {
+		touchEnd(e) {
+			console.log(e);
+			this.yPos = e.changedTouches[0].screenY - 44
+			this.xPos = e.deltaX + this.xPos - 20
+		},
+		touchStart(e) {
+			console.log(e); 
+			// this.xPos = e.touches[0].screenX
+			// this.yPos = e.touches[0].screenY
+			this.start();
+		},
+		start() {
+			const props = [
+				{
+					element: this.getEl(this.$refs.darkBlock),
+					expression: `y+0`,
+					property: 'transform.translateY'
+				}
+			];
+			BindingX.bind(
+				{
+					eventType: 'pan',
+					anchor: this.getEl(this.$refs.darkBlock),
+					exitExpression: '',
+					props
+				},
+				e => {
+					// nope
+					console.log(e);
+					if (e.state == 'end') {
+						console.log('保存成功');
+					}
+				}
+			);
+		},
+		getEl: function(el) {
+			if (typeof el === 'string' || typeof el === 'number') return el;
+			if (WXEnvironment) {
+				return el.ref;
+			} else {
+				return el instanceof HTMLElement ? el : el.$el;
+			}
+		},
+		turnLeft() {
+			this.hideWebview();
+		},
+		back() {
+			uni.navigateBack();
+		},
+		open() {
+			console.log('创建View+++++++++++++++++++++');
+			let styles = {};
+			// 在Android5以上设备，如果默认没有开启硬件加速，则强制设置开启
+			if (!plus.webview.defaultHardwareAccelerated() && parseInt(plus.os.version) >= 5) {
+				styles.hardwareAccelerated = true;
+			}
+
+			styles.softinputMode = 'adjustPan';
+			styles.videoFullscreen = 'landscape';
+			styles.top = '70px';
+			styles.bottom = `300px`;
+			this.viewObj = plus.webview.open(this.forumMsg.forumUrl, 'QAZVFR', styles);
+
+			setTimeout(() => {
+				this.viewObj.close();
+			}, 5000);
+		},
+		// 隐藏当前Webview窗口
+		hideWebview() {
+			// let ws=plus.webview.getWebviewById( 'QAZVFR' );
+			uni.navigateBack();
+		}
+	}
+};
+</script>
+
+<style></style>

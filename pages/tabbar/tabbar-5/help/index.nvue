@@ -1,0 +1,127 @@
+<template>
+	<div>
+		<uni-nav-bar left-icon="back" title="帮助" :statusBar="true" @clickLeft="goback" :fixed="true"></uni-nav-bar>
+		<list :border="false" class="flex w-100 flex-column pl-3 pr-3" style="background-color: #FFF;" :scrollable="false" v-for="(item,index) of helpList" :key="index">
+			<cell @click="showTxt(index)" class="titlrStyle flex flex-row align-center" >
+				<text class="title">{{index+1}}.{{item.title}}？</text>
+				<image src="../../../../static/user/packUp@2x.png" v-if="item.showImg" style="width: 20rpx; height: 20rpx; transform: rotate(90deg);"></image>
+				<image src="../../../../static/user/open@2x.png" v-else style="width: 20rpx; height: 20rpx; transform: rotate(-360deg);"></image>
+			</cell>
+			<cell style="width: 750rpx; 
+			background-color: #FFF;
+			border-bottom-width: 1rpx;
+			border-bottom-color: #EEEFF3; 
+			border-style: solid;">
+				<text class="textStyle"
+				v-if="item.status">答：{{item.content}}。</text>
+			</cell>
+		</list>
+	</div>
+</template>
+
+<script>
+	export default {
+		data(){
+			return {
+				helpList:[
+					{
+						title: '如何联系客服',
+						content: '客服电话为400-0912-119',
+						status: false,
+						showImg: true
+					},{
+						title: '之前在防火码管理端小程序已有账号哪在App中还需要重新注册吗',
+						content: '不需要，后台已有您的用户数据信息，您直接点击忘记密码重新设置密码即可使用',
+						status: false,
+						showImg: true
+					},{
+						title: '通讯录能查询其他上级信息吗',
+						content: '目前不能哦~只能查看用户直属上级人员信息、本级人员信息和所有下级人员信息',
+						status: false,
+						showImg: true
+					},{
+						title: '注册后多久才能通过审核',
+						content: '一般状态下为1-3个工作日即可有审核通知反馈',
+						status: false,
+						showImg: true
+					},{
+						title: '解除会商群聊必须输入会商结论吗',
+						content: '是的',
+						status: false,
+						showImg: true
+					},{
+						title: '输入会商结论时选择公开或者私密的逻辑是什么',
+						content: '公开是指对所有使用防火码APP的用户进行开放，私密是指对参加该会商的人员进行开放，但对其他用户不开放',
+						status: false,
+						showImg: true
+					},{
+						title: '防火码App都可以从哪些平台下载',
+						content: '安卓平台:腾讯应用宝、360手机助手、百度应用助手、小米应用商店、华为应用商店、魅族应用商店、VIVO应用商店、oppo应用商店、阿里应用商店；苹果平台：苹果App Store',
+						status: false,
+						showImg: true
+					},{
+						title: '如果忘记密码了怎么办',
+						content: '在登录页面点击忘记密码，输入手机号点击发送验证码即可重置密码',
+						status: false,
+						showImg: true
+					},{
+						title: '注册账号时所属层级选择错误但是审核通过了怎么办',
+						content: '您可以联系客服人员，把您的诉求告诉客服人员，客服人员会把相关问题进行整理并给相应的负责人，负责人会单独联系您并帮您修改，客服电话为电话为400-0912-119',
+						status: false,
+						showImg: true
+					},{
+						title: '如何创建会商',
+						content: '用户可以根据火情预警信息详情进行创建会商，用户在查看火情预警详情信息时下方有创建会商按钮，点击即可邀请其他用户进行创建会商，针对该事件进行会商和研讨',
+						status: false,
+						showImg: true
+					},{
+						title: '如何解散会商',
+						content: '用户点击会商主页，即可查看解除会商按钮',
+						status: false,
+						showImg: true
+					},
+				]
+			}
+		},
+		methods:{
+			showTxt(index){
+				this.helpList[index].status = !this.helpList[index].status
+				this.helpList[index].showImg = !this.helpList[index].showImg
+			},
+			goback(){
+				uni.navigateBack(1)
+			}
+		}
+	}
+</script>
+
+<style>
+.textStyle{
+	width: 690rpx;
+	background-color: #FFF;
+	font-size: 28rpx;
+	font-family: PingFangSC-Regular, PingFang SC;
+	font-weight: 400;
+	color: #949599;
+	line-height: 42rpx;
+	margin-top: 40rpx;
+	margin-bottom: 40rpx;
+}
+.title{
+	font-size: 32rpx;
+	padding-top: 40rpx;
+	padding-bottom: 40rpx;
+	width: 690rpx;
+	font-weight: 500;
+	width: 660rpx;
+}
+.titlrStyle{
+	position: relative; 
+	background-color: #FFF; 
+	width: 690rpx; 
+	border: 0rpx;
+	border-bottom-width: 1rpx;
+	border-bottom-color: #EEEFF3; 
+	border-style: solid;
+}
+</style>

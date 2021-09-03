@@ -1,0 +1,240 @@
+<template>
+	<view class="flex flex-1 flex-column" style="background-color: #F4F5FB;">
+		<uni-nav-bar left-icon="back" :title="perfectMsg.sourceType==1? '表决列表' : '会商结论'" statusBar="true" :fixed="true" @clickRight="toVote">
+			<view slot="right" v-if="this.isOwner">
+				<text class="rightTitle" v-if="perfectMsg.sourceType==1? true : false ">创建表决</text>
+				<text class="rightTitle" v-else>创建结论</text>
+			</view>
+		</uni-nav-bar>
+		<view class="flex flex-1 flex-column" style="margin-top: 24rpx;" v-if="perfectMsg.sourceType==1? true : false">
+			<wt-list api="discussion.getvotebyconid" :limit="20" v-if="isShowWTList" ref="votelist" :params="{where: this.perfectMsg.itemId, types: 1}">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+			
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="{dataList}">
+			
+					<!-- 循环处理数据 -->
+					<cell v-for="(item,index) in dataList" :key="index" style="background-color: #F4F5FB;"  >
+			
+						<!-- 重定义渲染组件 -->
+						<view @longpress="openAction(item, index)" @click="toVerdictdetail(item)">
+							<create-item :item="item"></create-item>
+						</view>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+		<!-- <view class="flex flex-1 flex-column align-center" v-else>
+			<wt-list  api="discussion.getvotebyconid" class="ml-3" :limit="20" ref="votelist" :params="{where: this.perfectMsg.itemId, types: 2}">
+				<template v-slot:dataList="{dataList}">
+					<cell  @longpress="openAction(item, index)" v-for="(item,index) in dataList" class="flex flex-column justify-center bg-white pt-2" :key="index" style="width: 690rpx; background-color: #F4F5FB" @click="toVerdictdetail(item)">
+						<view class="header justify-center">
+							<image src="../../static/discussion/resolved.png" v-if="timeDiff(item.endTime,item.status)" style="width: 152rpx; height: 40rpx; margin-left: 30rpx;"></image>
+							<image src="../../static/discussion/inVote.png" v-if="item.status == 1 ? true : false" style="width: 152rpx; height: 40rpx; margin-left: 30rpx;"></image>
+							<image src="../../static/discussion/toConfirmed.png" v-if="item.status == 0 ? true : false" style="width: 152rpx; height: 40rpx; margin-left: 30rpx;"></image>
+						</view>
+						<view class="bg-white">
+							<view class="content border-bottom justify-center ml-3">
+								<text class="textSize">{{item.title}}</text>
+							</view>
+							<view class="footer flex flex-row align-center justify-start ml-3">
+								<image src="../../static/img/vote/time3.png" style="width: 26rpx; height: 26rpx;"></image>
+								<text style="
+								margin-left: 16rpx;
+								font-size: 26rpx;
+								font-weight: 400;
+								color: #949599;
+								line-height: 26rpx;">{{item.endTime}} 结束</text>
+							</view>
+						</view>
+					</cell>
+				</template>
+			</wt-list>
+		</view> -->
+	</view>
+</template>
+
+<script>
+	import wtList from '@/components/wt-list/wt-list.nvue';
+	import createItem from '../vote/list/create.nvue';
+	import dayjs from 'dayjs'
+	export default {
+		components: {
+			createItem
+		},
+		data(){
+			return {
+				tabIndex: 0,
+				api: [
+					'vote.getvotebyuser',
+					'vote.getcastvotebyuser'
+				],
+				perfectMsg: {},
+				isShowWTList: true,
+				nowDay:'',
+				endTime:''
+			}
+		},
+		onShow() {
+			this.$refs.votelist.refreshData()
+		},
+		onLoad(option) {
+			console.log(this.isOwner)
+			this.perfectMsg = JSON.parse(decodeURIComponent(option.perfectMsg))
+			console.log(this.perfectMsg)
+			
+		},
+		computed:{
+			userUID() {
+				return this.$store.getters['initNim/userUID']
+			},
+			// 当前会话的id
+			currentSessionId() {
+			   return this.$store.getters['initNim/currentSessionId']
+			},
+			teamObj() {
+				return this.$store.getters['initNim/teamObj'] || {}
+			},
+			to() {
+				return this.currentSessionId.split('-')[1]
+			},
+			scene() {
+				return this.currentSessionId.split('-')[0]
+			},
+			// 当前用户或者群的详细信息
+			detailInfo() {
+				if (this.scene === 'p2p' && this.userObj[this.to]) {
+					return this.userObj[this.to]
+				} else if (this.scene === 'team' && this.teamObj[this.to]) {
+					return this.teamObj[this.to]
+				}
+			},
+			// 判断自己是否是群主
+			isOwner() {
+				console.log(this.detailInfo);
+				if (this.detailInfo.owner === this.userUID) {
+					return true
+				}
+				return false
+			},
+		},
+		methods:{
+			toVote(){
+				if(this.perfectMsg.sourceType == 1){
+					uni.navigateTo({
+						url:'../vote/create/create?voteType=1'+ '&ConsId='+this.perfectMsg.itemId
+					})
+				}
+				// if(this.perfectMsg.sourceType == 2){
+				// 	uni.navigateTo({
+				// 		url:'../vote/create/create?voteType=2'+ '&ConsId='+this.perfectMsg.itemId
+				// 	})
+				// }
+				
+			},
+			timeDiff(endTime,status){
+				console.log(status)
+				this.nowDay = dayjs().format('YYYY-MM-DD HH:mm:ss')
+				if(endTime < this.nowDay){
+					return true
+				}else {
+					return false
+				}
+			},
+			deleteItem(item, index) {
+				uni.$api.vote.deletevote({
+						voteId: item.voteId
+					})
+					.then(res => {
+						console.log('deletevote_RES', res);
+						uni.showToast({
+							title: '已删除',
+							icon: 'none'
+						});
+						this.$refs.votelist.removeItem(index);
+					})
+					.catch(err => {
+						uni.showToast({
+							title: err.message || '操作失败',
+							icon: 'none'
+						});
+					})
+			},
+			openAction(item, index) {
+				if (this.tabIndex) return;
+				uni.showActionSheet({
+					itemList: ['删除'],
+					success: res => {
+						if (res.tapIndex >= 0) {
+							this.deleteItem(item, index);
+						}
+					},
+					fail: () => {},
+					complete: () => {}
+				});
+			},
+		
+			//去结论详情页
+			toVerdictdetail(item){
+				console.log(item,'ssss')
+					uni.navigateTo({
+						url: '../vote/vote?lookDetail=0&voteId=' + item.voteId + '&voteType=' + item.voteType,
+					});
+				// uni.navigateTo({
+				// 	url: '../vote/vote?lookDetail=1&voteType=' + tapIndex,
+				// });
+			}
+		}
+	}
+</script>
+
+<style>
+.rightTitle{
+	font-size: 32rpx;
+	font-weight: 400;
+	color: #F75252;
+	line-height: 48rpx;
+}
+.listContent{
+	width: 750rpx;
+	height: 180rpx;
+	background-color: #FFFFFF;
+}
+.voteTitle{
+	width: 513rpx;
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #2F3034;
+	line-height: 32rpx;
+	lines: 1;
+	text-overflow: ellipsis;
+}
+.result{
+	width: 690rpx;
+	height: 251rpx;
+	background-color: #FFFFFF;
+	box-shadow: 0rpx 8rpx 16rpx 0rpx rgba(102, 102, 102, 0.04);
+	border-radius: 8rpx;
+}
+.header{
+	height: 80rpx;
+	background-image: linear-gradient(270deg, #FFFFFF, #FFF2ED);
+}
+.content{
+	width: 630rpx;
+	height: 96rpx;
+}
+.textSize{
+	width: 690rpx;
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #2F3034;
+	line-height: 32rpx;
+	lines: 1;
+	text-overflow: ellipsis;
+}
+.footer{
+	height: 74rpx;
+}
+</style>
+	

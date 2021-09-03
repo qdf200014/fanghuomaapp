@@ -1,0 +1,216 @@
+<template>
+	<view style="background-color: #FFF;">
+		<uni-nav-bar left-icon="back" title="积分规则" :statusBar="true" @clickLeft="toBack" :fixed="true"></uni-nav-bar>
+		<view class="title flex w-100 align-center justify-center">
+			<text>积分规则说明</text>
+		</view>
+		<view class="ruleCont">
+			<view class="first" style="margin-bottom: 40rpx; margin-left: 30rpx; margin-right: 30rpx;">
+				<text class="firstTitle contTitle">一、什么是积分？</text>
+				<text class="firstContent content">1. 积分是用户在平台签到、扫码、学习、收藏/转发、填写日报的时候，根据相关规定给予用户的一种奖励。
+2. 用户积累的积分可以在积分商城兑换商品
+3. 积分为防火码app特殊福利系统功能，不存在对外流通、转卖功能。
+ </text>
+			</view>
+			<view class="second" style="margin-bottom: 40rpx; margin-left: 30rpx; margin-right: 30rpx;">
+				<text class="secondTitle contTitle">二、如何获得积分？</text>
+				<text class="secondTitle contTitle">1. 常规任务</text>
+				<text class="secondContent content">1）学习
+用户学习完课程后，按照课时量给定的积分，每完成一个课时即可获得6积分奖励，在课时完成后，积分会自动发放至用户账户中。
+2）扫码
+用户在扫码进山/进园后，可获得10积分奖励，在用户登记信息成功后，积分会自动发放至用户账户中，每日仅限2次。
+3）收藏/转发
+用户在查阅会商文章内容时，对文章进行收藏/转发，可获得6积分奖励，每日限10次。
+</text>
+			</view>
+			<view class="thirdly" style="margin-bottom: 20rpx; margin-left: 30rpx; margin-right: 30rpx;">
+				<text class="thirdlyTitle contTitle">2. 每日任务（每日0点重置）</text>
+				<text class="thirdlyContent content">1） 每日签到
+a．关于签到：用户通过工作台进行签到，按照用户当日连续签到情况，可获得对应的积分奖励。
+b．连续签到一周（周一至周五）可额外获得宝箱（额外积分）奖励，具体规则如下:</text>
+			<view class="tegralTable">
+				<view class="flex w-100 flex-row">
+					<view class="tableTitle flex flex-column align-center justify-center" style="width: 140rpx; height: 80rpx;border-top-width:1rpx;">
+						<text>时间</text>
+<text style="font-size: 24rpx; font-weight: 400;">(连续签到)</text>
+					</view>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx;border-top-width: 1rpx;">第1天</text>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx;border-top-width: 1rpx;">第2天</text>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx;border-top-width: 1rpx;">第3天</text>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx;border-top-width: 1rpx;">第4天</text>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx; border-right-width: 1rpx; border-top-width: 1rpx;">第5天</text>
+				</view>
+				<view class="flex w-100 flex-row">
+					<view class="tableTitle flex flex-column align-center justify-center" style="width: 140rpx; height: 80rpx;">
+						<text style="font-size: 28rpx; color: #999;">积分奖励</text>
+					</view>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx;">5</text>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx;">10</text>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx;">15</text>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx;">30</text>
+					<text class="tableTitle" style="width: 112rpx; height: 80rpx; border-right-width: 1rpx;">30</text>
+				</view>
+				<view class="flex w-100 flex-row">
+					<view class="tableTitle flex flex-column align-center justify-center" style="width: 140rpx; height: 110rpx;">
+						<text style="font-size: 28rpx; color: #999;">额外奖励</text>
+					</view>
+					<text class="tableTitle" style="width: 554rpx; height: 110rpx; line-height: 50rpx; border-right-width: 1rpx;">连续签到一周(周一至周五)，周五签到当天可获得额外宝箱奖励(额外积分)</text>
+				</view>
+			</view>
+
+				<text class="thirdlyContent content">c．关于断签：用户在连续签到断签后，重新签到按照第一天签到重新计算获得积分。在一周内用户在连续签到断签后，如果在本周之内未能成功补签，则无法获得额外的宝箱奖励。
+d．关于补签：补签可以增加您的连续签到天数，在下一天签到时享受即将到来的连续签到奖励，但不能获得补签日的积分奖励和之前的连续签到奖励。例如：用户在2020年5月18-19日（周一至周二）连续签到，5月20日（周三）断签，在5月21日（周四）签到之前使用补签卡补签5月20日，则5月20日补签不能获得积分，但是5月21日签到可以获得连续签到4天的30积分，同时后续的周五连续签到，即可打开宝箱奖励。
+e．关于补签卡：补签卡可以在积分中心通过积分兑换，兑换后可针对任意可补签的日子进行补签，补签卡只能对当日之前30天内的未签到日进行补签，补签卡没有有效期也不限制每天的兑换上限。
+
+2）每日日报
+用户填报每日的日报后，可获得10积分奖励。
+</text>
+			</view>
+			<view class="first" style="margin-bottom: 20rpx; margin-left: 30rpx; margin-right: 30rpx;">
+							<text class="firstTitle contTitle">3. 每月任务（每月1日0点重置）</text>
+							<text class="firstContent content">统一说明：各项每月任务之间没有互斥关系，所有任务奖励积分将于日报提交，后台统计完成后发放。具体以实际发放实际为准。
+1） 填报5次日报
+每月完成5次日报，即可获得50积分 
+2） 填报10次日报
+每月完成10次日报，即可获得100积分
+3） 填报15次日报
+每月完成15次日报，即可获得150积分
+			 </text>
+			</view>
+			<view class="first" style="margin-bottom: 20rpx; margin-left: 30rpx; margin-right: 30rpx;">
+				<text class="firstTitle contTitle">4. 积分获取方式汇总</text>
+				<view class="gettegral flex flex-1 flex-column">
+					<view class="flex flex-1 flex-row">
+						<text class="getTitle flex-1">积分获取方式</text>
+						<text class="getTitle flex-1">获得积分数</text>
+					</view>
+					<view class="flex flex-1 flex-row" v-for="(item,index) of gradelList" :key="index">
+						<text class="getContent flex-1">{{item.type}}</text>
+						<text class="getContent flex-1">{{item.gradel}}积分</text>
+					</view>
+				</view>
+			</view>
+			<view class="first" style="margin-bottom: 40rpx; margin-left: 30rpx; margin-right: 30rpx;">
+				<text class="firstTitle contTitle">三、如何使用积分？</text>
+				<text class="firstContent content">1. 参与积分抽奖：抽奖消耗及奖励积分规则详见抽奖说明。
+2. 参与积分换购：可用使用积分抵现的方式兑换商品，规则可在订单积分抵扣处查看，也可通过积分商城选择可兑换的商品。
+3. 兑换优惠券：账户中的积分可用于兑换不同额度的优惠券（考虑后期商城上线商品交易部分）。
+4. 兑换补签卡：账户中的积分可用于兑换补签卡，补签卡权益及使用规则请参照补签卡的规则说明。</text>
+			</view>
+			<view class="first" style="margin-bottom: 40rpx; margin-left: 30rpx; margin-right: 30rpx;">
+				<text class="firstTitle contTitle">四、积分的有效期？</text>
+				<text class="firstContent content">积分的有效期是指从获得积分开始永久有效。</text>
+			</view>
+			<view class="first" style="margin-bottom: 40rpx; margin-left: 30rpx; margin-right: 30rpx;">
+				<text class="firstTitle contTitle">五、常见问题</text>
+				<text class="firstContent content">1. 本积分只在防火码app产品中流通。
+2. 如用户出现违规行为（包括但不限于作弊累计等），防火码运维工作组有权冻结或关闭其账号，并清除所涉嫌恶意违规操作的积分，并保留追究赔偿责任的权利。
+3. 防火码运维工作组有权根据业务情况调整积分相应规则（包括但不限于积分使用等）。调整后的规则，一经发布，用户对此不持异议。</text>
+			</view>
+			<view class="w-100">
+				<text class="content pl-3">*积分体系的最终解释权归平台所有
+版本更新时间 2020.12.28。</text>
+			</view>
+			
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				gradelList: [
+					{
+						type: '学习',
+						gradel: '6'
+					},{
+						type: '扫码',
+						gradel: '10'
+					},{
+						type: '收藏/转发',
+						gradel: '6'
+					},{
+						type: '每日签到',
+						gradel: '5/10/15/30'
+					},{
+						type: '每日日报',
+						gradel: '10'
+					},{
+						type: '每月完成5次日报',
+						gradel: '50'
+					},{
+						type: '每月完成10次日报',
+						gradel: '100'
+					},
+					{
+						type: '每月完成15次日报',
+						gradel: '150'
+					}
+				]
+			}
+		},
+		methods: {
+			toBack() {
+				uni.navigateBack(1)
+			}
+		},
+	}
+</script>
+
+<style>
+.title{
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #323234;
+	line-height: 32rpx;
+	margin-top: 29rpx;
+	margin-bottom: 42rpx;
+}
+.tableTitle{
+	text-align: center;
+	line-height: 80rpx;
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #323234;
+	border-width: 1rpx;
+	border-color: #ccc;
+	border-style: solid;
+	border-right-width: 0rpx;
+	border-top-width: 0rpx;
+}
+.getTitle{
+	text-align: center;
+	padding: 16rpx 0;
+	font-size: 32rpx;
+	font-weight: 500;
+	background-color: #EEEFF3;
+	border-width: 1rpx;
+	border-style: solid;
+	border-color: #ccc;
+}
+.getContent{
+	background-color: #FFF;
+	font-weight: 400;
+	font-size: 28rpx;
+	text-align: center;
+	padding: 16rpx 0;
+	border-width: 1rpx;
+	border-style: solid;
+	border-color: #ccc;
+	border-top-width: 0rpx;
+}
+.contTitle{
+	font-size: 28rpx;
+	font-weight: 500;
+	color: #323234;
+	line-height: 42rpx;
+	margin-right: 10rpx;
+}
+.content{
+	font-size: 28rpx;
+	font-weight: 400;
+	color: #949599;
+	line-height: 42rpx;
+}
+</style>

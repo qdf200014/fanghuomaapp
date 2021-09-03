@@ -1,0 +1,28 @@
+<template>
+	<view class="flex flex-1 flex-column w-100">
+		<uni-nav-bar title="确认完成" :statusBar="true"></uni-nav-bar>
+		<view class="flex flex-1 w-100 flex-column justify-center align-center">
+			<image src="../../../static/work/success.png" style="width: 196rpx;height: 196rpx;"></image>
+			<text class="font-2 p-5">已确认用户信息</text>
+			<view class="theme-second-blue-bg flex justify-center align-center" @click="back" hover-class="hover-8" style="width: 576rpx;height: 88rpx;border-radius: 44rpx;">
+				<text class="font-1 text-white">返回首页</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		methods: {
+			back(){
+				uni.switchTab({
+					url:'../../tabbar/tabbar-4/tabbar-4'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

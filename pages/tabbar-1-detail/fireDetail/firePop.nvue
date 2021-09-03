@@ -1,0 +1,77 @@
+<template>
+	<view style="width: 750rpx;height: 260rpx;background-color: #FFFFFF;padding-bottom: 32rpx;border-radius: 16rpx 16rpx 0 0;">
+		<text class="flex w-100 justify-center" style="font-size: 26rpx;font-weight: 400;color: #949599;padding-top: 32rpx;padding-bottom: 32rpx;">分享</text>
+		<view class="flex flex-row justify-around align-center">
+			<view v-for="(item,index) in bottomList" :key="index" class="flex justify-center align-center flex-column" @click="haddle(index, item)">
+				<image :src="item.icon" mode="" style="width: 96rpx;height: 96rpx;"></image>
+				<text style="font-size: 26rpx;font-weight: 400;color: #323234;padding-top: 16rpx;text-align: center;">{{item.title}}</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import appConfig from '@/common/appConfig/appConfig.js'
+	export default {
+		props:{
+			popType:{
+				type: Number,
+				default: ()=>null
+			}
+		},
+		data(){
+			return{
+				bottomList:[
+					{
+						icon: '/static/work/peopleShare.png',
+						title:'分享至朋友',
+						id:'innerShare'
+					},
+					{
+						icon: '/static/work/weixin.png',
+						title:'分享至微信',
+						id:'wx'
+					},
+					{
+						icon: '/static/work/peopleCircle.png',
+						title:'分享至朋友圈',
+						id:'pyq'
+					},
+					{
+						icon: '/static/work/clone.png',
+						title:'复制链接',
+						id:'copy'
+					}
+				],
+				
+			}
+		},
+		onReady(){
+			console.log(popType)
+			if(this.popType == 1){
+				this.bottomList = this.bottomList.slice(0,2)
+			}
+		},
+		methods:{
+			haddle(index, item){
+				console.log(this.bottomList.slice(0,2))
+				this.Status = index;
+				
+				// if(appConfig.homeMenuDisable.indexOf(item.id) > -1){
+				// 	uni.showToast({
+				// 		title:appConfig.tipText,
+				// 		icon:'none'
+				// 	})
+				// 	return this.$emit("gohaddle",-1);
+				// }
+				
+				
+				this.$emit("gohaddle",this.Status)
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

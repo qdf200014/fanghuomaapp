@@ -1,0 +1,182 @@
+<template>
+	<!-- 火情报警列表 -->
+	<view class="flex flex-1 flex-column w-100" style="background-color: #F4F5FB;">
+		<uni-nav-bar left-icon="back" title="火情报警" :statusBar="true"></uni-nav-bar>
+		<view style="flex-direction: row;background-color: #FFFFFF;">
+			<view class="flex justify-center align-center flex-row" style="width: 250rpx;"  @click="open">
+				<text style="font-size: 30rpx;font-weight: 400;color: #303233;padding-left: 40rpx;text-align: right;"
+				 class="line-1 flex flex-1 px-1">{{this.title}}</text>
+				 <image src="../../../static/work/drop.png" style="width: 44rpx;height: 44rpx;margin-right: 27rpx;"></image>
+			</view>
+			<view class="uni-tab-item flex justify-center align-center" v-for="(tab,index) in tabList"
+			 :ref="'tabitem'+index" :data-id="index" :data-current="index" @click="handerToggle(index)" :class="tabIndex==index ? ' border-title-active' : ''">
+				<text class="uni-tab-item-title" :class="tabIndex==index ? 'uni-tab-item-title-active' : ''">{{tab.name}}</text>
+			</view>
+		</view>
+		<wt-area ref="areaSelect" @confirm="confirm"></wt-area>
+		<!-- 注意wt-list本身不具有flex布局，使用时包一层容器 -->
+		<view class="position-relative flex flex-1 w-100" v-if="tabIndex>-1">
+			<!-- list组件，封装数据刷新及分页加载逻辑，使用方式按照如下写法即可，所触发的事件无须使用 -->
+			<wt-list api="firewarn.getfirewarn" :params="{status: 2 - tabIndex,organization_id:this.cid}"  resKey="data.items" ref="fireWarnList">
+				<!-- wt-list所触发的事件无须使用！！！ -->
+		
+				<!-- 如下结构必须遵守 -->
+				<template v-slot:dataList="{dataList}">
+		
+					<!-- 循环处理数据 -->
+					<cell v-for="(item,index) in dataList">
+						<!-- // 已回执 -->
+						<firewarned v-if="tabIndex" :item="item"></firewarned>
+						<!-- // 未回执 -->
+						<unfirewarn v-else :item="item" :index="index"></unfirewarn>
+					</cell>
+				</template>
+			</wt-list>
+		</view>
+		<view style="height:24rpx;"></view>
+	</view>
+</template>
+
+<script>
+	import wtArea from '@/components/wt-area/wt-area.nvue';
+	import wtList from '@/components/wt-list/wt-list.nvue';
+	import firewarned from "./firewarned.nvue";
+	import unfirewarn from "./unfirewarn.nvue";
+	export default {
+		data() {
+			return {
+				tabList: [
+				{
+					name: '未回执',
+				}, 
+				{
+					name: '已回执'
+				}],
+				tabIndex: 0,
+				arealist:[],
+				title:'区域选择',
+				cid:undefined
+			}
+		},
+		components:{
+			wtArea,
+			wtList,
+			firewarned,
+			unfirewarn
+		},
+		// onShow() {
+		// 	this.$refs.fireWarnList.refreshData();
+		// },
+		onLoad() {
+			uni.$on('removeSosItem', res=>{
+				this.removeItem(res.index)
+			})
+		},
+		onUnload() {
+			uni.$off('removeSosItem')
+		},
+		methods: {
+			handerToggle(index){
+				this.tabIndex = -1;
+				this.$nextTick(()=>{
+					this.tabIndex = index;
+				})
+				console.log(index);
+			},
+			removeItem(index){
+				this.$refs.fireWarnList.removeItem(index)
+			},
+			open(){
+				this.$refs.areaSelect.open();
+			},
+			// 地区保存
+			confirm(arealist){
+				this.arealist = arealist;
+				if(arealist.length<=0){
+					this.cid = undefined;
+					this.title = '区域选择';
+				}else{
+					this.cid = this.arealist[ this.arealist.length-1].id
+					this.title =this.arealist[ this.arealist.length-1].name;
+				}
+				this.$nextTick(()=>{
+					this.$refs.fireWarnList.refreshData();
+				})
+			},
+			// 地区取消
+			clearArea(){
+				this.$refs.areaSelect.clear();
+			}
+		}
+	}
+</script>
+
+<style>
+	.gcolor {
+		/* width: 375rpx; */
+		/* height: 30rpx; */
+		font-size: 30rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #487CF1;
+		/* line-height: 30rpx; */
+		/* text-align: center; */
+		border-bottom-width: 4rpx;
+		border-style: solid;
+		border-color: #487CF1;
+	}
+
+	.mcolor {
+		/* width: 375rpx; */
+		/* 	height: 30rpx; */
+		font-size: 30rpx;
+		font-family: PingFangSC-Regular, PingFang SC;
+		font-weight: 400;
+		color: #949599;
+		/* 	line-height: 30rpx;
+	text-align: center; */
+
+	}
+	.uni-tab-item {
+	  /* #ifndef APP-PLUS */
+	  display: inline-block;
+	  /* #endif */
+	  flex-wrap: nowrap;
+		width: 250rpx;
+	}
+	
+	.uni-tab-item-title {
+	  color: #555;
+	  font-size: 15px;
+	  height: 40px;
+	  line-height: 40px;
+	  flex-wrap: nowrap;
+	  /* #ifndef APP-PLUS */
+	  white-space: nowrap;
+	  /* #endif */
+	}
+	
+	.uni-tab-item-title-active {
+	  color: #007AFF;
+	}
+	.border-title-active{
+		border-bottom-width: 4rpx;
+		border-bottom-color: #487CF1;
+		border-style: solid;
+	}
+	.swiper-item {
+	  flex: 1;
+	  flex-direction: column;
+	}
+	
+	.page-item {
+	  flex: 1;
+	  flex-direction: row;
+	  position: absolute;
+	  left: 0;
+	  top: 0;
+	  right: 0;
+	  bottom: 0;
+	}
+
+</style>

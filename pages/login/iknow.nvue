@@ -1,0 +1,85 @@
+<template>
+	<view>
+		<uni-popup type="center" :maskClick="false" ref="iknow" class="flex flex-1 flex-column justify-center align-center ">
+			<view class=" bg-white rounded-2 flex flex-column justify-center align-center" style="width: 540rpx;height: 660rpx;">
+				<text class="font-32 text-center text-dark-3 p-4 pb-2 font-weight-bold">个人信息保护指引</text>
+				<scroll-view scroll-y="true" style="width: 540rpx;" class="flex flex-1 flex-column">
+					<view class="p-4 pt-2">
+						<text class="text-dark-5 font " style="line-height: 40rpx;text-indent:36px">&emsp;&emsp;防火码APP（以下简称“App”或“我们”）非常重视您的个人信息，并让您对个人信息拥有控制权，我们会使用强大的保密技术来保护您的个人隐私，同时制定严格的政策来管理所有数据。当您访问App时，或使用我们提供的服务前，您需要同意本政策中关于我们如何收集、使用、储存和分享您的相关信息的规定。如果您不同意本隐私政策中的任何内容，请立即停止使用或访问我们的产品和服务。</text>
+						<view class="flex flex-1 flex-row flex-nowrap">
+							<text class="text-dark-5 font " style="line-height: 40rpx;">&emsp;&emsp;详见</text>
+							<template v-for="(item, index) in linkArr">
+								<navigator :url="item.link"><text class="theme-main-color font " style="line-height: 40rpx;">{{item.name}}</text></navigator>
+								<text class="text-dark-5 font " style="line-height: 40rpx;" v-if="index != (linkArr.length - 1)">和</text>
+							</template>
+						</view>
+					</view>
+				</scroll-view>
+				<view class=" border-top flex flex-row align-center justify-center" style="height: 100rpx;line-height: 100rpx;width: 540rpx;text-align: center;"
+				 v-if="this.platform=='android'">
+					<navigator class="flex-1 justify-center align-center border-right" style="height: 100rpx;" @click="refuse">
+						<text class="font-32" style="color: #6C757D;">我拒绝</text>
+					</navigator>
+					<navigator class="flex-1 align-center justify-center" style="height: 100rpx;" @click="iKnow">
+						<text class="theme-main-color font-32">我同意</text>
+					</navigator>
+				</view>
+				<navigator class=" border-top flex flex-row justify-center align-center" style="height: 100rpx;line-height: 100rpx;width: 540rpx;text-align: center;"
+				 @click="iKnow" v-else>
+					<text class="theme-main-color font-32">我同意</text>
+				</navigator>
+			</view>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	import uniPopup from '@/components/uni-popup/uni-popup.vue';
+	export default {
+		components: {
+			uniPopup
+		},
+		data(){
+			return{
+				platform:''
+			}
+		},
+		props: {
+			linkArr: {
+				type: [Array, Object],
+				default: () => [{
+					name: '隐私政策',
+					link: '/pages/tabbar/tabbar-5/servicePirvacy/service'
+				}, {
+					name: '服务协议',
+					link: '/pages/tabbar/tabbar-5/servicePirvacy/pirvacy'
+				}]
+			}
+		},
+		mounted() {
+			this.isKnow();
+			this.platform = uni.getSystemInfoSync().platform;
+		},
+		methods: {
+			isKnow() {
+				let know = uni.getStorageSync('iknow') || false;
+
+				// know = false; // 测试打开
+				if(!know){
+					this.$refs.iknow.open();
+				}
+			},
+			iKnow() {
+				this.$refs.iknow.close();
+				uni.setStorageSync('iknow', true);
+			},
+			refuse() {
+				// #ifdef APP-PLUS
+				plus.runtime.quit();
+				// #endif
+			}
+		}
+	};
+</script>
+
+<style></style>

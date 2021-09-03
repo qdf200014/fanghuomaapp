@@ -1,0 +1,137 @@
+<template>
+	<view style="background-color: #FFFFFF;" class="flex flex-column flex-1 w-100">
+		<!-- 火警报警未回执详情 -->
+		<uni-nav-bar left-icon="back" title='火情报警详情' :statusBar="true" @clickLeft="navigateBack"></uni-nav-bar>
+		<list class="flex flex-1 flex-column w-100">
+			<cell class="w-100 p-3">
+				<view style="border-radius: 16rpx;background-color: #F4F5FB;">
+					<view class="pl-3 pr-3 pt-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">报警人</text>
+						<text class="violation_bottom" v-if="unfirewarn.username">{{unfirewarn.username}}</text>
+						<text class="violation_bottom" v-else>非登记游客</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">手机号</text>
+						<text class="violation_bottom">{{unfirewarn.phone}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">报警时间</text>
+						<text class="violation_bottom">{{dateTran(unfirewarn.created_at)}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">火情地点</text>
+						<text class="violation_bottom">{{unfirewarn.place}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">火情地址</text>
+						<text class="violation_bottom">{{unfirewarn.place}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">火情位置</text>
+						<text class="violation_bottom">{{unfirewarn.lng}}，{{unfirewarn.lat}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text style="font-size: 32rpx;font-weight: 400;color: #606266;">火情图片/视频</text>
+						<view class="flex flex-row justify-between flex-wrap">
+							<view v-for="(item,index) in unfirewarn.images" :key="index" style="padding-top: 28rpx;">
+								<wt-media :media="headUrl+item.url"style="width: 300rpx;height: 200rpx;border-radius: 15rpx;"></wt-media>
+							</view>
+						</view>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">描述</text>
+						<text class="violation_bottom">{{unfirewarn.describe}}</text>
+					</view>
+				</view>
+			</cell>
+		</list>
+		<view class="flex justify-center border-top box" style="padding-top: 20rpx;padding-bottom: 20rpx;">
+			<view style="background-color: #487CF1;width: 686rpx;height: 88rpx;border-radius: 44rpx;" class="flex justify-center align-center" @click="goreceipt">
+				<text style="font-size: 36rpx;font-family: PingFangSC-Semibold, PingFang SC;font-weight: 600;color: #FFFFFF;">回执</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		data() {
+			return {
+				unfirewarn: [],
+				imageList: [],
+				id: '',
+				headUrl: 'https://fhm-oss.limefamily.cn/fhm/',
+				index:null
+			}
+		},
+		onLoad(e) {
+			console.log(e)
+			this.id = e.id
+			this.firedetail();
+		},
+		methods: {
+			navigateBack() {
+				uni.navigateBack(1)
+			},
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+			firedetail() {
+				uni.$api.firewarn.getfiredetail({
+						id: this.id
+					})
+					.then(res => {
+						console.log(res);
+						this.unfirewarn = res.data.data
+						console.log(this.unfirewarn, 'lalalla')
+					})
+					.catch(err => {
+						console.log(err)
+					})
+			},
+			goreceipt(){
+				uni.$api.firewarn.firemark({
+					id:this.id
+				})
+				.then(res=>{
+					console.log('回执成功',res);
+					uni.$emit('removeSosItem', {
+						index: this.index
+					})
+					uni.showToast({
+						title: "回执成功",
+						duration: 2000
+					});
+					setTimeout(()=>{
+						uni.navigateBack(1)
+					},2000)
+					
+				})
+				.catch(err=>[
+					console.log('回执失败',err)
+				])
+			},
+			navigateBack(){
+				uni.navigateBack(1)
+			},
+		}
+	}
+</script>
+
+<style>
+	.violation_top {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #606266;
+		padding-bottom: 14rpx;
+	}
+
+	.violation_bottom {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+</style>

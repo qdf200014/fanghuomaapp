@@ -1,0 +1,64 @@
+<template>
+	<div class="im-bg-grey-1 flex flex-1 flex-column w-100">
+		<nim-chat-navigation>
+			<view class="im-flex im-flex-nowrap im-align-center">
+				<text class="im-font-34 im-font-black" >会商列表</text>
+			</view>
+		</nim-chat-navigation>
+		
+		<list v-if="advancedArr.length!=0" class="flex-1">
+			<cell class="im-bg-white" v-for="item in advancedArr" :key="item.id">
+				<session-item :session="item"></session-item>
+			</cell>
+		</list>
+		<no-data v-else class="flex flex-1 flex-column w-100 position-relative align-center justify-center"></no-data>
+	</div>
+</template>
+
+<script>
+	import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+	import sessionItem from '@/components/easy-chat/session-item.vue'
+	import noData from '@/components/nodata.nvue';
+	export default {
+		components: {
+			nimChatNavigation,
+			sessionItem,
+			noData
+		},
+		computed: {
+			teamObj() {
+				return this.$store.getters['initNim/teamObj']
+			},
+			// 高级群聊天数组 高级群单独展示 只展示前三个
+			advancedArr() {
+				let arr = []
+				let topArr = []
+				this.$store.getters['initNim/sessionArr'].map(item => {
+					if (item.scene === 'team' && this.teamObj[item.to] && this.teamObj[item.to].type === 'advanced') {
+						if (item.isTop) {
+							topArr.push(item)
+						} else {
+							arr.push(item)
+						}
+					}
+				})
+				return topArr.concat(arr)
+			}
+		},
+		methods: {
+			
+		}
+	}
+</script>
+
+<style>
+.no-data {
+	flex: 1;
+	/* position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 10; */
+}
+</style>

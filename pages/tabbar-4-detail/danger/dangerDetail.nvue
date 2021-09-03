@@ -1,0 +1,250 @@
+<template>
+	<view class="flex flex-1 flex-column">
+		<uni-nav-bar @clickLeft="clickLeft" :isOperation="back == 1 ? true : false" left-icon="back" :title="!pageReady ?'  ' : (dangerList.fileType == 1 ? '隐患整改通知书' : '督查问题清单') " :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-1 flex-column" style="padding-bottom: 50rpx;" v-if="pageReady">
+			<cell  class="pl-3 pr-3 bg-white">
+				<view style="padding-bottom: 24rpx;padding-top: 56rpx;" class="border-bottom-4 flex flex-column justify-center align-center">
+					<text class="contentTitle">{{dangerList.redUnitName || ''}}</text>
+				</view>
+				<view class="flex flex-column align-end" style="padding-top: 16rpx;">
+					<text class="smallTitle" v-if="dangerList.numType==1">{{dangerList.numText || dangerList.NumText}}{{dangerList.numProvince}}{{dangerList.numYear || dangerList.NumYear}}{{dangerList.numNumber || dangerList.NumNumber}}</text>
+					<text class="smallTitle" v-else>{{dangerList.numProvince}}{{dangerList.numText || dangerList.NumText}}{{dangerList.numYear || dangerList.NumYear}}{{dangerList.numNumber || dangerList.NumNumber}}</text>
+				</view>
+				<view class="flex flex-column justify-center align-center pt-4 pb-4">
+					<text class="smallName">森林草原防火{{dangerList.fileType == 1 ? '隐患整改通知书' : '督查问题清单' }}</text>
+				</view>
+				<text class="companyName">{{dangerList.inspectedUnit}}：</text>
+				<view style="padding-top: 16rpx;padding-bottom: 16rpx;">
+					<text class="contentTop">&emsp;&emsp;{{inspectionStartTime}}至{{inspectionEndTime}},{{dangerList.inspectionUnit}}对你单位进行督查，依据《国家林业和草原局森林草原防火督查工作管理办法（试行）》，发现存在{{dangerList.hiddenDangerCount}}处{{dangerList.fileType == 1 ? '隐患' : '问题' }}，具体如下：</text>
+				</view>
+				<view v-for="item in dangerDetailList">
+					<text class="contentTop" style="line-height: 45rpx;">&emsp;&emsp;{{item.hiddenContent}}</text>
+				</view>
+				<text class="contentTop" style="padding-top: 16rpx;">&emsp;&emsp;上述问题，对具备整改条件、能够当下改的，拿出具体措施和办法，明确时限和要求，按期整改到位；对短期内不能解决的，要制定整改方案，明确阶段目标，实行清单式、台账式管理，督查组将适时组织“回头看”，推动整改任务落实。各省级林草主管部门防火处于60日内将各单位整改情况汇总后报国家林草局防火司。</text>
+				<view class="pt-4 pl-2" style="padding-bottom: 16rpx; margin-top: 96rpx;">
+					<text class="contentTop">督查工作组组长签字：</text>
+				</view>
+				<!-- 签字区域 -->
+				<view class="flex justify-end align-end">
+					<image :src="dangerList.groupLeaderSign" style="width: 345rpx;height: 210rpx;"></image>
+				</view>
+				<view class="pt-4 pl-2" style="padding-bottom: 16rpx;">
+					<text class="contentTop">被督查单位责任人签字：</text>
+				</view>
+				<!-- 签字区域 -->
+				<view class="flex justify-end align-end">
+					<image :src="dangerList.personLiableSign" mode="" style="width: 345rpx;height: 210rpx;"></image>
+				</view>
+				<view class="flex flex-column justify-end align-end pt-4" style="padding-bottom:200rpx;">
+					<text class="contentTop">{{createTime}}</text>
+				</view>
+			</cell>
+		</list>
+		<view style="width: 750rpx;height: 202rpx;" class="position-fixed left-0 bottom-0 pl-3 pr-3 flex flex-row justify-around align-center bg-white border-top">
+			<view class="flex flex-column align-center justify-center" @click="goStatus($event, 1)">
+				<image src="../../../static/work/sharePeople.png" mode="" style="width: 96rpx;height: 96rpx;"></image>
+				<text style="font-size: 26rpx;font-weight: 400;color: #323234;padding-top: 16rpx;">发送至朋友</text>
+			</view>
+			<view class="flex flex-column align-center justify-center" @click="fileShare">
+				<image src="../../../static/work/shareWx.png" mode="" style="width: 96rpx;height: 96rpx;"></image>
+				<text style="font-size: 26rpx;font-weight: 400;color: #323234;padding-top: 16rpx;">发送至微信好友</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import appConfig from '@/common/appConfig/appConfig.js'
+	import dayjs from 'dayjs'
+	export default {
+		data() {
+			return {
+				inspectionStartTime: '',
+				inspectionEndTime: '',
+				createTime:'',
+				// reportTime:'',
+				dangerList:{
+					fileType:1
+				},
+				dangerDetailList:null,
+				articleId: null,
+				myPdf: null,
+				back:1,
+				pageReady:false
+			}
+		},
+		onLoad(e){
+			console.log(e);
+			this.articleId = e.id;
+			this.back = e.back || 1;
+			this.setListenerShare()
+			this.getPdf()
+			uni.$api.danger.gethiddendanger({
+				id:e.id
+			})
+			.then(res=>{
+				console.log(res,'gethiddendanger_RES');
+				this.dangerList = res.data.data;
+				this.dangerDetailList = this.dangerList.hiddenDangerSelectInfo
+				this.inspectionStartTime = dayjs(this.dangerList.inspectionStartTime.split(" ")[0]).format('YYYY年MM月DD日')
+				this.inspectionEndTime = dayjs(this.dangerList.inspectionEndTime.split(" ")[0]).format('YYYY年MM月DD日')
+				this.createTime = dayjs(this.dangerList.createTime.split(" ")[0]).format('YYYY年MM月DD日')
+				// this.reportTime = dayjs(this.dangerList.reportTime.split(" ")[0]).format('YYYY年MM月DD日')
+				
+				this.pageReady = true;
+			})
+			.catch(err=>{
+				console.log(err,'gethiddendanger_ERR')
+			})
+		},
+		methods: {
+			// 页面返回
+			clickLeft(){
+				if(this.back == 1){
+					console.log(this.back);
+					uni.navigateBack({delta:this.back});
+				}else {
+					console.log(this.back)
+					uni.navigateBack({delta:3})
+				}
+			},
+			// 注册监听 分享完成后发送 火点消息
+			setListenerShare() {
+				let _self = this
+				uni.$off('im-selectContactOk');
+				uni.$on('im-selectContactOk', (data) => {
+					this.$nextTick(function(){
+						// 发送一个卡片消息
+						let adviceCard_content = {
+							type: 'adviceCard',
+							data: {
+								// 跳转的地址
+								url: '/pages/tabbar-4-detail/danger/dangerDetail?id='+this.articleId,
+								// 标题
+								title: `森林草原防火${this.dangerList.fileType == 1 ? '隐患整改通知书' : '督查问题清单'}` ,
+								// 详细内容
+								detail: this.dangerDetailList[0].hiddenContent,
+								// 封面
+								appName: '防火码'
+							}
+						};
+						
+						data.map(item => {
+							_self.$store.dispatch('initNim/nimSendCustomMsg', {
+								scene: item.scene,
+								to: item.to,
+								content: JSON.stringify(adviceCard_content)
+							});
+						})
+						
+						
+						uni.showToast({
+							title: '分享成功',
+							icon:'none'
+						})
+					})
+					console.log('selectContactOk', data)
+				})
+			},
+			goStatus(val, index){
+				// if(appConfig.dangerBtnDisable){
+				// 	uni.showToast({
+				// 		title: appConfig.tipText,
+				// 		icon:'none'
+				// 	})
+				// 	return;
+				// }
+				
+				if(!this.pageReady)return;
+				uni.navigateTo({
+					url: '/pages/easy-chat/select-contact?title=' + `森林草原防火${this.dangerList.fileType == 1 ? '隐患整改通知书' : '督查问题清单'}`,
+					animationType: 'slide-in-bottom'
+				})
+			},
+			// toWechat(){
+			// 	uni.navigateTo({
+			// 		url:'../../vote/index/fileShare/fileShare'
+			// 	})
+			// }
+			getPdf(){
+				uni.$api.danger.gethiddendangerpdf({
+					id: this.articleId
+				}).then(res => {
+					console.log(res)
+					this.myPdf = res.data.data.pdfUrl
+				}).catch(err => {
+					console.log(err)
+				})
+			},
+			/**
+			 * 分享文件
+			 */
+			fileShare() {
+				if(!this.pageReady || this.myPdf == null)return;
+				uni.$shareFile({
+					url:this.myPdf,
+					filename:`森林草原防火${this.dangerList.fileType == 1 ? '隐患整改通知书' : '督查问题清单'}${this.dangerList.numYear || ''}${this.dangerList.numText || ''}${this.dangerList.numNumber || ''}.pdf`,	// ios 命名不生效
+					// type:'WX'//QQ为QQ，微信为WX，系统默认是SYSTEM，不填写默认SYSTEM
+				})
+				.then(res=>{
+					console.log('shareFile_', res);
+				})
+				.catch(err=>{
+					uni.showModal({
+						title: 'shareFile_ERR',
+						content: JSON.stringify(err)
+					});
+					console.log('shareFile_', err);
+				});
+			}
+		}
+	}
+</script>
+
+<style>
+	.contentTitle {
+		/* #ifndef APP-PLUS-NVUE */
+		letter-spacing: 1rpx;
+		/* #endif */
+		font-size: 44rpx;
+		font-weight: 600;
+		color: #FF1D1D;
+		line-height: 44rpx;
+	}
+
+	.border-bottom-4 {
+		border-bottom-width: 2rpx;
+		border-bottom-style: solid;
+		border-bottom-color: #FF1D1D;
+	}
+
+	.smallTitle {
+		font-size: 28rpx;
+		font-weight: 600;
+		color: #666666;
+	}
+
+	.smallName {
+		font-size: 40rpx;
+		font-weight: 400;
+		color: #333333;
+	}
+
+	.companyName {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #333333;
+	}
+
+	.contentTop {
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #333333;
+		line-height: 45rpx;
+	}
+	.modify{
+		font-size: 22rpx;
+		color: #545B62;
+		padding-top: 10rpx;
+	}
+</style>

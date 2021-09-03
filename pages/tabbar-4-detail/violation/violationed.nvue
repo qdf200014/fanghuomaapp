@@ -1,0 +1,77 @@
+<template>
+	<view style="padding-left: 30rpx;padding-right: 30rpx;padding-top: 24rpx;">
+		<view style="position: relative;background-color: #FFFFFF;width: 690rpx;border-radius: 16rpx;">
+			<view style="position: absolute;right: 26rpx;top: 49rpx;">
+				<image src="../../../static/work/warn.png" mode="" style="width:208rpx;height:198rpx;"></image>
+			</view>
+			<view class="flex flex-column">
+				<view class="flex flex-row flex-1" style="width: 690rpx;">
+					<text class="violation_title" style="width: 300rpx;padding-top: 46rpx;">标题：</text>
+					<text class="violation_detail" style="width: 390rpx;padding-top: 46rpx;">{{item.park_name}}</text>
+				</view>
+				<view class="flex flex-row flex-1" style="width: 690rpx;padding-bottom: 40rpx;">
+					<text class="violation_title" style="width: 300rpx;padding-top: 46rpx;">申请时间：</text>
+					<text class="violation_detail" style="width: 390rpx;padding-top: 46rpx;">{{dateTran(item.created_at)}}</text>
+				</view>
+				<view class="border-top flex justify-center align-center" style="width:690rpx;height: 80rpx;">
+					<text class="look_detail" @click="goviolationed(item)">查看详情</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		props:{
+			item:{
+				type:[Object],
+				default:()=>{}
+			}
+		},
+		methods:{
+			goviolationed(item){
+				uni.navigateTo({
+					url:'./violationedetail?id='+item.id+'&title=' + item.park_name,
+					fail: (err) => {
+						console.log('err', err);
+					}
+				})
+			},
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+		}
+	}
+</script>
+
+<style>
+	.violation_title {
+		font-size: 32rpx;
+		font-weight: 500;
+		color: #2F3034;
+		padding-left: 24rpx;
+	}
+
+	.violation_detail {
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #323234;
+		line-height: 44rpx;
+	}
+
+	.look_detail {
+
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #487CF1;
+/* 		padding-top: 26rpx;
+		padding-bottom: 26rpx; */
+	}
+	.border-top {
+		border-top-width: 1rpx;
+		border-top-style: solid;
+		border-top-color: #EEEFF3;
+	}
+</style>

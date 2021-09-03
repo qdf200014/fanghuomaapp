@@ -1,0 +1,138 @@
+<template>
+	<view style="background-color: #FFFFFF;" class="flex flex-column flex-1 w-100">
+		<!-- 高危未回执详情 -->
+		<uni-nav-bar left-icon="back" title="高危人群预警详情" :statusBar="true" @clickLeft="navigateBack"></uni-nav-bar>
+		<list class="flex flex-column w-100 flex-1">
+			<cell class="p-3 w-100">
+				<view style="border-radius: 16rpx;background-color: #F4F5FB;">
+					<view class="pl-3 pr-3 pt-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">姓名</text>
+						<text class="violation_bottom">{{unreplay.name}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">手机号</text>
+						<text class="violation_bottom">{{unreplay.phone}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">进山日期</text>
+						<text class="violation_bottom">{{dateTran(unreplay.created_at)}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">进山地点</text>
+						<text class="violation_bottom">{{unreplay.park_name}}</text>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">进山原因</text>
+						<text class="violation_bottom">{{unreplay.in_type}}</text>
+					</view>
+					<view class="pl-3 flex flex-row justify-between align-center pr-3" style="padding-bottom: 56rpx;">
+						<view>
+							<text class="violation_top">同行人员</text>
+							<text class="violation_bottom">{{unreplay.peers_count}}人</text>
+						</view>
+						<view v-if="unreplay.peers_count != 0" class="flex flex-row align-center">
+							<text class="violation_more" @click="gopeers()">查看同行人员</text>
+							<image src="../../../static/work/into.png" mode="" style="width: 20rpx;height: 20rpx;"></image>
+						</view>
+					</view>
+					<view class="pl-3 pr-3" style="padding-bottom: 56rpx;">
+						<text class="violation_top">高危行为</text>
+						<text class="violation_bottom">{{userinfo.type}}</text>
+					</view>
+				</view>
+			</cell>
+		</list>
+		<view class="flex justify-center border-top" style="padding-top: 20rpx;padding-bottom: 20rpx;">
+			<view style="background-color: #487CF1;width: 686rpx;height: 88rpx;border-radius: 44rpx;" class="flex justify-center align-center" @click="goreceipt">
+				<text style="font-size: 36rpx;font-weight: 600;color: #FFFFFF;">回执</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import dayjs from 'dayjs';
+	export default {
+		data() {
+			return {
+				unreplay: '',
+				headUrl: 'https://fhm-oss.limefamily.cn/fhm/',
+				id:'',
+				title:'',
+				index:null,
+				userinfo:''
+			}
+		},
+		onLoad(e) {
+			console.log(e);
+			this.id = e.id;
+			this.title = e.title;
+			this.index = e.index;
+			uni.$api.riskhigh.getriskhighdetail({
+					id: this.id
+				})
+				.then(res => {
+					console.log(res);
+					this.userinfo = res.data.data.userinfo;
+					this.unreplay = res.data.data.register
+				})
+				.catch(err => {
+					console.log(err)
+				});
+		},
+		methods:{
+			goreceipt() {
+				uni.$api.riskhigh.riskmark({
+						id: this.id
+					})
+					.then(res => {
+						console.log('回执成功', res);
+						uni.$emit('removeSosItem', {
+							index: this.index
+						})
+						uni.showToast({
+							title: "回执成功",
+							duration: 2000
+						});
+						setTimeout(()=>{
+							uni.navigateBack(1)
+						},2000)
+					})
+					.catch(err => {
+						console.log('回执失败', err)
+					})
+			},
+			dateTran(time) {
+				return time.slice(0,16)
+			},
+			gopeers(){
+				uni.navigateTo({
+					url:'./lookpeers?id='+this.id
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.violation_top {
+
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #606266;
+		padding-bottom: 14rpx;
+	}
+
+	.violation_bottom {
+
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #00BCAB;
+	}
+	.violation_more{
+		
+		font-size: 28rpx;
+		font-weight: 400;
+		color: #487CF1;
+	}
+</style>

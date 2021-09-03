@@ -1,0 +1,163 @@
+<template>
+	<view class="flex flex-1 flex-column w-100">
+		<uni-nav-bar left-icon="back" :title="souteType == 0 ? `${ title}确认人员` : '全部参与者'" v-if="souteType == 0 ? true: false" :statusBar="true"></uni-nav-bar>
+		<uni-nav-bar left-icon="back" title="已签到人员" v-if="souteType == 1 ? true: false" :statusBar="true"></uni-nav-bar>
+		<uni-nav-bar left-icon="back" title="已选人员" v-if="souteType == 2 ? true: false" :statusBar="true"></uni-nav-bar>
+		<list class="flex flex-1 flex-column w-100">
+			<cell class="flex flex-column w-100">
+				<text class="p-3 font-3 theme-second-color w-100" v-if="souteType == 0 ? true : false">共{{list.length}}位参与者</text>
+				<text class="p-3 font-3 theme-second-color w-100" v-else>共{{list.length}}位</text>
+				<view class="w-100  flex flex-row flex-wrap" style="padding-left: 6rpx;padding-right: 44rpx;">
+					<view  v-for="(item,index) in list" :key="item" class="align-center" style="margin-left: 24rpx;margin-bottom: 24rpx;">
+						<!-- <text>{{item.name}}</text> -->
+						<view class="imgbox flex justify-center align-center" @click="toDetali(item)" v-if="souteType == 0 ? item.userAvatar : item.headUrl" >
+							<image :src="souteType == 0 ? item.userAvatar : item.headUrl" class="img-icon"></image>
+						</view>
+						<view class="defaultHead" v-else @click="toDetali(item)">
+							<text class="headName" v-if="souteType == 0 ? true : false">{{item.userName.charAt(item.userName.length-2)+item.userName.charAt(item.userName.length-1)}}</text>
+							<text class="headName" v-else>{{item.name.charAt(item.name.length-2)+item.name.charAt(item.name.length-1)}}</text>
+						</view>
+						<image src="../../../static/addrBook/delImg.png" v-if="souteType == 2 ? true : false" @click="cancelUser(item)" style="
+						    position: absolute;
+							top: 0;
+							right: 0;
+						    width: 30rpx;
+						    height: 30rpx;
+						    border-radius: 15rpx;"></image>
+						<text style="
+						margin-top: 10rpx;
+						font-size: 32rpx;
+						font-weight: 400;
+						color: #2F3034;
+						line-height: 32rpx;" v-if="souteType == 0 ? true : false">{{item.name}}</text>
+						<text style="
+						margin-top: 10rpx;
+						font-size: 32rpx;
+						font-weight: 400;
+						color: #2F3034;
+						line-height: 32rpx;" v-if="souteType == 1 ? true : false">{{item.userName}}</text>
+					</view>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	import { mapGetters, mapActions } from 'vuex';
+	export default {
+		data() {
+			return {
+				list:[],
+				guid: '',
+				souteType: 0,
+				consId: '',
+				title: ''
+			}
+		},
+		computed:{
+		    ...mapGetters({
+		        selectedList:'user/selectedList'
+		    })
+		},
+		onLoad(e) {
+			console.log('llllllllllllllllll',this.selectedList)
+			console.log(e,'参与人详情事件')
+			this.guid = e.guid
+			this.souteType = e.souteType
+			this.title = e.title
+			console.log(this.souteType)
+			console.log(JSON.stringify(e).souteType)
+			this.voteId = e.voteId;
+			this.option = e.option;
+			this.consId = e.consId;
+			if(this.souteType == 0){
+				this.getOptionInfo();
+			}else if(this.souteType == 1){
+				this.getSignUsers();
+			}else{
+				this.list = this.selectedList
+			}
+			console.log(this.list)
+			
+		},
+		methods: {
+			//去人物详情页
+			toDetali(item){
+				console.log(item)
+				uni.navigateTo({
+					url: '../../addrBook/personalPage?userId=' + item.userId + '&sourceType=' + 0
+				})
+			},
+			getOptionInfo(){
+				console.log(this.list.length)
+				uni.$api.vote.castuserlist({
+					voteId: this.voteId,
+					optionIndex: this.option,
+					consId: this.consId
+				})
+				.then(res=>{
+					console.log('castuserlist_RES', res);
+					this.list = res.data.data;
+				})
+				.catch(err=>{
+					console.log('castuserlist_ERR', err);
+				});
+			},
+			
+			cancelUser(item){
+				console.log('sssssssssssssssssss',item)
+				item.isChecked = false
+				item.selectValue = false
+				this.unSelectUser([item])
+				this.list = this.selectedList
+			},
+			
+			getSignUsers(){
+				uni.$api.discussion.getappconsultationusers({
+					guid: this.guid
+				}).then(res => {
+					
+					this.list = res.data.data;
+					console.log(this.list)
+				}).catch(err => {
+					console.log(err)
+				})
+			},
+			...mapActions({
+			    clearSelected:'user/clearSelected',
+			    selectUser:'user/selectUser',
+			    unSelectUser:'user/unSelectUser'
+			})
+		}
+	}
+</script>
+
+<style>
+/* 	.imgbox{
+		width: 138rpx;
+	} */
+	.img-icon{
+		width: 116rpx;
+		height: 116rpx;
+		background-color: #D8D8D8;
+		border-radius: 60rpx;
+	}
+	.defaultHead {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 116rpx;
+		height: 116rpx;
+		background-color: #F75252;
+		border-radius: 200;
+		border-width: 4rpx;
+		border-style: solid;
+		border-color: rgba(255, 196, 196, 0.67);
+	}
+	.headName {
+		font-size: 36rpx;
+		font-weight: 400;
+		color: #FFFFFF;
+	}
+</style>

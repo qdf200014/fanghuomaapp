@@ -1,0 +1,101 @@
+<template>
+	<!-- 会商结论 -->
+	<view class="w-100 flex flex-1 flex-column">
+		<!-- <uni-nav-bar leftIcon="back" title="结论" :statusBar="true" :border="false"></uni-nav-bar> -->
+		<!-- <view style="width: 750rpx;height: 330rpx;" class="border-test">
+			<wt-media media="/static/fireIndex/con_bg.png" style="width: 750rpx;"></wt-media>
+		</view> -->
+		<view class="border-bottom" style="position: relative;">
+			<image src="/static/fireIndex/con_bg.png" style="width: 750rpx;height: 436rpx;"></image>
+			<view style="position: absolute;top: 0;left: 0;">
+				<uni-status-bar />
+				<view style="width: 750rpx;padding-left: 30rpx;padding-right: 30rpx;padding-top: 30rpx;" class="flex flex-row align-center">
+					<view @click="goBack" slot="left">
+						<image src="../../../static/fireIndex/white.png" mode="" style="width: 20rpx;height: 35rpx;color: #FFFFFF;"></image>
+					</view>
+					<view style="padding-left: 287rpx;">
+						<text style="color: #FFFFFF;font-size: 38rpx;">结论</text>
+					</view>
+				</view>
+			</view>
+			<view class="p-4">
+				<view class="flex flex-row">
+					<view>
+						<image src="../../../static/fireIndex/con_one.png" mode="" style="width: 50rpx;height: 66rpx;"></image>
+					</view>
+					<view class="flex flex-row align-end" style="padding-left: 24rpx;">
+						<text class="con_title">标题：</text>
+						<text class="con_detail">{{conclusion.title}}</text>
+					</view>
+				</view>
+				<view class="flex flex-row" style="margin-top: 87rpx;">
+					<view>
+						<image src="../../../static/fireIndex/con_two.png" mode="" style="width: 50rpx;height: 66rpx;"></image>
+					</view>
+					<view style="padding-left: 24rpx;">
+						<text class="con_title">参会人员：</text>
+						<text class="con_detail">{{conclusion.persons}}</text>
+					</view>
+				</view>
+				<view class="flex flex-row" style="margin-top: 87rpx;">
+					<view>
+						<image src="../../../static/fireIndex/con_three.png" mode="" style="width: 50rpx;height: 66rpx;"></image>
+					</view>
+					<view style="padding-left: 24rpx;">
+						<text class="con_title">会商结果：</text>
+						<text class="con_detail">{{conclusion.consolsion}}</text>
+					</view>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				guid: '',
+				conclusion: [], //查看会商结论
+			}
+		},
+		onLoad(e) {
+			console.log(e.guid);
+			this.guid = e.guid
+			uni.$api.consultation.getconsultationconclusion({
+					guid: this.guid
+				})
+				.then(res => {
+					console.log('getconsultationconclusion_RES', res)
+					this.conclusion = res.data.data || []
+				})
+				.catch(err => {
+					console.log('getconsultationconclusion_ERR', err)
+				})
+		},
+		methods: {
+			goBack() {
+				uni.navigateBack(1)
+			}
+		}
+	}
+</script>
+
+<style>
+	.con_title {
+		font-size: 32rpx;
+		color: #487CF1;
+		font-weight: 600;
+	}
+
+	.con_detail {
+		font-size: 28rpx;
+		color: #323234;
+		font-weight: 600;
+	}
+	.border-bottom{
+		border-width: 1rpx;
+		border-color: #F4F5FB;
+		border-style: solid;
+	}
+</style>

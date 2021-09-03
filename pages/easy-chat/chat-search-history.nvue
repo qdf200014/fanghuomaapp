@@ -1,0 +1,94 @@
+<template>
+	<view class="im-flex-column im-flex-1">
+		<!-- 顶部导航栏 -->
+		<nim-chat-navigation>
+			<view class="im-flex-column im-align-center">
+				<view class="im-flex im-flex-nowrap im-align-center">
+					<text class="im-font-38 im-font-black-2">搜索记录</text>
+				</view>
+			</view>
+		</nim-chat-navigation>
+		<list>
+			<cell>
+				<nim-search-input v-model="searchKey" @confirm="confirm"></nim-search-input>
+			</cell>
+			<cell v-for="(item,index) in msgList" :key="item.idClient">
+				<view v-if="item.type === 'text'" class="im-flex im-align-center im-my-1 im-mx-2">
+					<nim-avatar :account="item.from" class="im-round-2"></nim-avatar>
+					<view class="im-flex-column im-flex-1 im-justify-between im-content-between im-ml-2">
+						<text class="im-font-30 im-font-light">{{ item.time | formatTime }}</text>
+						<text class="im-font-30 im-font-black-2 im-mt-2">{{ item.text }}</text>
+					</view>
+				</view>
+			</cell>
+			<cell>
+				<view class="im-list-bottom"></view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	import { sqlite } from '@/common/sqlite';
+	const imConnect = new sqlite.im();
+	
+	import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+	import nimAvatar from '@/components/easy-chat/nim-avatar.vue'
+	import useDayjs from '@/common/NIM/useDayjs.js'
+	import nimSearchInput from '@/components/easy-chat/nim-search-input.vue'
+	
+	export default {
+		data() {
+			return {
+				searchKey: '',
+				pageSize: 15,
+				listArr: []
+			}
+		},
+		filters: {
+			formatTime(n) {
+				return useDayjs.defaultFormat(n)
+			}
+		},
+		components: {
+			nimChatNavigation,
+			nimAvatar,
+			nimSearchInput
+		},
+		computed: {
+			currentSessionMsg() {
+				return this.$store.getters['initNim/currentSessionMsg'] || {};
+			},
+			currentSessionId() {
+				return this.$store.getters['initNim/currentSessionId'];
+			},
+			userUID() {
+				return this.$store.getters['initNim/userUID']
+			},
+			msgList() {
+				return this.listArr.sort(function(a, b) {
+					return b.time < a.time ? -1 : 1;
+				}).slice(0, this.pageSize);
+			}
+		},
+		methods: {
+			confirm(e) {
+				console.log(e);
+				
+				uni.hideKeyboard()
+				imConnect.selectSession(this.userUID, {
+					type: 'text',
+					'text-like': this.searchKey,	// text字段模糊查询
+					'sessionId': this.currentSessionId
+				}).then(res => {
+					console.log(res);
+					this.listArr = [].concat(res)
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

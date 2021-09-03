@@ -1,0 +1,142 @@
+<template>
+	<view class="w-100 flex flex-column bg-white">
+		<uni-nav-bar title="通知" :statusBar="true" left-icon="back">
+			<view class="flex flex-1 justify-end" slot="right">
+				<image src="../../../static/fireIndex/filter.png" style="width: 30rpx;height: 30rpx;"></image>
+			</view>
+		</uni-nav-bar>
+		<view class="flex flex-column">
+			<view class="w-100 flex flex-row" style="height: 609rpx; background-color: #F9FAF9;">
+				<list class="flex-1 pl-3 bg-white">
+					<cell class="flex align-center border-bottom" v-for="(item, index) in $store.state.user.provinceCodeList" 
+					style="height: 92rpx; width: 343rpx;" @click="chooseArea(item,index)">
+						<text class="areaSize" :class="index === provinceIndex ? 'active' : ''">{{item.name}}</text>
+					</cell>
+				</list>
+				<list class="flex-1 pl-3">
+					<cell class="flex align-center border-bottom" v-for="(item, index) in $store.state.user.cityCodeList" style="height: 92rpx; width: 343rpx;" @click="chooseCity(item,index)">
+						<text class="areaSize" :class="index === cityIndex ? 'active' : ''">{{item.name}}</text>
+					</cell>
+				</list>
+				<list class="flex-1 pl-3" v-if="showCounty">
+					<cell class="flex align-center border-bottom" v-for="(item, index) in $store.state.user.countryCodeList" 
+					style="height: 92rpx; width: 343rpx;" @click="chooseCountry(item,index)">
+						<text class="areaSize" :class="index === countyIndex ? 'active' : ''">{{item.name}}</text>
+					</cell>
+				</list>
+			</view>
+			<view class="flex flex-row justify-around align-center w-100" style="height: 128rpx;">
+				<view class="Btn1 flex align-center justify-center">
+					<text class="BtnText1">重置</text>
+				</view>
+				<view class="Btn2 flex align-center justify-center">
+					<text class="BtnText2">确定</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import { mapState,mapActions } from 'vuex'
+	export default {
+		data(){
+			return {
+				areaList:[],
+				cityList:[],
+				showCounty: false,
+				provinceIndex: 0,
+				cityIndex: 0,
+				countyIndex: 0
+			}
+		},
+		// onShow() {
+		// 	...mapState({
+		// 		areaCode: state => {
+		// 			console.log(state['user'].areacodelist)
+		// 			return state['user'].areacodelist
+		// 		},
+		// 	}),
+		// },
+		created() {
+			this.getareacodelist({attr :1,Area :'0'});
+			
+			// console.log(this.areaCode);
+			// if(this.areaCode && this.areaCode != []){
+			// 	this.areaList = this.$store.state['user/areacodelist']
+			// }
+		},
+		computed:{
+			
+			
+		},
+		onBackPress(){
+			console.log('页面关闭了')
+		},
+		methods:{
+			...mapActions({
+			  getareacodelist:'user/getareacodelist'
+			}),
+			chooseArea(item,index){
+				console.log(index)
+				this.provinceIndex = index
+				this.getareacodelist({attr :item.level + 1,Area :item.code});
+				// console.log(this.cityList)
+			},
+			chooseCity(item,index){
+				console.log(index)
+				this.cityIndex = index
+				if(item.level == 2){
+					this.showCounty = true
+				}
+				this.getareacodelist({attr :item.level + 1,Area :item.code});
+				// console.log(this.cityList)
+			},
+			chooseCountry(item,index){
+				this.countyIndex = index
+			}
+		}
+	}
+</script>
+
+<style>
+.Btn1{
+	width: 324rpx;
+	height: 80rpx;
+	background-color: #F5F5F5;
+	border-radius: 4rpx;
+}
+.Btn2{
+	width: 324rpx;
+	height: 80rpx;
+	background-color: #F75252;
+	border-radius: 4rpx;
+}
+.BtnText1{
+	font-size: 28rpx;
+	font-weight: 400;
+	color: #999999;
+	line-height: 28rpx;
+}
+.BtnText2{
+	font-size: 28rpx;
+	font-weight: 400;
+	color: #FFFFFF;
+	line-height: 28rpx;
+}
+.areaSize{
+	width: 209rpx;
+	lines: 1;
+	text-overflow: ellipsis;
+	font-size: 28rpx;
+	font-weight: 400;
+	color: #303133;
+	line-height: 28rpx;
+}
+.active{
+	font-size: 28rpx;
+	font-weight: 500;
+	color: #F75252;
+	line-height: 28rpx;
+}
+</style>

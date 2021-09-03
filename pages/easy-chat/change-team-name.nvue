@@ -1,0 +1,75 @@
+<template>
+	<view class="im-flex-column im-bg-grey-1">
+		<!-- 顶部导航栏 -->
+		<nim-chat-navigation>
+			<view class="im-flex-column im-align-center">
+				<view class="im-flex im-flex-nowrap im-align-center">
+					<text class="im-font-38 im-font-black-2">修改群名称</text>
+				</view>
+			</view>
+			
+			<view slot="right" class="im-flex" @tap="save">
+				<text class="im-font-34 im-font-red-2">保存</text>
+			</view>
+		</nim-chat-navigation>
+		
+		<view class="im-bg-white im-mt-2 im-py-2 im-position-relative im-flex im-align-center">
+			<input class="im-mx-2 im-font-30 im-font-black-2 im-flex-1 im-mr-5 im-pl-1 im-pr-2" focus type="text" v-model="textValue" @confirm="save" />
+			
+			<image v-if="textValue" class="im-position-absolute" src="/static/addrBook/delImg@2x.png" mode="aspectFill" style="width: 40rpx;height: 40rpx;right: 20rpx;top: 25rpx;" @tap="() => {textValue = ''}"></image>
+		</view>
+		
+	</view>
+</template>
+
+<script>
+	import nimChatNavigation from '@/components/easy-chat/nim-chat-navigation.vue'
+	
+	export default {
+		data() {
+			return {
+				textValue: '',
+				to: ''
+			}
+		},
+		computed: {
+			teamObj() {
+				return this.$store.getters['initNim/teamObj'] || {}
+			},
+			// 当前群的详细信息
+			teamInfo() {
+				return this.teamObj[this.to] || {}
+			}
+		},
+		components: {
+			nimChatNavigation
+		},
+		onLoad(event) {
+			console.log('页面接受的参数', event);
+			this.to = event.teamId
+			this.textValue = this.teamInfo.name
+		},
+		methods: {
+			save() {
+				console.log('保存');
+				this.$store.dispatch('initNim/nimUpdateTeam', {
+					teamId: this.to,
+					name: this.textValue
+				}).then(res => {
+					uni.showToast({
+						title: '保存成功!',
+						icon: 'success'
+					})
+					
+					setTimeout(() => {
+						uni.navigateBack()
+					}, 1500)
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>
